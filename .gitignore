@@ -1,0 +1,7 @@
+*.txt
+*.iml
+*.ipr
+*.iws
+build/
+out/
+.*/
