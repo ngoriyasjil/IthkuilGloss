@@ -180,8 +180,8 @@ fun parseAffix(c: String, v: String, delin: Boolean, precision: Int): String {
     }
     val deg = vi % 10
     val type = vi / 10 + 1
-    return if (precision > 0 && deg > 0) {
-        "'" + aff.desc[deg - 1] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
+    return if (precision > 0) {
+        "'" + aff.desc[deg] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
     } else {
         aff.abbr + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
     }
