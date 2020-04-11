@@ -31,15 +31,15 @@ fun main() {
 
 class MessageListener : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        if (event.channelType != ChannelType.TEXT)
+        if (event.channelType != ChannelType.TEXT && event.channelType != ChannelType.PRIVATE)
             return
-        val chan = event.textChannel
+        val chan = event.channel
         val msg = event.message
         val content = msg.contentRaw
         if (!content.startsWith("?", ignoreCase = true)) {
             return
         }
-        if (!chan.canTalk(event.guild.selfMember)) {
+        if (event.channelType == ChannelType.TEXT && !event.textChannel.canTalk(event.guild.selfMember)) {
             println("Can't talk in channel #" + chan.name)
             return
         }
@@ -66,17 +66,24 @@ class MessageListener : ListenerAdapter() {
                     .append("it's probably actual nonsense caused by the algorithm not interpreting the structure of your input properly. If however the error pertains to\n")
                     .append("the actual type of word you are trying to parse, there may be an actual bug, to which case make sure to let me (Syst3ms#9959) know.")
                 val auth = event.author
-                auth.openPrivateChannel()
-                    .flatMap { it.sendMessage(newMessage.build()) }
-                    .queue({ chan.sendMessage("Help was sent your way, " + auth.asMention + "!").queue() }) { // Failure
-                        val m = newMessage.append("\n")
-                            .append("(Couldn't send the message in DMs, ")
-                            .append(auth.asMention)
-                            .append(")")
-                            .build()
-                        chan.sendMessage(m)
-                            .queue()
-                    }
+                if (event.channelType == ChannelType.TEXT) {
+                    auth.openPrivateChannel()
+                        .flatMap { it.sendMessage(newMessage.build()) }
+                        .queue({
+                            chan.sendMessage("Help was sent your way, " + auth.asMention + "!").queue()
+                        }) { // Failure
+                            val m = newMessage.append("\n")
+                                .append("(Couldn't send the message in DMs, ")
+                                .append(auth.asMention)
+                                .append(")")
+                                .build()
+                            chan.sendMessage(m)
+                                .queue()
+                        }
+                } else {
+                    chan.sendMessage(newMessage.build())
+                        .queue()
+                }
             }
             "?gloss", "?short", "?full", "!debug" -> { // Word-by-word parsing, precision 1
                 val prec = if (parts[0].contains("short", ignoreCase = true)) {
