@@ -16,9 +16,9 @@ val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
     "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř"
 )
-val SEMIVOWELS = listOf("w", "y")
 val MODULAR_CONSONANTS = listOf("w", "y", "ç", "'", "h", "hl", "hr", "hw", "hm", "")
 val CD_CONSONANTS = listOf("h", "ř", "w", "y", "hl", "hr", "hw", "hy")
+val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ç", "çç", "ř", "h", "w", "y")
 val affixVowel = listOf(
     "ae", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "ea", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
@@ -28,35 +28,51 @@ val combinationPRASpecification = listOf("tm", "sn", "km", "šn")
 val affixualScopingConsonants = listOf("w", "y", "h", "'w", "'y", "'h")
 
 interface Precision {
-    abstract fun toString(precision: Int): String
+    fun toString(precision: Int, ignoreDefault: Boolean = false): String
 }
 
 enum class Designation(val short: String) : Precision {
     INFORMAL("IFL"),
     FORMAL("FML");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Incorporation(val short: String) : Precision {
     TYPE_ONE("T1"),
     TYPE_TWO("T2");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Version(val short: String) : Precision {
     PROCESSUAL("PRC"),
     COMPLETIVE("CPT");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Relation(val short: String) : Precision {
     UNFRAMED("UNF"),
     FRAMED("FRA");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Stem(val short: String) : Precision {
@@ -65,7 +81,11 @@ enum class Stem(val short: String) : Precision {
     STEM_THREE("S3"),
     STEM_ZERO("S0");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Specification(val short: String) : Precision {
@@ -73,21 +93,33 @@ enum class Specification(val short: String) : Precision {
     CONTENTIAL("CTE"),
     CONSTITUTIVE("CSV"),
     OBJECTIVE("OBJ");
-    
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 enum class Function(val short: String) : Precision {
     STATIVE("STA"),
     DYNAMIC("DYN");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Uniplex(val short: String) : Precision {
     SPECIFIC("UXS"),
     POTENTIAL("UPX");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Similarity(val short: String) : Precision {
@@ -98,7 +130,10 @@ enum class Similarity(val short: String) : Precision {
     MULTIPLEX_DISSIMILAR("MPD"),
     MULTIPLEX_FUZZY("MPF");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Connectedness(val short: String) : Precision {
@@ -106,7 +141,10 @@ enum class Connectedness(val short: String) : Precision {
     CONNECTED("CND"),
     FUSED("FSD");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Affiliation(val short: String) : Precision {
@@ -115,7 +153,11 @@ enum class Affiliation(val short: String) : Precision {
     VARIATIVE("VAR"),
     COALESCENT("COA");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Extension(val short: String) : Precision {
@@ -126,7 +168,11 @@ enum class Extension(val short: String) : Precision {
     GRADUATIVE("GRA"),
     DEPLETIVE("DPL");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Perspective(val short: String) : Precision {
@@ -135,14 +181,22 @@ enum class Perspective(val short: String) : Precision {
     NOMIC("N"),
     ABSTRACT("A");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Essence(val short: String) : Precision {
     NORMAL("NRM"),
     REPRESENTATIVE("RPV");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Context(val short: String) : Precision {
@@ -151,7 +205,11 @@ enum class Context(val short: String) : Precision {
     REPRESENTATIONAL("RPS"),
     AMALGAMATIVE("AMG");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Valence(val short: String) : Precision {
@@ -165,7 +223,11 @@ enum class Valence(val short: String) : Precision {
     CONTINGENT("CNG"),
     PARTICIPATIVE("PTI");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Phase(val short: String, val vp: String) : Precision {
@@ -179,7 +241,11 @@ enum class Phase(val short: String, val vp: String) : Precision {
     FRAGMENTATIVE("FRG", "wü"),
     FLUCTUATIVE("FLC", "wu");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
         fun byVowel(vp: String) = values().find { it.vp eq vp }
@@ -192,7 +258,10 @@ enum class Effect(val short: String) : Precision {
     NEUTRAL("NEU"),
     UNKNOWN("UNK");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Level(val short: String) : Precision {
@@ -206,7 +275,10 @@ enum class Level(val short: String) : Precision {
     SUPEREQUATIVE("SPQ"),
     SUBEQUATIVE("SUBEQUATIVE");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Aspect(val short: String, val t1: String, val t2: String) : Precision {
@@ -247,7 +319,10 @@ enum class Aspect(val short: String, val t1: String, val t2: String) : Precision
     EXPENDITIVE("XPD", "eä", "yeä"),
     LIMITATIVE("LIM", "oä", "yoä");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
         fun byT1(t1: String) = values().find { it.t1 eq t1 }
@@ -264,7 +339,11 @@ enum class Mood(val short: String, val cm: String, val vm: String) : Precision {
     COUNTERFACTIVE("COU", "hm", "ho"),
     HYPOTHETICAL("HYP", "hn", "hui");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
         fun byGroup(cm: String) = values().find { it.cm eq cm }
@@ -281,7 +360,11 @@ enum class CaseScope(val short: String, val cc: String) : Precision {
     CCM("CCm", "hm"),
     CCn("CCn", "hn");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
         fun byGroup(cc: String) = values().find { it.cc eq cc }
@@ -358,7 +441,11 @@ enum class Case(val short: String, val vc: String) : Precision {
     TERMINATIVE("TRM", "oyë"),
     VOCATIVE("VOC", "uyë");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
         fun byVowel(vc: String) = values().find { it.vc eq vc }
@@ -376,7 +463,11 @@ enum class Illocution(val short: String) : Precision {
     INTERROGATIVE("IRG"),
     DECLARATIVE("DEC");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Sanction(val short: String) : Precision {
@@ -391,7 +482,11 @@ enum class Sanction(val short: String) : Precision {
     AXIOMATIC("AXM"),
     NULL("null");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 enum class Bias(val short: String, val cb: String) : Precision {
@@ -454,10 +549,13 @@ enum class Bias(val short: String, val cb: String) : Precision {
     VEXATIVE("VEX", "ksk"),
     DEJECTIVE("DEJ", "zzg");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
-        fun byGroup(cb: String) = values().find { it.cb == cb }
+        fun byGroup(cb: String) = values().find { it.cb eq cb }
     }
 }
 
@@ -470,7 +568,10 @@ enum class Register(val short: String, val v: String) : Precision {
     MATHEMATICAL("MTH", "u"),
     CARRIER_END("CAR", "ë");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 
     companion object {
         fun byVowel(v: String) = values().find { it.v eq v }
@@ -492,11 +593,14 @@ enum class Referent(val short: String) : Precision {
     NOMIC_REFERENT("Nai"),
     ABSTRACT_REFERENT("Aai");
 
-    override fun toString(precision: Int) = if (precision >= 2) this.name.toLowerCase().replace("_", " ") else short
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
 }
 
 fun parseCd(c: String) : List<Precision> {
-    val i = CD_CONSONANTS.indexOf(c)
+    val i = CD_CONSONANTS.indexOf(c.defaultForm())
     return listOf(Designation.values()[i % 2], Incorporation.values()[i/2 % 2], Version.values()[i / 8])
 }
 
@@ -516,24 +620,24 @@ fun parseVk(s: String) : List<Precision>? {
     }
 }
 
-fun parseSlotEleven(s: String, precision: Int) : String? {
+fun parseSlotEleven(s: String, precision: Int, ignoreDefault: Boolean = false) : String? {
     val phase = Phase.byVowel(s)
     if (phase != null) {
-        return phase.toString(precision)
+        return phase.toString(precision, ignoreDefault)
     }
     val ben = Effect.BENEFICIAL.toString(precision)
     val det = Effect.DETRIMENTAL.toString(precision)
     val unk = Effect.UNKNOWN.toString(precision)
-    when {
-        s eq "wai" -> return "1/$ben"
-        s eq "wau" -> return "2/$ben"
-        s eq "wei" -> return "3/$ben"
-        s eq "weu" -> return "a/$ben"
-        s eq "wëu" -> return unk
-        s eq "woi" -> return "a/$det"
-        s eq "wou" -> return "3/$det"
-        s eq "wiu" -> return "2/$det"
-        s eq "wui" -> return "1/$det"
+    when (s.defaultForm()) {
+        "wai" -> return "1/$ben"
+        "wau" -> return "2/$ben"
+        "wei" -> return "3/$ben"
+        "weu" -> return "a/$ben"
+        "wëi" -> return unk
+        "woi" -> return "a/$det"
+        "wou" -> return "3/$det"
+        "wiu" -> return "2/$det"
+        "wui" -> return "1/$det"
     }
     val i = VOWEL_FORM.indexOfFirst { it eq s.substring(1) }
     if (i != -1 && (i/9 == 2 || i/9 == 3)) {
@@ -598,7 +702,7 @@ fun parseVr(s: String): List<Precision>? = when {
 }
 
 
-fun parsePersonalReference(s: String): List<Precision>? = when (s) {
+fun parsePersonalReference(s: String): List<Precision>? = when (s.defaultForm()) {
     "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)
     "r" -> listOf(Referent.MONADIC_SPEAKER, Effect.BENEFICIAL)
     "ř" -> listOf(Referent.MONADIC_SPEAKER, Effect.DETRIMENTAL)
@@ -643,7 +747,7 @@ fun parsePersonalReference(s: String): List<Precision>? = when (s) {
 
 fun parseCa(s: String) : List<Precision>? {
     val elements = arrayListOf<Precision>()
-    var original = s
+    var original = s.defaultForm()
     if (original.isEmpty() || original.startsWith("h"))
         return null
     when (original) {
@@ -671,7 +775,7 @@ fun parseCa(s: String) : List<Precision>? {
         .replace("rš(?=.)".toRegex(), "šf")
         .replace("rs(?=.)".toRegex(), "sf")
         .replace("j", "šs")
-        .replace("ż", "sš")
+        .replace("ẓ", "sš")
         .replace("v", "tf")
         .replace("č", "tš")
         .replace("c", "ts")
@@ -732,7 +836,7 @@ fun parseCa(s: String) : List<Precision>? {
             0
         }
     }
-    original = original.substring(0, original.length - a)
+    original = original.dropLast(a)
     when (original) {
         "ļt" -> {
             elements.add(0, Extension.PROXIMAL)
@@ -759,7 +863,7 @@ fun parseCa(s: String) : List<Precision>? {
         }
     }
     if (b == Unit)
-        original = original.substring(0, original.length - 1)
+        original = original.dropLast(1)
     when (original) {
         "ls" -> {
             elements.add(0, Affiliation.CONSOLIDATIVE)
@@ -790,7 +894,7 @@ fun parseCa(s: String) : List<Precision>? {
         }
     }
     if (c == Unit)
-        original = original.substring(0, original.length - 1)
+        original = original.dropLast(1)
     when (original) {
         "ţ" -> elements.add(0, Uniplex.POTENTIAL)
         "lt" -> {

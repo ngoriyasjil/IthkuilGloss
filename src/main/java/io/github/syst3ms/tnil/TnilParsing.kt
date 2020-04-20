@@ -14,7 +14,7 @@ val rootData: List<RootData> by lazy {
 
 fun String.isVowel() = VOWEL_FORM.any { it eq this }
 
-fun String.isConsonant() = this.toCharArray().all { it.toString() in CONSONANTS }
+fun String.isConsonant() = this.toCharArray().all { it.toString().defaultForm() in CONSONANTS }
 
 fun String.hasStress() = VOWEL_FORM.flatMap { it.split("/") }
     .any { it eq this && it != this }
@@ -23,33 +23,45 @@ fun String.trimGlottal() = this.replace("'", "")
 
 fun String.trimH() = this.replace("^('?)h".toRegex(), "$1")
 
-fun List<Precision>.toString(precision: Int) = this.joinToString("/") { it.toString(precision) }
-
-infix fun String.eq(s: String): Boolean {
-    return if ("/" in this) {
-        this.split("/").any { it eq s }
-    } else {
-        this.deaccent() == s.deaccent()
-    }
+fun String.plusSeparator(start: Boolean = false, sep: String = "-") = when {
+    this.isEmpty() -> this
+    start -> "$sep$this"
+    else -> "$this$sep"
 }
 
-fun String.deaccent() = this.replace("á", "a")
-    .replace("â", "ä")
-    .replace("é", "e")
-    .replace("ê", "ë")
-    .replace("í", "i")
-    .replace("ì", "i")
-    .replace("ó", "o")
-    .replace("ô", "ö")
-    .replace("ú", "u")
-    .replace("û", "ü")
+fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false) = this
+        .map { it.toString(precision, ignoreDefault) }
+        .filter { it.isNotEmpty() }
+        .joinToString("/")
+
+infix fun String.eq(s: String): Boolean = if ("/" in this) {
+    this.split("/").any { it eq s }
+} else {
+    this.defaultForm() == s.defaultForm()
+}
+
+fun String.defaultForm() = this.replace("á", "a")
+        .replace("â", "ä")
+        .replace("é", "e")
+        .replace("ê", "ë")
+        .replace("[ìíı]".toRegex(), "i")
+        .replace("ó", "o")
+        .replace("ô", "ö")
+        .replace("ú", "u")
+        .replace("û", "ü")
+        .replace("[ṭŧ]".toRegex(), "ţ")
+        .replace("[ḍđ]".toRegex(), "ḑ")
+        .replace("[łḷ]".toRegex(), "ļ")
+        .replace("ż", "ẓ")
+        .replace("ṇ", "ň")
+        .replace("ṛ", "ř")
 
 fun Array<String>.findStress(): Int {
     val i = this.flatMap {
-        if (it.isVowel() && (it.length == 3 || it.length == 2 && (it.endsWith("i") || it.endsWith("u")))) {
+        if (it.isVowel() && it.length == 3) {
             it.toCharArray().map(Char::toString)
         } else {
-            listOf(it)
+            listOf(it.replace("[ìı]".toRegex(), "i"))
         }
     }.reversed()
         .indexOfFirst { it.hasStress() }
@@ -143,9 +155,10 @@ fun loadAffixes(): List<AffixData> {
     val file = File("./affixes.txt")
     val reader = file.bufferedReader()
     return reader.lines()
-        .map { it.split("|") }
-        .map { AffixData(it[0], it[1], it.subList(2, it.size).toTypedArray()) }
-        .toList()
+            .filter { it.isNotBlank() }
+            .map { it.split("|") }
+            .map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
+            .toList()
 }
 
 fun parseAffix(c: String, v: String, delin: Boolean, precision: Int): String {
@@ -173,17 +186,25 @@ fun parseAffix(c: String, v: String, delin: Boolean, precision: Int): String {
             if (precision > 0) "delineation-" else "d-"
         } else "") + "$ca)"
     }
-    val aff = affixData.find { it.cs == c } ?: return "#$c"
     val vi = affixVowel.indexOfFirst { it eq v }
     if (vi == -1) {
         return "@$v"
     }
     val deg = vi % 10
     val type = vi / 10 + 1
-    return if (precision > 0) {
-        "'" + aff.desc[deg] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
+    val aff = affixData.find { it.cs == c }
+    return if (aff != null) {
+        if (precision > 0) {
+            when (aff.desc.size) {
+                1 -> "'" + aff.desc[0] + "'" + (0x2080 + type).toChar() + (if (delin) "(delineation)" else "") + "/" + deg
+                9 -> "'" + aff.desc[deg] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
+                else -> throw IllegalArgumentException("Invalid number of affix degrees")
+            }
+        } else {
+            aff.abbr + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
+        }
     } else {
-        aff.abbr + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
+        MarkdownUtil.underline(c.defaultForm()) + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
     }
 }
 
@@ -199,25 +220,23 @@ fun loadRoots(): List<RootData> {
 }
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false) : String {
-    val root = rootData.find { it.cr == c } ?: return MarkdownUtil.italics(c)
+    val root = rootData.find { it.cr == c } ?: return MarkdownUtil.underline(c.defaultForm())
     if (precision > 0) {
         val d = when (root.dsc.size) {
             1 -> root.dsc[0] // Only basic description, no precise stem description
             4 -> root.dsc[stem] // basic description + IFL Stems 1,2,3
             7 -> { // basic description + IFL & FML Stems 1,2,3
-                if (stem == 0) {
-                    root.dsc[0]
-                } else if (formal) {
-                    root.dsc[stem+3]
-                } else {
-                    root.dsc[stem]
+                when {
+                    stem == 0 -> root.dsc[0]
+                    formal -> root.dsc[stem+3]
+                    else -> root.dsc[stem]
                 }
             }
             8 -> root.dsc[stem + if (formal) 4 else 0] // IFL & FML Stems 0,1,2,3
             else -> throw IllegalArgumentException("Root format is invalid : found ${root.dsc.size} arguments in the description of root -${root.cr}-")
-        }
+        }.toLowerCase()
         return "'$d'"
     } else {
-        return "'${root.dsc[0]}'"
+        return "'${root.dsc[0].toLowerCase()}'"
     }
 }
