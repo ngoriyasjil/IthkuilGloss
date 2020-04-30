@@ -29,8 +29,19 @@ fun String.plusSeparator(start: Boolean = false, sep: String = "-") = when {
     else -> "$this$sep"
 }
 
-fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false) = this
-        .map { it.toString(precision, ignoreDefault) }
+fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed : Boolean = false, designationUsed : Boolean = false) = this
+        .map {
+            when {
+                it is Stem && stemUsed || it is Designation && designationUsed -> {
+                    val s = it.toString(precision, ignoreDefault)
+                    when {
+                        s.isEmpty() -> ""
+                        else -> MarkdownUtil.underline(s)
+                    }
+                }
+                else -> it.toString(precision, ignoreDefault)
+            }
+        }
         .filter { it.isNotEmpty() }
         .joinToString("/")
 
@@ -194,17 +205,17 @@ fun parseAffix(c: String, v: String, delin: Boolean, precision: Int): String {
     val type = vi / 10 + 1
     val aff = affixData.find { it.cs == c }
     return if (aff != null) {
-        if (precision > 0) {
+        if (precision > 0 || aff.desc.size == 9 && deg == 0) {
             when (aff.desc.size) {
                 1 -> "'" + aff.desc[0] + "'" + (0x2080 + type).toChar() + (if (delin) "(delineation)" else "") + "/" + deg
-                9 -> "'" + aff.desc[deg] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
+                9 -> "'" + aff.desc[deg - 1] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
                 else -> throw IllegalArgumentException("Invalid number of affix degrees")
             }
         } else {
             aff.abbr + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
         }
     } else {
-        MarkdownUtil.underline(c.defaultForm()) + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
+        MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
     }
 }
 
@@ -219,24 +230,34 @@ fun loadRoots(): List<RootData> {
         .toList()
 }
 
-fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false) : String {
-    val root = rootData.find { it.cr == c } ?: return MarkdownUtil.underline(c.defaultForm())
+fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false) : Triple<String, Boolean, Boolean> {
+    val root = rootData.find { it.cr == c } ?: return Triple(MarkdownUtil.underline(c.defaultForm()), false, false)
     if (precision > 0) {
+        var stemUsed = false
+        var designationUsed = false
         val d = when (root.dsc.size) {
             1 -> root.dsc[0] // Only basic description, no precise stem description
-            4 -> root.dsc[stem] // basic description + IFL Stems 1,2,3
+            4 -> {
+                stemUsed = true
+                root.dsc[stem] // basic description + IFL Stems 1,2,3
+            }
             7 -> { // basic description + IFL & FML Stems 1,2,3
+                stemUsed = true
+                designationUsed = true
                 when {
-                    stem == 0 -> root.dsc[0]
-                    formal -> root.dsc[stem+3]
+                    formal -> root.dsc[stem+4]
                     else -> root.dsc[stem]
                 }
             }
-            8 -> root.dsc[stem + if (formal) 4 else 0] // IFL & FML Stems 0,1,2,3
+            9 -> { // basic description + IFL & FML Stems 0,1,2,3 ; only used for the carrier root
+                stemUsed = true
+                designationUsed = true
+                root.dsc[stem + if (formal) 5 else 1]
+            }
             else -> throw IllegalArgumentException("Root format is invalid : found ${root.dsc.size} arguments in the description of root -${root.cr}-")
         }.toLowerCase()
-        return "'$d'"
+        return Triple("'$d'", stemUsed, designationUsed)
     } else {
-        return "'${root.dsc[0].toLowerCase()}'"
+        return Triple("'${root.dsc[0].toLowerCase()}'", false, false)
     }
 }

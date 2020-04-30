@@ -2,10 +2,9 @@ package io.github.syst3ms.tnil
 
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.Exception
 
 fun main() {
-    parseWord("owo", 1, true, alone = true)
+    println(parseWord("severe", 1, true, alone = true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -206,6 +205,11 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     var firstSegment = ""
     var i = 0
     val acceptableAlternateSlotEight = arrayOf("h", "hl", "hr", "hw", "hm", "hn")
+    /*
+     * First value is 0 for -N- and 1 for -D-
+     * Second value is the stem
+     */
+    var parsingReferentRoot : Pair<Int, Int>? = null
     // First we need to determine if the formative is short, simple or complex
     if (groups[0] in CD_CONSONANTS) { // Complex formative
         if (groups.size < 7) { // Minimum possible for a complex formative
@@ -215,41 +219,53 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         val cd = parseCd(groups[0])
         if (cd[0] == Designation.FORMAL)
             rootFlag = 1
-        firstSegment += cd.toString(precision, ignoreDefault).plusSeparator()
-        firstSegment += (Case.byVowel(groups[1])?.toString(precision)
-            ?: return error("Unknown case value : ${groups[1]}")).plusSeparator()
-        firstSegment += parseRoot(groups[2], precision, formal = rootFlag == 1).plusSeparator()
+        val vf = Case.byVowel(groups[1]) ?: return error("Unknown case value : ${groups[1]}")
+        val ci = parseRoot(groups[2], precision, formal = rootFlag == 1)
+        firstSegment += cd.toString(precision, ignoreDefault, designationUsed = ci.third)
+        firstSegment += vf.toString(precision, false).plusSeparator()
+        firstSegment += ci.first.plusSeparator()  // Not gonna bother with the special case of referent roots here
         val vv = parseVv(groups[3])
         if (vv?.get(0) == Designation.FORMAL)
             rootFlag = 4
-        firstSegment += (vv?.toString(precision, ignoreDefault) ?: return error("Unknown Vv value : ${groups[3]}")).plusSeparator()
         val vr = parseVr(groups[5])
         if (vr != null) {
-            rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 3
+            rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 4
         }
-        firstSegment += parseRoot(groups[4], precision, rootFlag and 3, rootFlag and 4 == 4) + "-"
-        firstSegment += (vr?.toString(precision, ignoreDefault) ?: return error("Unknown Vr value : ${groups[5]}")).plusSeparator()
+        val stem = rootFlag and 3
+        val cr = parseRoot(groups[4], precision, stem, rootFlag and 4 == 4)
+        firstSegment += (vv?.toString(precision, ignoreDefault, designationUsed = cr.third) ?: return error("Unknown Vv value : ${groups[3]}")).plusSeparator()
+        firstSegment += if (precision > 0 && stem != 0 && groups[4] == "n") {
+            parsingReferentRoot = 0 to stem
+            "@-"
+        } else if (precision > 0 && stem != 0 && groups[4] == "d") {
+            parsingReferentRoot = 1 to stem
+            "@-"
+        } else {
+            cr.first.plusSeparator()
+        }
+        firstSegment += (vr?.toString(precision, ignoreDefault, stemUsed = cr.second) ?: return error("Unknown Vr value : ${groups[5]}")).plusSeparator()
         i += 6
     } else if (groups[0].isConsonant()) { // Short formative
         if (groups.size < 3) { // Minimum possible for a short formative
             return error("Short formative ended unexpectedly : ${groups.joinToString("")}")
         }
         var rootFlag = 0
+        var shortVv : List<Precision>? = null
         val vr: String?
         if (groups.size >= 5 && groups[2] matches "'h?|h".toRegex()) {
-            firstSegment = when (groups[2]) {
+            shortVv = when (groups[2]) {
                 "'h" -> {
                     rootFlag = 4
                     acceptableAlternateSlotEight[0] = "ç"
-                    Designation.FORMAL.toString(precision) + "/" + Version.COMPLETIVE.toString(precision) + "-"
+                    listOf(Designation.FORMAL, Version.COMPLETIVE)
                 }
                 "h" -> {
                     acceptableAlternateSlotEight[0] = "ç"
-                    Version.COMPLETIVE.toString(precision) + "-"
+                    listOf(Version.COMPLETIVE)
                 }
                 "'" -> {
                     rootFlag = 4
-                    Designation.FORMAL.toString(precision) + "-"
+                    listOf(Designation.FORMAL)
                 }
                 else -> throw IllegalStateException()
             }
@@ -260,14 +276,14 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             }
             i += 4
         } else if (groups[2].startsWith("'") || groups[2].startsWith("h") && groups[2].length > 1) { // h in Slot VIII is possible
-            firstSegment = when {
+            shortVv = when {
                 // Infixation rules forbid 'h at the beginning of the next consonant
                 groups[2].startsWith("'") -> {
                     rootFlag = 4
-                    Designation.FORMAL.toString(precision) + "-"
+                    listOf(Designation.FORMAL)
                 }
                 groups[2].startsWith("h") -> {
-                    Version.COMPLETIVE.toString(precision) + "-"
+                    listOf(Version.COMPLETIVE)
                 }
                 else -> throw IllegalStateException()
             }
@@ -279,10 +295,21 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         }
         val v = parseVr(vr)
         if (v != null) {
-            rootFlag = rootFlag or ((v[1] as Enum<*>).ordinal + 1) % 3
+            rootFlag = rootFlag or ((v[1] as Enum<*>).ordinal + 1) % 4
         }
-        firstSegment += parseRoot(groups[0], precision, rootFlag and 3, rootFlag and 4 == 4) + "-"
-        firstSegment += (v?.toString(precision, ignoreDefault) ?: return error("Unknown Vr value : $vr")).plusSeparator()
+        val stem = rootFlag and 3
+        val cr = parseRoot(groups[0], precision, stem, rootFlag and 4 == 4)
+        firstSegment += (shortVv?.toString(precision, false, designationUsed = cr.third) ?: "").plusSeparator()
+        firstSegment += if (precision > 0 && stem != 0 && groups[0] == "n") {
+            parsingReferentRoot = 0 to stem
+            "@-"
+        } else if (precision > 0 && stem != 0 && groups[0] == "d") {
+            parsingReferentRoot = 1 to stem
+            "@-"
+        } else {
+            cr.first.plusSeparator()
+        }
+        firstSegment += (v?.toString(precision, ignoreDefault, stemUsed = cr.second) ?: return error("Unknown Vr value : $vr")).plusSeparator()
     } else { // Simple formative
         if (groups.size < 4) {
             return error("Simple formative ended unexpectedly : ${groups.joinToString("")}")
@@ -291,13 +318,23 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         val vv = parseVv(groups[0])
         if (vv?.get(0) == Designation.FORMAL)
             rootFlag = 4
-        firstSegment += (vv?.toString(precision, ignoreDefault) ?: return error("Unknown Vv value : ${groups[0]}")).plusSeparator()
         val vr = parseVr(groups[2])
         if (vr != null) {
-            rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 3
+            rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 4
         }
-        firstSegment += parseRoot(groups[1], precision, rootFlag and 3, rootFlag and 4 == 4) + "-"
-        firstSegment += (vr?.toString(precision, ignoreDefault) ?: return error("Unknown Vr value : ${groups[2]}")).plusSeparator()
+        val stem = rootFlag and 3
+        val cr = parseRoot(groups[1], precision, stem, rootFlag and 4 == 4)
+        firstSegment += (vv?.toString(precision, ignoreDefault, designationUsed = cr.third) ?: return error("Unknown Vv value : ${groups[0]}")).plusSeparator()
+        firstSegment += if (precision > 0 && stem != 0 && groups[1] == "n") {
+            parsingReferentRoot = 0 to stem
+            "@-"
+        } else if (precision > 0 && stem != 0 && groups[1] == "d") {
+            parsingReferentRoot = 1 to stem
+            "@-"
+        } else {
+            cr.first.plusSeparator()
+        }
+        firstSegment += (vr?.toString(precision, ignoreDefault, stemUsed = cr.second) ?: return error("Unknown Vr value : ${groups[2]}")).plusSeparator()
         i += 3
     }
     // i is now either at Ca or the beginning of Slot VII
@@ -398,7 +435,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     // j is now either at Ca, or at the end of Slot IX
     if (i == j) { // We're at Ca, slots VII and IX are empty
         val c = groups[i].trimGlottal()
-        val ca = parseCa(c.trimH())?.toString(precision, ignoreDefault)
+        val ca = parseCa(c.trimH())
         val alternate = if (stress == 0 || stress == 3) {
             Mood.values()
                 .getOrNull(acceptableAlternateSlotEight.indexOf(c))
@@ -408,8 +445,24 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 .getOrNull(acceptableAlternateSlotEight.indexOf(c))
                 ?.toString(precision)
         }
+        var caString = ca?.toString(precision, ignoreDefault)
+        if (ca != null) {
+            if (parsingReferentRoot?.first == 0) {
+                val desc = animateReferentDescriptions
+                        .get(parsingReferentRoot.second - 1)
+                        .get((ca[ca.size - 2] as Enum<*>).ordinal)
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            } else if (parsingReferentRoot?.first == 1) {
+                val desc = inanimateReferentDescriptions
+                        .get(parsingReferentRoot.second - 1)
+                        .get((ca[ca.size - 2] as Enum<*>).ordinal)
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            }
+        }
         return firstSegment.dropLast(1) +
-                (ca ?: alternate ?: return error("Slot VIII is neither a valid Ca value nor a case-scope/mood : ${groups[i]}")).plusSeparator(start = true) +
+                (caString ?: alternate ?: return error("Slot VIII is neither a valid Ca value nor a case-scope/mood : ${groups[i]}")).plusSeparator(start = true) +
                 secondSegment
     } else if (groups[j].startsWith("'") || groups[j-2] matches "['h]".toRegex()) { // We're at Ca, slot IX is empty, but slot VII isn't
         if (groups[j-2] == "h") {
@@ -419,7 +472,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             acceptableAlternateSlotEight[0] = "h" // Slot XI is empty, Slot VII doesn't have delineation, so -ç- is not acceptable
         }
         val c = groups[j].trimGlottal()
-        val ca = parseCa(c.trimH())?.toString(precision, ignoreDefault)
+        val ca = parseCa(c.trimH())
         val alternate = if (stress == 0 || stress == 3) {
             Mood.values()
                 .getOrNull(acceptableAlternateSlotEight.indexOf(c))
@@ -429,17 +482,33 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 .getOrNull(acceptableAlternateSlotEight.indexOf(c))
                 ?.toString(precision)
         }
-        secondSegment = (ca ?: (alternate ?: return error("Slot VIII is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
+        var caString = ca?.toString(precision, ignoreDefault)
+        if (ca != null) {
+            if (parsingReferentRoot?.first == 0) {
+                val desc = animateReferentDescriptions
+                        .get(parsingReferentRoot.second - 1)
+                        .get((ca[ca.size - 2] as Enum<*>).ordinal)
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            } else if (parsingReferentRoot?.first == 1) {
+                val desc = inanimateReferentDescriptions
+                        .get(parsingReferentRoot.second - 1)
+                        .get((ca[ca.size - 2] as Enum<*>).ordinal)
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            }
+        }
+        secondSegment = (caString ?: (alternate ?: return error("Slot VIII is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
         j--
     } else {
         var caIndex = -1
         for (k in j downTo i) {
-            if (groups[k] matches "'h?".toRegex()) { // End of slot VII, but the glottal stop isn't part of Ca
+            if (groups[k] matches "['h]".toRegex()) { // End of slot VII, but the glottal stop isn't part of Ca
                 if (groups[k].contains("h"))
                     delin = true
                 caIndex = k+2
                 break
-            } else if (groups[k].startsWith("'")) { // Ca reached
+            } else if (groups[k].startsWith("'") || groups[k].startsWith("h")) { // Ca reached
                 caIndex = k
                 break
             }
@@ -478,7 +547,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             acceptableAlternateSlotEight[0] = "ç"
         secondSegment = "-$slotNine$secondSegment"
         val c = groups[caIndex].trimGlottal()
-        val ca = parseCa(c.trimH())?.toString(precision, ignoreDefault)
+        val ca = parseCa(c.trimH())
         val alternate = if (stress == 0 || stress == 3) {
             Mood.values()
                 .getOrNull(acceptableAlternateSlotEight.indexOf(c))
@@ -488,7 +557,23 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 .getOrNull(acceptableAlternateSlotEight.indexOf(c))
                 ?.toString(precision)
         }
-        secondSegment = (ca ?: (alternate ?: return error("Slot VIII is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
+        var caString = ca?.toString(precision, ignoreDefault)
+        if (ca != null) {
+            if (parsingReferentRoot?.first == 0) {
+                val desc = animateReferentDescriptions
+                        .get(parsingReferentRoot.second - 1)
+                        .get((ca[ca.size - 2] as Enum<*>).ordinal)
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            } else if (parsingReferentRoot?.first == 1) {
+                val desc = inanimateReferentDescriptions
+                        .get(parsingReferentRoot.second - 1)
+                        .get((ca[ca.size - 2] as Enum<*>).ordinal)
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            }
+        }
+        secondSegment = (caString ?: (alternate ?: return error("Slot VIII is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
         j = caIndex-1
     }
     // j is now at the vowel before Ca
@@ -496,7 +581,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     while (k <= j) { // Reminder : affixes are CV rather than VC here
         val c = groups[k].trimH()
         var v : String
-        if (k + 3 <= j && groups[k+2] matches "('h?|h)".toRegex()) { // Vowel has standalone delineation (and potentially the end of slot VII but we don't care)
+        if (k + 3 <= j && groups[k+2] matches "['h]".toRegex()) { // Vowel has standalone delineation (and potentially the end of slot VII but we don't care)
             v = if (groups[k+1] == groups[k+3]) {
                 groups[k+1]
             } else {

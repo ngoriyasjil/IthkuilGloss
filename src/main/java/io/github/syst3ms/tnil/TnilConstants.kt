@@ -26,6 +26,16 @@ val affixVowel = listOf(
 )
 val combinationPRASpecification = listOf("tm", "sn", "km", "šn")
 val affixualScopingConsonants = listOf("w", "y", "h", "'w", "'y", "'h")
+val animateReferentDescriptions = listOf(
+        listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
+        listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
+        listOf("monadic animate 3rd party (ma), \"he/she/they\"", "polyadic animate 3rd party (pa), \"they (pl.)\"", "impersonal animate (IPa), \"one\"", "all that (s)he/they are")
+)
+val inanimateReferentDescriptions = listOf(
+        listOf("monadic inanimate 3rd party (mi), \"it\"", "polyadic inanimate 3rd party (pi), \"them/those\"", "impersonal inanimate (IPi), \"something\"", "all that it/they are"),
+        listOf("monadic obviative (mObv)", "polyadic obviative (pObv)", "Nai, \"it\" as a generic concept", "Aai, \"it\" as an abstract referent"),
+        listOf("monadic mixed animate+inanimate (mMx)", "polyadic mixed animate+inanimate (pMx)", "impersonal mixed animate+inanimate (IPx)", "everything and everyone, all about the world")
+)
 
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
@@ -791,26 +801,36 @@ fun parseCa(s: String) : List<Precision>? {
             1
         }
         original.endsWith("ll") || original.endsWith("hw") -> {
+            if (original.length == 2) // All such checks are present to ensure that the standalone forms are properly used
+                return null
             elements.add(Perspective.POLYADIC)
             elements.add(Essence.REPRESENTATIVE)
             2
         }
         original.endsWith("ļ") -> {
+            if (original.length == 1)
+                return null
             elements.add(Perspective.POLYADIC)
             elements.add(Essence.REPRESENTATIVE)
             1
         }
         original.endsWith("l") -> {
+            if (original.length == 1)
+                return null
             elements.add(Perspective.POLYADIC)
             elements.add(Essence.NORMAL)
             1
         }
         original.endsWith("h") || original.endsWith("v") -> {
+            if (original.length == 1)
+                return null
             elements.add(Perspective.NOMIC)
             elements.add(Essence.REPRESENTATIVE)
             1
         }
         original.endsWith("rr") -> {
+            if (original.length == 2)
+                return null
             elements.add(Perspective.NOMIC)
             elements.add(Essence.REPRESENTATIVE)
             2
@@ -821,11 +841,15 @@ fun parseCa(s: String) : List<Precision>? {
             1
         }
         original.endsWith("w") -> {
+            if (original.length == 1)
+                return null
             elements.add(Perspective.ABSTRACT)
             elements.add(Essence.NORMAL)
             1
         }
         original.endsWith("y") -> {
+            if (original.length == 1)
+                return null
             elements.add(Perspective.ABSTRACT)
             elements.add(Essence.REPRESENTATIVE)
             1
@@ -852,9 +876,21 @@ fun parseCa(s: String) : List<Precision>? {
         }
     }
     val b = when (original.lastOrNull()) { // Dirty hack exploiting the fact that in Kotlin, 'void' functions return a singleton object called Unit
-        't' -> elements.add(0, Extension.PROXIMAL)
-        'k' -> elements.add(0, Extension.INCIPIENT)
-        'p' -> elements.add(0, Extension.ATTENUATIVE)
+        't' -> {
+            if (original.length == 1)
+                return null
+            elements.add(0, Extension.PROXIMAL)
+        }
+        'k' -> {
+            if (original.length == 1)
+                return null
+            elements.add(0, Extension.INCIPIENT)
+        }
+        'p' -> {
+            if (original.length == 1)
+                return null
+            elements.add(0, Extension.ATTENUATIVE)
+        }
         'g' -> elements.add(0, Extension.GRADUATIVE)
         'b' -> elements.add(0, Extension.DEPLETIVE)
         else -> {
@@ -958,14 +994,20 @@ fun parseCa(s: String) : List<Precision>? {
             elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
         }
         "s" -> {
+            if (Affiliation.CONSOLIDATIVE !in elements)
+                return null
             elements.add(0, Connectedness.SEPARATE)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
         "š" -> {
+            if (Affiliation.CONSOLIDATIVE !in elements)
+                return null
             elements.add(0, Connectedness.CONNECTED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
         "f" -> {
+            if (Affiliation.CONSOLIDATIVE !in elements)
+                return null
             elements.add(0, Connectedness.FUSED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
