@@ -160,7 +160,24 @@ fun parseFullReferent(s: String, precision: Int): String? {
     return null
 }
 
-data class AffixData(val cs: String, val abbr: String, val desc: Array<String>)
+data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as AffixData
+        if (cs != other.cs) return false
+        if (abbr != other.abbr) return false
+        if (!desc.contentEquals(other.desc)) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = cs.hashCode()
+        result = 31 * result + abbr.hashCode()
+        result = 31 * result + desc.contentHashCode()
+        return result
+    }
+}
 
 fun loadAffixes(): List<AffixData> {
     val file = File("./affixes.txt")
@@ -231,7 +248,7 @@ fun loadRoots(): List<RootData> {
 }
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false) : Triple<String, Boolean, Boolean> {
-    val root = rootData.find { it.cr == c } ?: return Triple(MarkdownUtil.underline(c.defaultForm()), false, false)
+    val root = rootData.find { it.cr == c } ?: return Triple(MarkdownUtil.underline(c.defaultForm()), second = false, third = false)
     if (precision > 0) {
         var stemUsed = false
         var designationUsed = false
@@ -245,7 +262,8 @@ fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false)
                 stemUsed = true
                 designationUsed = true
                 when {
-                    formal -> root.dsc[stem+4]
+                    stem == 0 -> root.dsc[0]
+                    formal -> root.dsc[stem+3]
                     else -> root.dsc[stem]
                 }
             }
@@ -258,6 +276,6 @@ fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false)
         }.toLowerCase()
         return Triple("'$d'", stemUsed, designationUsed)
     } else {
-        return Triple("'${root.dsc[0].toLowerCase()}'", false, false)
+        return Triple("'${root.dsc[0].toLowerCase()}'", second = false, third = false)
     }
 }

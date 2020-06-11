@@ -173,7 +173,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean, stress: Int? = 
             }
         }
     } else if (groups.size == 2 && !(groups[0] matches "[hwyç].?".toRegex()) && groups[1].isVowel() ||
-        groups.size == 3 && groups[0].isVowel() && !(groups[1] matches "[hwy].?".toRegex()) ||
+        groups.size == 3 && groups[0].isVowel() && !(groups[1] matches "'?[hwy].?".toRegex()) ||
         groups.size == 5 && groups[2] == "ë"
     ) { // PRA
         parsePRA(groups, precision, stress)

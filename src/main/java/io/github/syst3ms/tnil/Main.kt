@@ -70,6 +70,14 @@ class MessageListener : ListenerAdapter() {
                         .append("  - Strong precision : all morphological components are completely written out, roots may change depending on the stem\n")
                         .append("  - Weak precision : all morphological components are abbreviated, roots will only display their generic title\n")
                         .append("\n")
+                val second = MessageBuilder()
+                        .append("Formatting details :\n")
+                        .append("  - **Bold text** in place of a root/affix means that it's just not in the current database\n")
+                        .append("  - __Underlined text__ means that the corresponding category was taken into account when looking for a description of the root.\n")
+                        .append("   For example, \" 'description'/S2 \" indicates that S2 contributed nothing to the final result of 'description' ;\n")
+                        .append("   However, \" 'description'/__S2__ \" indicates that 'description' was specifically picked because S2 was specified.\n")
+                        .append("   NOTE : this only applies to Stem, Designation, and in the special case of -N- and -D-, Perspective\n")
+                        .append("\n")
                         .append("The parsing logic is far from perfect (and also difficult to improve substantially), so if an error message looks like nonsense to you,\n")
                         .append("it's probably actual nonsense caused by the algorithm not interpreting the structure of your input properly. If however the error pertains to\n")
                         .append("the actual type of word you are trying to parse, there may be an actual bug, to which case make sure to let me (Syst3ms#9959) know.")
@@ -77,14 +85,17 @@ class MessageListener : ListenerAdapter() {
                 if (event.channelType == ChannelType.TEXT) {
                     auth.openPrivateChannel()
                         .flatMap { it.sendMessage(newMessage.build()) }
+                        .flatMap { it.channel.sendMessage(second.build()) }
                         .queue({
                             chan.sendMessage("Help was sent your way, " + auth.asMention + "!").queue()
                         }) { // Failure
-                            val m = newMessage.append("\n")
+                            val m = second.append("\n")
                                 .append("(Couldn't send the message in DMs, ")
                                 .append(auth.asMention)
                                 .append(")")
                                 .build()
+                            chan.sendMessage(newMessage.build())
+                                .queue()
                             chan.sendMessage(m)
                                 .queue()
                         }
