@@ -144,7 +144,7 @@ class MessageListener : ListenerAdapter() {
                     glosses += res.trim()
                 }
                 val newMessage = glosses.mapIndexed { i, s ->
-                    MarkdownUtil.bold(parts[i+1] + " : ") + if (s.startsWith("\u0000")) {
+                    MarkdownUtil.bold(parts[i+1] + " :") + " " + if (s.startsWith("\u0000")) {
                         MarkdownUtil.italics(s.substring(1, s.length))
                     } else {
                         s

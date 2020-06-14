@@ -221,7 +221,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             rootFlag = 1
         val vf = Case.byVowel(groups[1]) ?: return error("Unknown case value : ${groups[1]}")
         val ci = parseRoot(groups[2], precision, formal = rootFlag == 1)
-        firstSegment += cd.toString(precision, ignoreDefault, designationUsed = ci.third)
+        firstSegment += cd.toString(precision, ignoreDefault, designationUsed = ci.third).plusSeparator()
         firstSegment += vf.toString(precision, false).plusSeparator()
         firstSegment += ci.first.plusSeparator()  // Not gonna bother with the special case of referent roots here
         val vv = parseVv(groups[3])
