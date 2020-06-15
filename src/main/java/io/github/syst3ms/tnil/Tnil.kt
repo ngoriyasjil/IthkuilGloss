@@ -4,7 +4,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("severe", 1, true, alone = true))
+    println(parseWord("lalksthw", 1, true, alone = true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {

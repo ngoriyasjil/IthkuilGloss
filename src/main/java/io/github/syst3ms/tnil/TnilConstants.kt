@@ -876,19 +876,22 @@ fun parseCa(s: String) : List<Precision>? {
         }
     }
     val b = when (original.lastOrNull()) { // Dirty hack exploiting the fact that in Kotlin, 'void' functions return a singleton object called Unit
-        't' -> {
-            if (original.length == 1)
-                return null
+        't' -> if (original.length == 1) {
+            elements.add(0, Extension.DELIMITIVE)
+            null
+        } else {
             elements.add(0, Extension.PROXIMAL)
         }
-        'k' -> {
-            if (original.length == 1)
-                return null
+        'k' -> if (original.length == 1) {
+            elements.add(0, Extension.DELIMITIVE)
+            null
+        } else {
             elements.add(0, Extension.INCIPIENT)
         }
-        'p' -> {
-            if (original.length == 1)
-                return null
+        'p' -> if (original.length == 1) {
+            elements.add(0, Extension.DELIMITIVE)
+            null
+        } else {
             elements.add(0, Extension.ATTENUATIVE)
         }
         'g' -> elements.add(0, Extension.GRADUATIVE)
@@ -994,19 +997,19 @@ fun parseCa(s: String) : List<Precision>? {
             elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
         }
         "s" -> {
-            if (Affiliation.CONSOLIDATIVE !in elements)
+            if (Affiliation.CONSOLIDATIVE in elements)
                 return null
             elements.add(0, Connectedness.SEPARATE)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
         "š" -> {
-            if (Affiliation.CONSOLIDATIVE !in elements)
+            if (Affiliation.CONSOLIDATIVE in elements)
                 return null
             elements.add(0, Connectedness.CONNECTED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
         "f" -> {
-            if (Affiliation.CONSOLIDATIVE !in elements)
+            if (Affiliation.CONSOLIDATIVE in elements)
                 return null
             elements.add(0, Connectedness.FUSED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
