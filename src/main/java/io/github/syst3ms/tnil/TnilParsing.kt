@@ -12,12 +12,13 @@ val rootData: List<RootData> by lazy {
     loadRoots()
 }
 
-fun String.isVowel() = VOWEL_FORM.any { it eq this }
+fun String.isVowel() = this.defaultForm() in flatVowelForm
 
-fun String.isConsonant() = this.toCharArray().all { it.toString().defaultForm() in CONSONANTS }
+fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
 
-fun String.hasStress() = VOWEL_FORM.flatMap { it.split("/") }
-    .any { it eq this && it != this }
+fun String.isModular() = this matches "'?([wy]|h.*)".toRegex()
+
+fun String.hasStress() = this.defaultForm() != this && this.defaultForm() in VOWEL_FORM
 
 fun String.trimGlottal() = this.replace("'", "")
 
@@ -83,7 +84,7 @@ fun Array<String>.findStress(): Int {
     }
 }
 
-fun String.splitGroups(noSemis: Boolean = false): Array<String> {
+fun String.splitGroups(): Array<String> {
     val groups = arrayListOf<String>()
     var chars = toCharArray()
         .map(Char::toString)
@@ -91,7 +92,7 @@ fun String.splitGroups(noSemis: Boolean = false): Array<String> {
     while (chars.isNotEmpty()) {
         var group: String? = null
         if (chars[0].isVowel()) {
-            for (i in (if (noSemis) 2 else 3).coerceAtMost(chars.size) downTo 1) {
+            for (i in 2.coerceAtMost(chars.size) downTo 1) {
                 val potentialVowel = chars.subList(0, i).joinToString("")
                 if (potentialVowel.isVowel()) {
                     group = potentialVowel
@@ -107,14 +108,18 @@ fun String.splitGroups(noSemis: Boolean = false): Array<String> {
     return groups.toTypedArray()
 }
 
-fun scopeToString(ca: Boolean, letter: String): String? {
+fun scopeToString(letter: String, ignoreDefault: Boolean): String? {
+    if (letter == "a" && ignoreDefault) {
+        return ""
+    }
     return "{" +
-            (if (ca) "Ca" else "Stm") +
-            when {
-                "a" eq letter || "w/y" eq letter -> "Slot"
-                "e" eq letter || "h" eq letter -> "Sub"
-                "o" eq letter || "'w/'y" eq letter -> "Form"
-                "i/u" eq letter || "'h" eq letter -> "All"
+            when (letter) {
+                "a" -> "{StmDom}"
+                "u" -> "{StmSub}"
+                "e" -> "{CaDom}"
+                "i" -> "{CaSub}"
+                "o" -> "{Form}"
+                "ö" -> "{All}"
                 else -> return null
             } +
             "}"
@@ -189,8 +194,20 @@ fun loadAffixes(): List<AffixData> {
             .toList()
 }
 
-fun parseAffix(c: String, v: String, delin: Boolean, precision: Int): String {
-    // Special cases
+fun parseAffix(c: String, v: String, precision: Int): String {
+    val vi = affixVowel.indexOfFirst { it eq v }
+    if (vi == -1) {
+        return "@$v"
+    }
+    val deg = vi % 10
+    var delin = false
+    val type = if (vi < 30) {
+        vi / 10 + 1
+    } else {
+        delin = true
+        vi / 10 - 2
+    }
+    val aff = affixData.find { it.cs == c }
     if (c == "rl") { // case-stacking affix
         val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
         return "($case" + (if (delin && precision > 0) "(delineation)" else if (delin) "d" else "") + ")"
@@ -204,23 +221,17 @@ fun parseAffix(c: String, v: String, delin: Boolean, precision: Int): String {
     } else if (c == "lw" || c == "ly") { // inverse case-accessor affix
         val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
         return if (precision > 0) {
-            "($case\\inverse accessor-" + (if (c == "ll") "Type 1" else "Type 2") + (if (delin) "(delineation)" else "") + ")"
+            "($case\\inverse accessor-" + (if (c == "lw") "Type 1" else "Type 2") + (if (delin) "(delineation)" else "") + ")"
         } else {
             "(${case}ia-" + (if (c == "lw") "T1" else "T2") + (if (delin) "d" else "") + ")"
         }
-    } else if (v eq "eo" || v eq "oe") {
+    } else if (v eq "eä" || v eq "öä") {
         val ca = parseCa(c) ?: return "^$c"
-        return "(" + (if (v eq "oe") {
+        return "(" + (if (v eq "öä") {
             if (precision > 0) "delineation-" else "d-"
         } else "") + "$ca)"
     }
-    val vi = affixVowel.indexOfFirst { it eq v }
-    if (vi == -1) {
-        return "@$v"
-    }
-    val deg = vi % 10
-    val type = vi / 10 + 1
-    val aff = affixData.find { it.cs == c }
+    // Special cases
     return if (aff != null) {
         if (precision > 0 || aff.desc.size == 9 && deg == 0) {
             when (aff.desc.size) {
@@ -248,7 +259,7 @@ fun loadRoots(): List<RootData> {
 }
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false) : Triple<String, Boolean, Boolean> {
-    val root = rootData.find { it.cr == c } ?: return Triple(MarkdownUtil.underline(c.defaultForm()), second = false, third = false)
+    val root = rootData.find { it.cr == c } ?: return Triple(MarkdownUtil.bold(c.defaultForm()), second = false, third = false)
     if (precision > 0) {
         var stemUsed = false
         var designationUsed = false

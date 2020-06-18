@@ -1,30 +1,42 @@
 package io.github.syst3ms.tnil
 
+import java.lang.IllegalStateException
+
 val VOWEL_FORM = listOf(
     "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "ia/öa", "ua/aö", "ie/öe", "ue/eö", "ëu", "uo/iö", "io/uö", "uë/iä", "ië/uä",
-    "ao", "ae", "ea", "eo", "oë", "oe", "oa", "eä", "oä",
-    "aya", "awa", "eya", "ewa", "iwa", "owa", "oya", "öwa", "uya",
-    "aye", "awe", "eye", "ewe", "iwe", "owe", "oye", "öwe", "uye",
-    "ayo", "awo", "eyo", "ewo", "iwo", "owo", "oyo", "öwo", "uyo",
-    "ayë", "awë", "eyë", "ewë", "iwë", "owë", "oyë", "öwë", "uyë",
-    "ayu", "awi", "eyu", "ewi", "iwi", "owi", "oyu", "öwi", "uyu",
-    "ayö", "awö", "eyö", "ewö", "iwö", "owö", "oyö", "öwö", "uyö"
+    "ia/öa", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
+    "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
+    "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
+    "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
+    "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
+    "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
+    "awo", "awe", "ewa", "ewo", "ewë", "öwe", "owe", "öwa", "owa"
 )
+val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") }
 val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
     "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř"
 )
-val MODULAR_CONSONANTS = listOf("w", "y", "ç", "'", "h", "hl", "hr", "hw", "hm", "")
-val CD_CONSONANTS = listOf("h", "ř", "w", "y", "hl", "hr", "hw", "hy")
+val FRICATIVES = listOf("f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "ř", "h", "ļ")
+val AFFRICATES = listOf("c", "ẓ", "č", "j")
+val NASALS = listOf("m", "n", "ň")
+val STOPS = listOf("p", "b", "t", "d", "k", "g")
+val CD_CONSONANTS = listOf(
+        "h", "ç", "w", "y",
+        "hw", "çw", "hl", "hr",
+        "hlw", "hly", "hm", "hn",
+        "hmw", "hnw", "hmy", "hny"
+)
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ç", "çç", "ř", "h", "w", "y")
 val affixVowel = listOf(
-    "ae", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
-    "ea", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "oa", "ia/öa", "ua/aö", "ie/öe", "ue/eö", "ëu", "uo/iö", "io/uö", "uë/iä", "ië/uä"
+    "üa", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
+    "üe", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
+    "üo", "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
+    "üö", "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
+    "üwö", "awo", "awe", "ewa", "ewo", "ewë", "öwe", "owe", "öwa", "owa"
 )
-val combinationPRASpecification = listOf("tm", "sn", "km", "šn")
+val combinationPRASpecification = listOf("bz", "gz", "bž", "gž")
 val affixualScopingConsonants = listOf("w", "y", "h", "'w", "'y", "'h")
 val animateReferentDescriptions = listOf(
         listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
@@ -291,43 +303,43 @@ enum class Level(val short: String) : Precision {
     }
 }
 
-enum class Aspect(val short: String, val t1: String, val t2: String) : Precision {
-    RETROSPECTIVE("RTR", "a", "ya"),
-    PROSPECTIVE("PRS", "ä", "yä"),
-    HABITUAL("HAB", "e", "ye"),
-    PROGRESSIVE("PRG", "ë", "yë"),
-    IMMINENT("IMM", "i", "yi"),
-    PRECESSIVE("PCS", "ö", "yö"),
-    REGULATIVE("REG", "o", "yo"),
-    ANTECENDENT("ATC", "ü", "yü"),
-    ANTICIPATORY("ATP", "u", "yu"),
-    RESUMPTIVE("RSM", "ai", "yai"),
-    CESSATIVE("CSS", "au", "yau"),
-    PAUSAL("PAU", "ei", "yei"),
-    REGRESSIVE("RGR", "eu", "yeu"),
-    PRECLUSIVE("PCL", "ëi", "yëi"),
-    CONTINUATIVE("CNT", "ou", "you"),
-    INCESSATIVE("ICS", "oi", "yoi"),
-    SUMMATIVE("SMM", "iu", "yiu"),
-    INTERRUPTIVE("IRP", "ui", "yui"),
-    PREEMPTIVE("PMP", "ia/öa", "yöa"),
-    CLIMACTIC("CLM", "ua/aö", "yua"),
-    DILATORY("DLT", "ie/öe", "yöe"),
-    TEMPORARY("TMP", "ue/eö", "yue"),
-    MOTIVE("MTV", "ëu", "yëu"),
-    SEQUENTIAL("SQN", "uo/iö", "yuo"),
-    EXPEDITIVE("EPD", "io/uö", "yuö"),
-    PROTRACTIVE("PTC", "uë/iä", "yuë"),
-    PREPARATORY("PPR", "ië/uä", "yuä"),
-    DISCLUSIVE("DCL", "ao", "yao"),
-    CONCLUSIVE("CCL", "ae", "yae"),
-    CULMINATIVE("CUL", "ea", "yea"),
-    INTERMEDIATIVE("IMD", "eo", "yeo"),
-    TARDATIVE("TRD", "oë", "yoë"),
-    TRANSITIONAL("TNS", "oe", "yoe"),
-    INTERCOMMUTATIVE("ITC", "oa", "yoa"),
-    EXPENDITIVE("XPD", "eä", "yeä"),
-    LIMITATIVE("LIM", "oä", "yoä");
+enum class Aspect(val short: String, val vt: String) : Precision {
+    RETROSPECTIVE("RTR", "a"),
+    PROSPECTIVE("PRS", "ä"),
+    HABITUAL("HAB", "e"),
+    PROGRESSIVE("PRG", "ë"),
+    IMMINENT("IMM", "i"),
+    PRECESSIVE("PCS", "ö"),
+    REGULATIVE("REG", "o"),
+    ANTECENDENT("ATC", "ü"),
+    ANTICIPATORY("ATP", "u"),
+    RESUMPTIVE("RSM", "ai"),
+    CESSATIVE("CSS", "au"),
+    PAUSAL("PAU", "ei"),
+    REGRESSIVE("RGR", "eu"),
+    PRECLUSIVE("PCL", "ëi"),
+    CONTINUATIVE("CNT", "ou"),
+    INCESSATIVE("ICS", "oi"),
+    SUMMATIVE("SMM", "iu"),
+    INTERRUPTIVE("IRP", "ui"),
+    PREEMPTIVE("PMP", "ia/oä"),
+    CLIMACTIC("CLM", "iä/uä"),
+    DILATORY("DLT", "ie/oë"),
+    TEMPORARY("TMP", "ië/uë"),
+    MOTIVE("MTV", "ëu"),
+    SEQUENTIAL("SQN", "uö/iö"),
+    EXPEDITIVE("EPD", "uo/io"),
+    PROTRACTIVE("PTC", "ue/eö"),
+    PREPARATORY("PPR", "ua/aö"),
+    DISCLUSIVE("DCL", "ao"),
+    CONCLUSIVE("CCL", "ae"),
+    CULMINATIVE("CUL", "ea"),
+    INTERMEDIATIVE("IMD", "eo"),
+    TARDATIVE("TRD", "eë"),
+    TRANSITIONAL("TNS", "öe"),
+    INTERCOMMUTATIVE("ITC", "oe"),
+    EXPENDITIVE("XPD", "öa"),
+    LIMITATIVE("LIM", "oa");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
@@ -335,19 +347,17 @@ enum class Aspect(val short: String, val t1: String, val t2: String) : Precision
     }
 
     companion object {
-        fun byT1(t1: String) = values().find { it.t1 eq t1 }
-
-        fun byT2(t2: String) = values().find { it.t2 eq t2 }
+        fun byVowel(vt: String) = values().find { it.vt eq vt }
     }
 }
 
-enum class Mood(val short: String, val cm: String, val vm: String) : Precision {
-    FACTUAL("FAC", "h/ç", "hai"),
-    SUBJUNCTIVE("SUB", "hl", "he"),
-    ASSUMPTIVE("ASM", "hr", "hi"),
-    SPECULATIVE("SPC", "hw", "hö"),
-    COUNTERFACTIVE("COU", "hm", "ho"),
-    HYPOTHETICAL("HYP", "hn", "hui");
+enum class Mood(val short: String, val cn: String, val cy: String) : Precision {
+    FACTUAL("FAC", "h/ç", ""),
+    SUBJUNCTIVE("SUB", "hl", "x"),
+    ASSUMPTIVE("ASM", "hr", "rz"),
+    SPECULATIVE("SPC", "hw", "rž"),
+    COUNTERFACTIVE("COU", "hm", "lz"),
+    HYPOTHETICAL("HYP", "hn", "lž");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -356,19 +366,19 @@ enum class Mood(val short: String, val cm: String, val vm: String) : Precision {
     }
 
     companion object {
-        fun byGroup(cm: String) = values().find { it.cm eq cm }
+        fun byCn(cn: String) = values().find { it.cn eq cn }
 
-        fun byVowel(vm: String) = values().find { it.vm eq vm }
+        fun byCy(cy: String) = values().find { it.cy eq cy }
     }
 }
 
-enum class CaseScope(val short: String, val cc: String) : Precision {
-    CCH("CCh", "h/ç"),
-    CCL("CCl", "hl"),
-    CCR("CCr", "hr"),
-    CCW("CCw", "hw"),
-    CCM("CCm", "hm"),
-    CCn("CCn", "hn");
+enum class CaseScope(val short: String, val cn: String, val cy: String) : Precision {
+    CCH("CCh", "h/ç", ""),
+    CCL("CCl", "hl", "x"),
+    CCR("CCr", "hr", "rz"),
+    CCW("CCw", "hw", "rž"),
+    CCM("CCm", "hm", "lz"),
+    CCn("CCn", "hn", "lž");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -377,11 +387,13 @@ enum class CaseScope(val short: String, val cc: String) : Precision {
     }
 
     companion object {
-        fun byGroup(cc: String) = values().find { it.cc eq cc }
+        fun byCn(cn: String) = values().find { it.cn eq cn }
+
+        fun byCy(cy: String) = values().find { it.cy eq cy }
     }
 }
 
-enum class Case(val short: String, val vc: String) : Precision {
+enum class Case(val short: String, val vc: String, val vfShort: String? = null) : Precision {
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
     ABSOLUTIVE("ABS", "e"),
@@ -400,56 +412,56 @@ enum class Case(val short: String, val vc: String) : Precision {
     ORIGINATIVE("OGN", "oi"),
     INTERDEPENDENT("IDP", "iu"),
     PARTITIVE("PAR", "ui"),
-    APPLICATIVE("APL", "ia/öa"),
-    PURPOSIVE("PUR", "ua/aö"),
-    TRANSMISSIVE("TRA", "ie/öe"),
-    DEFERENTIAL("DFR", "ue/eö"),
+    APPLICATIVE("APL", "ia/oä"),
+    PURPOSIVE("PUR", "iä/uä"),
+    TRANSMISSIVE("TRA", "ie/oë"),
+    DEFERENTIAL("DFR", "ië/uë"),
     CONTRASTIVE("CRS", "ëu"),
-    TRANSPOSITIVE("TSP", "uo/iö"),
-    COMMUTATIVE("CMM", "io/uö"),
-    COMPARATIVE("CMP", "uë/iä"),
-    CONSIDERATIVE("CSD", "ië/uä"),
+    TRANSPOSITIVE("TSP", "uö/iö"),
+    COMMUTATIVE("CMM", "uo/io"),
+    COMPARATIVE("CMP", "ue/eö"),
+    CONSIDERATIVE("CSD", "ua/aö"),
     CONCESSIVE("CON", "ao"),
     AVERSIVE("AVS", "ae"),
     CONVERSIVE("CVS", "ea"),
     SITUATIVE("SIT", "eo"),
-    FUNCTIVE("FUN", "oë"),
-    TRANSFORMATIVE("TFM", "oe"),
-    CLASSIFICATIVE("CLA", "oa"),
-    CONSUMPTIVE("CSM", "eä"),
-    RESULTATIVE("RSL", "oä"),
-    LOCATIVE("LOC", "aya"),
-    ATTENDANT("ATD", "awa"),
-    ALLATIVE("ALL", "eya"),
-    ABLATIVE("ABL", "ewa"),
-    ORIENTATIVE("ORI", "iwa"),
-    INTERRELATIVE("IRL", "owa"),
-    INTRATIVE("INV", "oya"),
-    NAVIGATIVE("NAV", "uya"),
-    ASSESSIVE("ASS", "aye"),
-    CONCURSIVE("CNR", "awe"),
-    PERIODIC("PER", "eye"),
-    PROLAPSIVE("PRO", "ewe"),
-    PRECURSIVE("PCV", "iwe"),
-    POSTCURSIVE("PCR", "owe"),
-    ELAPSIVE("ELP", "oye"),
-    PROLIMITIVE("PLM", "uye"),
-    REFERENTIAL("REF", "ayo"),
-    CORRELATIVE("COR", "awo"),
-    COMPOSITIVE("CPS", "eyo"),
-    DEPENDENT("DEP", "ewo"),
-    PREDICATIVE("PRD", "iwo"),
-    ESSIVE("ESS", "owo"),
-    ASSIMILATIVE("ASI", "oyo"),
-    CONFORMATIVE("CFM", "uyo"),
-    ACTIVATIVE("ACT", "ayë"),
-    SELECTIVE("SEL", "awë"),
-    COMITATIVE("COM", "eyë"),
-    UTILITATIVE("UTL", "ewë"),
-    DESCRIPTIVE("DSC", "iwë"),
-    RELATIVE("RLT", "owë"),
-    TERMINATIVE("TRM", "oyë"),
-    VOCATIVE("VOC", "uyë");
+    FUNCTIVE("FUN", "eë", "ai"),
+    TRANSFORMATIVE("TFM", "öe", "au"),
+    CLASSIFICATIVE("CLA", "oe", "ei"),
+    CONSUMPTIVE("CSM", "öa", "ëi"),
+    RESULTATIVE("RSL", "oa", "eu"),
+    LOCATIVE("LOC", "a'a", "i"),
+    ATTENDANT("ATD", "ä'ä"),
+    ALLATIVE("ALL", "e'e"),
+    ABLATIVE("ABL", "ë'ë"),
+    ORIENTATIVE("ORI", "i'i"),
+    INTERRELATIVE("IRL", "ö'ö"),
+    INTRATIVE("INV", "o'o"),
+    NAVIGATIVE("NAV", "u'u"),
+    ASSESSIVE("ASS", "a'i"),
+    CONCURSIVE("CNR", "a'u", "iu"),
+    PERIODIC("PER", "e'i"),
+    PROLAPSIVE("PRO", "e'u"),
+    PRECURSIVE("PCV", "ë'i"),
+    POSTCURSIVE("PCR", "o'u"),
+    ELAPSIVE("ELP", "o'i"),
+    PROLIMITIVE("PLM", "u'i"),
+    REFERENTIAL("REF", "i'a", "a"),
+    CORRELATIVE("COR", "i'ä", "ë"),
+    COMPOSITIVE("CPS", "i'e", "ëu"),
+    DEPENDENT("DEP", "i'ë"),
+    PREDICATIVE("PRD", "ë'u"),
+    ESSIVE("ESS", "u'ö", "e"),
+    ASSIMILATIVE("ASI", "u'o", "ä"),
+    CONFORMATIVE("CFM", "u'a"),
+    ACTIVATIVE("ACT", "a'o", "ui"),
+    SELECTIVE("SEL", "a'e"),
+    COMITATIVE("COM", "e'a", "ö"),
+    UTILITATIVE("UTL", "e'o", "o"),
+    DESCRIPTIVE("DSC", "e'ë", "oi"),
+    RELATIVE("RLT", "ö'e", "u"),
+    TERMINATIVE("TRM", "o'e", "ou"),
+    VOCATIVE("VOC", "o'a");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -458,20 +470,13 @@ enum class Case(val short: String, val vc: String) : Precision {
     }
 
     companion object {
-        fun byVowel(vc: String) = values().find { it.vc eq vc }
+        fun byVowel(vc: String, vfShort: Boolean = false) = values().find { (if (vfShort) it.vfShort ?: "" else it.vc) eq vc }
     }
 }
 
 enum class Illocution(val short: String) : Precision {
-    CONFIRMATIVE("CNF"),
-    INFERENTIAL("INF"),
-    INTUITIVE("ITU"),
-    REVELATORY("REV"),
-    HEARSAY("HSY"),
-    UNSPECIFICED("USP"),
-    DIRECTIVE("DIR"),
-    INTERROGATIVE("IRG"),
-    DECLARATIVE("DEC");
+    ASSERTIVE("ASR"),
+    PERFORMATIVE("PFM");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -480,17 +485,25 @@ enum class Illocution(val short: String) : Precision {
     }
 }
 
-enum class Sanction(val short: String) : Precision {
-    PROPOSITIONAL("PPS"),
-    EPISTEMIC("EPI"),
-    ALLEGATIVE("ALG"),
-    IMPUTATIVE("IPU"),
-    REFUTATIVE("RFU"),
-    REBUTTATIVE("REB"),
-    CONJECTURAL("CJT"),
-    EXPATIATIVE("EXV"),
-    AXIOMATIC("AXM"),
-    NULL("null");
+enum class Expectation(val short: String) : Precision {
+    COGNITIVE("COG"),
+    RESPONSIVE("RSP"),
+    EXECUTIVE("EXE");
+
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
+}
+
+enum class Validation(val short: String) : Precision {
+    OBSERVATIONAL("OBS"),
+    RECOLLECTIVE("REC"),
+    REPORTIVE("RPR"),
+    INFERENTIAL("INF"),
+    INTUITIVE("ITU"),
+    IMAGINARY("IMA");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -557,6 +570,7 @@ enum class Bias(val short: String, val cb: String) : Precision {
     ANTICIPATIVE("ANP", "lst"),
     ARCHETYPAL("ACH", "mçt"),
     VEXATIVE("VEX", "ksk"),
+    CORRUPTIVE("CRP", "gžž"),
     DEJECTIVE("DEJ", "zzg");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
@@ -569,14 +583,14 @@ enum class Bias(val short: String, val cb: String) : Precision {
     }
 }
 
-enum class Register(val short: String, val v: String) : Precision {
-    DISCURSIVE("DSV", "a"),
-    PARENTHETICAL("PNT", "e"),
-    COGITANT("COG", "o"),
-    EXAMPLIFICATIVE("EXM", "ö"),
-    SPECIFICATIVE("SPF", "i"),
-    MATHEMATICAL("MTH", "u"),
-    CARRIER_END("CAR", "ë");
+enum class Register(val short: String, val initial: String, val final: String) : Precision {
+    DISCURSIVE("DSV", "a", "ai"),
+    PARENTHETICAL("PNT", "e", "ei"),
+    COGITANT("CGT", "o", "oi"),
+    EXAMPLIFICATIVE("EXM", "ö", "ëi"),
+    SPECIFICATIVE("SPF", "i", "iu"),
+    MATHEMATICAL("MTH", "u", "ui"),
+    CARRIER_END("CAR", "", "ü");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
@@ -584,7 +598,14 @@ enum class Register(val short: String, val v: String) : Precision {
     }
 
     companion object {
-        fun byVowel(v: String) = values().find { it.v eq v }
+        fun byVowel(v: String): Pair<Register, Boolean>? {
+            val i = values().indexOfFirst { it.initial eq v }
+            return if (i != -1) {
+                values()[i] to true
+            } else {
+                values().find { it.final eq v }?.to(false)
+            }
+        }
     }
 }
 
@@ -609,105 +630,159 @@ enum class Referent(val short: String) : Precision {
     }
 }
 
-fun parseCd(c: String) : List<Precision> {
+fun parseCd(c: String) : Pair<List<Precision>, Boolean> {
     val i = CD_CONSONANTS.indexOf(c.defaultForm())
-    return listOf(Designation.values()[i % 2], Incorporation.values()[i/2 % 2], Version.values()[i / 8])
+    return listOf<Precision>(Designation.values()[(i % 8) % 2], Incorporation.values()[(i % 8)/2 % 2], Version.values()[i%8 / 4]) to (i >= 8)
 }
 
-fun parseVn(v: String): List<Precision>? {
+fun parseValenceContext(v: String): List<Precision>? {
     val i = VOWEL_FORM.indexOfFirst { it eq v }
     if (i == -1)
         return null
     return listOf(Context.values()[i / 9], Valence.values()[i % 9])
 }
 
-fun parseVk(s: String) : List<Precision>? {
-    val i = VOWEL_FORM.indexOfFirst { it eq s }
-    return if (i == -1) {
-        null
-    } else {
-        listOf(Illocution.values()[i % 9], Sanction.values()[i / 9])
-    }
+fun parsePhaseContext(v: String): List<Precision>? {
+    val i = VOWEL_FORM.indexOfFirst { it eq v }
+    if (i == -1)
+        return null
+    return listOf(Context.values()[i / 9], Phase.values()[i % 9])
 }
 
-fun parseSlotEleven(s: String, precision: Int, ignoreDefault: Boolean = false) : String? {
-    val phase = Phase.byVowel(s)
-    if (phase != null) {
-        return phase.toString(precision, ignoreDefault)
-    }
+fun parseLevelContext(v: String): List<Precision>? {
+    val i = VOWEL_FORM.indexOfFirst { it eq v }
+    if (i == -1)
+        return null
+    return listOf(Context.values()[i / 9], Level.values()[i % 9])
+}
+
+fun parseEffectContext(v: String, precision: Int, ignoreDefault: Boolean): String? {
+    val i = VOWEL_FORM.indexOfFirst { it eq v }
+    if (i == -1)
+        return null
     val ben = Effect.BENEFICIAL.toString(precision)
     val det = Effect.DETRIMENTAL.toString(precision)
     val unk = Effect.UNKNOWN.toString(precision)
-    when (s.defaultForm()) {
-        "wai" -> return "1/$ben"
-        "wau" -> return "2/$ben"
-        "wei" -> return "3/$ben"
-        "weu" -> return "a/$ben"
-        "wëi" -> return unk
-        "woi" -> return "a/$det"
-        "wou" -> return "3/$det"
-        "wiu" -> return "2/$det"
-        "wui" -> return "1/$det"
+    return Context.values()[i / 9].toString(precision, ignoreDefault).plusSeparator(sep = "/") + when (i % 9) {
+        0 -> "1/$ben"
+        1 -> "2/$ben"
+        2 -> "3/$ben"
+        3 -> "all/$ben"
+        4 -> unk
+        5 -> "all/$det"
+        6 -> "3/$det"
+        7 -> "2/$det"
+        8 -> "1/$det"
+        else -> throw IllegalStateException()
     }
-    val i = VOWEL_FORM.indexOfFirst { it eq s.substring(1) }
-    if (i != -1 && (i/9 == 2 || i/9 == 3)) {
-        val lev = Level.values()[i % 9].toString(precision)
-        val r = when {
-            i/9 == 2 && precision == 0 -> "r"
-            i/9 == 2 && precision > 0 -> "(relative)"
-            i/9 == 3 && precision == 0 -> "a"
-            else -> "(absolute)"
-        }
-        return "$lev$r"
-    }
-    return Aspect.byT2(s)?.toString(precision)
 }
 
-fun parseVv(s: String) : List<Precision>? = when {
+fun parseVk(s: String) : List<Precision>? = when(s.defaultForm()) {
+    "a" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
+    "e" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.RECOLLECTIVE)
+    "i" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.REPORTIVE)
+    "o" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INFERENTIAL)
+    "u" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INTUITIVE)
+    "ä" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.IMAGINARY)
+    "ai" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
+    "ei" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.RECOLLECTIVE)
+    "ëi" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.REPORTIVE)
+    "oi" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INFERENTIAL)
+    "ui" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INTUITIVE)
+    "ae" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.IMAGINARY)
+    "au" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
+    "eu" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.RECOLLECTIVE)
+    "ëu" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.REPORTIVE)
+    "ou" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INFERENTIAL)
+    "iu" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INTUITIVE)
+    "ao" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.IMAGINARY)
+    "ë" -> listOf(Illocution.PERFORMATIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
+    "ö" -> listOf(Illocution.PERFORMATIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
+    "ü" -> listOf(Illocution.PERFORMATIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
+    else -> null
+}
+
+fun parseVvSimple(s: String) : List<Precision>? = when {
     "a" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED)
-    "ai" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED)
+    "ä" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED)
     "e" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED)
-    "ei" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED)
-    "i/u" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED)
-    "ui/iu" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED)
+    "i" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED)
+    "u" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED)
+    "ü" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED)
     "o" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED)
-    "oi" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED)
+    "ö" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED)
+    else -> null
+}
+
+fun parseVvComplex(s: String) : List<Precision>? = when {
+    "a" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE)
+    "ä" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE)
+    "e" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE)
+    "i" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE)
+    "u" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE)
+    "ü" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE)
+    "o" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE)
+    "ö" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE)
+    "ai" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO)
+    "au" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO)
+    "ei" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO)
+    "eu" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO)
+    "ui" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO)
+    "iu" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO)
+    "oi" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO)
+    "ou" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO)
+    "ia/oä" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE)
+    "iä/uä" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE)
+    "ie/oë" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE)
+    "ië/uë" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE)
+    "ua/aö" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE)
+    "ue/eö" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE)
+    "uo/io" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE)
+    "uö/iö" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE)
+    "ao" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO)
+    "ae" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO)
+    "ea" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO)
+    "eo" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO)
+    "oa" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO)
+    "öa" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO)
+    "oe" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO)
+    "öe" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO)
     else -> null
 }
 
 fun parseVr(s: String): List<Precision>? = when {
     "a" eq s -> listOf(Specification.BASIC, Stem.STEM_ONE, Function.STATIVE)
-    "ai" eq s -> listOf(Specification.BASIC, Stem.STEM_ONE, Function.DYNAMIC)
-    "ä" eq s -> listOf(Specification.BASIC, Stem.STEM_TWO, Function.STATIVE)
-    "au" eq s -> listOf(Specification.BASIC, Stem.STEM_TWO, Function.DYNAMIC)
-    "ia/öa" eq s -> listOf(Specification.BASIC, Stem.STEM_THREE, Function.STATIVE)
-    "ua/aö" eq s -> listOf(Specification.BASIC, Stem.STEM_THREE, Function.DYNAMIC)
+    "ä" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ONE, Function.STATIVE)
+    "e" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ONE, Function.STATIVE)
+    "i" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ONE, Function.STATIVE)
+    "ai" eq s -> listOf(Specification.BASIC, Stem.STEM_TWO, Function.STATIVE)
+    "au" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_TWO, Function.STATIVE)
+    "ei" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_TWO, Function.STATIVE)
+    "eu" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_TWO, Function.STATIVE)
+    "ia/oä" eq s -> listOf(Specification.BASIC, Stem.STEM_THREE, Function.STATIVE)
+    "iä/uä" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_THREE, Function.STATIVE)
+    "ie/oë" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_THREE, Function.STATIVE)
+    "ië/uë" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_THREE, Function.STATIVE)
     "ao" eq s -> listOf(Specification.BASIC, Stem.STEM_ZERO, Function.STATIVE)
-    "ae" eq s -> listOf(Specification.BASIC, Stem.STEM_ZERO, Function.DYNAMIC)
-    "e" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ONE, Function.STATIVE)
-    "ei" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ONE, Function.DYNAMIC)
-    "ü" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_TWO, Function.STATIVE)
-    "eu" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_TWO, Function.DYNAMIC)
-    "ie/öe" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_THREE, Function.STATIVE)
+    "ae" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ZERO, Function.STATIVE)
+    "ea" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ZERO, Function.STATIVE)
+    "eo" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ZERO, Function.STATIVE)
+    "u" eq s -> listOf(Specification.BASIC, Stem.STEM_ONE, Function.DYNAMIC)
+    "ü" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ONE, Function.DYNAMIC)
+    "o" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ONE, Function.DYNAMIC)
+    "ö" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ONE, Function.DYNAMIC)
+    "ui" eq s -> listOf(Specification.BASIC, Stem.STEM_TWO, Function.DYNAMIC)
+    "iu" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_TWO, Function.DYNAMIC)
+    "oi" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_TWO, Function.DYNAMIC)
+    "ou" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_TWO, Function.DYNAMIC)
+    "ua/aö" eq s -> listOf(Specification.BASIC, Stem.STEM_THREE, Function.DYNAMIC)
     "ue/eö" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_THREE, Function.DYNAMIC)
-    "ea" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ZERO, Function.STATIVE)
-    "eo" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ZERO, Function.DYNAMIC)
-    "o" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ONE, Function.STATIVE)
-    "oi" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ONE, Function.DYNAMIC)
-    "ö" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_TWO, Function.STATIVE)
-    "ou" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_TWO, Function.DYNAMIC)
-    "io/uö" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_THREE, Function.STATIVE)
-    "uo/iö" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_THREE, Function.DYNAMIC)
-    "oa" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ZERO, Function.STATIVE)
+    "uo/io" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_THREE, Function.DYNAMIC)
+    "uö/iö" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_THREE, Function.DYNAMIC)
+    "oa" eq s -> listOf(Specification.BASIC, Stem.STEM_ZERO, Function.DYNAMIC)
+    "öa" eq s -> listOf(Specification.CONTENTIAL, Stem.STEM_ZERO, Function.DYNAMIC)
     "oe" eq s -> listOf(Specification.CONSTITUTIVE, Stem.STEM_ZERO, Function.DYNAMIC)
-    "u" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ONE, Function.STATIVE)
-    "ui" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ONE, Function.DYNAMIC)
-    "i" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_TWO, Function.STATIVE)
-    "iu" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_TWO, Function.DYNAMIC)
-    "ië/oë" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_THREE, Function.STATIVE)
-    "uë/eë" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_THREE, Function.DYNAMIC)
-    "ëi" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ZERO, Function.STATIVE)
-    "ëu" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ZERO, Function.DYNAMIC)
+    "öe" eq s -> listOf(Specification.OBJECTIVE, Stem.STEM_ZERO, Function.DYNAMIC)
     else -> null
 }
 
@@ -755,101 +830,116 @@ fun parsePersonalReference(s: String): List<Precision>? = when (s.defaultForm())
     else -> null
 }
 
+fun String.isGlottalCa(): Boolean {
+    if (startsWith("'")) {
+        return true
+    } else if (length >= 3) {
+        val pre = take(2)
+        if (pre[0] == pre[1]) {
+            if (pre[0] == 'r' ||
+                    pre[0] == 'l' ||
+                    pre[0].toString() in NASALS ||
+                    pre[0].toString() in FRICATIVES ||
+                    pre[0].toString() in AFFRICATES) {
+                return true
+            } else if (pre[0].toString() in STOPS && this[2].toString() in listOf("l", "r", "ř", "w", "y")) {
+                return true
+            }
+        }
+    }
+    return false
+}
+
 fun parseCa(s: String) : List<Precision>? {
     val elements = arrayListOf<Precision>()
     var original = s.defaultForm()
-    if (original.isEmpty() || original.startsWith("h"))
+    if (original.isEmpty())
         return null
     when (original) {
-        "l" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.MONADIC, Essence.NORMAL)
-        "d" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.POLYADIC, Essence.NORMAL)
-        "lţ" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.POLYADIC, Essence.REPRESENTATIVE)
-        "rţ" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.NOMIC, Essence.REPRESENTATIVE)
-        "lz" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.ABSTRACT, Essence.NORMAL)
-        "lž" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.ABSTRACT, Essence.REPRESENTATIVE)
-        "ļt" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.PROXIMAL, Perspective.MONADIC, Essence.NORMAL)
-        "ļk" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.INCIPIENT, Perspective.MONADIC, Essence.NORMAL)
-        "ļp" -> return listOf(Uniplex.SPECIFIC, Affiliation.CONSOLIDATIVE, Extension.ATTENUATIVE, Perspective.MONADIC, Essence.NORMAL)
-        "ls" -> return listOf(Similarity.MULTIPLEX_FUZZY, Connectedness.SEPARATE, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.MONADIC, Essence.NORMAL)
-        "lš" -> return listOf(Similarity.MULTIPLEX_FUZZY, Connectedness.CONNECTED, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.MONADIC, Essence.NORMAL)
-        "lf" -> return listOf(Similarity.MULTIPLEX_FUZZY, Connectedness.FUSED, Affiliation.CONSOLIDATIVE, Extension.DELIMITIVE, Perspective.MONADIC, Essence.NORMAL)
+        "l" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "ř" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.REPRESENTATIVE)
+        "r" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.NORMAL)
+        "tļ" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.REPRESENTATIVE)
+        "v" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.NORMAL)
+        "lm" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.REPRESENTATIVE)
+        "ẓ" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.NORMAL)
+        "ln" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.REPRESENTATIVE)
+        "d" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.ASSOCIATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "g" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.COALESCENT, Perspective.MONADIC, Essence.NORMAL)
+        "b" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.VARIATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "lţ" -> return listOf(Uniplex.POTENTIAL, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
     }
-    original = original.replace("nn", "ňy")
-        .replace("cc", "cy")
-        .replace("čč", "čy")
-        .replace("nž", "ňg")
-        .replace("mv", "nb")
-        .replace("nz", "ňk")
-        .replace("mz", "np")
-        .replace("mž", "nf")
-        .replace("rš(?=.)".toRegex(), "šf")
-        .replace("rs(?=.)".toRegex(), "sf")
-        .replace("j", "šs")
-        .replace("ẓ", "sš")
-        .replace("v", "tf")
+    original = original.replace("mz", "mm")
+        .replace("nd", "nn")
+        .replace("lf", "pp")
+        .replace("lš", "kk")
+        .replace("ls", "tt")
+        .replace("j", "čy")
+        .replace("nž", "çy")
+        .replace("nz", "ňy")
+        .replace("v(?=.)".toRegex(), "nf")
+        .replace("fš(?=.)".toRegex(), "kf")
+        .replace("fs(?=.)".toRegex(), "tf")
+        .replace("ng", "ňk")
+        .replace("mb", "np")
+        .replace("ḑ", "tţ")
         .replace("č", "tš")
         .replace("c", "ts")
-        .replace("bb|pţ".toRegex(), "pb")
-        .replace("gg|kţ".toRegex(), "kg")
-        .replace("ḑ", "ţf")
+        .replace("rç", "ţç")
+        .replace("rs", "ţţ")
+        .replace("rţ", "ţf")
         .replace("ž", "ţš")
         .replace("z", "ţs")
     val a = when {
-        original.endsWith("ř") -> {
+        original.endsWith("ļ") -> {
             elements.add(Perspective.MONADIC)
             elements.add(Essence.REPRESENTATIVE)
             1
         }
-        original.endsWith("ll") || original.endsWith("hw") -> {
-            if (original.length == 2) // All such checks are present to ensure that the standalone forms are properly used
+        original.endsWith("r") || original.endsWith("v") -> {
+            if (original.endsWith("v") && !(original.startsWith("ř") || original.getOrNull(original.length - 2) in listOf('b', 'd', 'g')))
                 return null
             elements.add(Perspective.POLYADIC)
-            elements.add(Essence.REPRESENTATIVE)
-            2
-        }
-        original.endsWith("ļ") -> {
-            if (original.length == 1)
-                return null
-            elements.add(Perspective.POLYADIC)
-            elements.add(Essence.REPRESENTATIVE)
+            elements.add(Essence.NORMAL)
             1
         }
         original.endsWith("l") -> {
             if (original.length == 1)
                 return null
             elements.add(Perspective.POLYADIC)
-            elements.add(Essence.NORMAL)
-            1
-        }
-        original.endsWith("h") || original.endsWith("v") -> {
-            if (original.length == 1)
-                return null
-            elements.add(Perspective.NOMIC)
             elements.add(Essence.REPRESENTATIVE)
-            1
-        }
-        original.endsWith("rr") -> {
-            if (original.length == 2)
-                return null
-            elements.add(Perspective.NOMIC)
-            elements.add(Essence.REPRESENTATIVE)
-            2
-        }
-        original.endsWith("r") -> {
-            elements.add(Perspective.NOMIC)
-            elements.add(Essence.NORMAL)
             1
         }
         original.endsWith("w") -> {
+            elements.add(Perspective.NOMIC)
+            elements.add(Essence.NORMAL)
+            1
+        }
+        original.endsWith("m") || original.endsWith("h") -> {
+            if (original.endsWith("h") &&
+                    (original.length < 3
+                            || original[original.lastIndex - 1].toString() !in STOPS
+                            || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
+                return null
+            }
+            elements.add(Perspective.NOMIC)
+            elements.add(Essence.REPRESENTATIVE)
+            1
+        }
+        original.endsWith("y") -> {
             if (original.length == 1)
                 return null
             elements.add(Perspective.ABSTRACT)
             elements.add(Essence.NORMAL)
             1
         }
-        original.endsWith("y") -> {
-            if (original.length == 1)
+        original.endsWith("n") || original.endsWith("ç") -> {
+            if (original.endsWith("ç") &&
+                    (original.length < 3
+                            || original[original.lastIndex - 1].toString() !in STOPS
+                            || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
                 return null
+            }
             elements.add(Perspective.ABSTRACT)
             elements.add(Essence.REPRESENTATIVE)
             1
@@ -862,73 +952,53 @@ fun parseCa(s: String) : List<Precision>? {
     }
     original = original.dropLast(a)
     when (original) {
-        "ļt" -> {
-            elements.add(0, Extension.PROXIMAL)
+        "d" -> {
+            elements.add(0, Affiliation.ASSOCIATIVE)
             return elements
         }
-        "ļk" -> {
-            elements.add(0, Extension.INCIPIENT)
+        "g" -> {
+            elements.add(0, Affiliation.COALESCENT)
             return elements
         }
-        "ļp" -> {
-            elements.add(0, Extension.ATTENUATIVE)
+        "b" -> {
+            elements.add(0, Affiliation.VARIATIVE)
             return elements
         }
     }
     val b = when (original.lastOrNull()) { // Dirty hack exploiting the fact that in Kotlin, 'void' functions return a singleton object called Unit
-        't' -> if (original.length == 1) {
-            elements.add(0, Extension.DELIMITIVE)
+        't' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
             null
         } else {
-            elements.add(0, Extension.PROXIMAL)
+            elements.add(0, Affiliation.ASSOCIATIVE)
         }
-        'k' -> if (original.length == 1) {
-            elements.add(0, Extension.DELIMITIVE)
+        'k' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
             null
         } else {
-            elements.add(0, Extension.INCIPIENT)
+            elements.add(0, Affiliation.COALESCENT)
         }
-        'p' -> if (original.length == 1) {
-            elements.add(0, Extension.DELIMITIVE)
+        'p' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
             null
         } else {
-            elements.add(0, Extension.ATTENUATIVE)
+            elements.add(0, Affiliation.VARIATIVE)
         }
-        'g' -> elements.add(0, Extension.GRADUATIVE)
-        'b' -> elements.add(0, Extension.DEPLETIVE)
         else -> {
-            elements.add(0, Extension.DELIMITIVE)
+            elements.add(0, Affiliation.CONSOLIDATIVE)
             null
         }
     }
     if (b == Unit)
         original = original.dropLast(1)
-    when (original) {
-        "ls" -> {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.MULTIPLEX_FUZZY)
-            return elements
-        }
-        "lš" -> {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.MULTIPLEX_FUZZY)
-            return elements
-        }
-        "lf" -> {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.MULTIPLEX_FUZZY)
-            return elements
-        }
-    }
     val c = when (original.lastOrNull()) {
-        's' -> elements.add(0, Affiliation.ASSOCIATIVE)
-        'f' -> elements.add(0, Affiliation.VARIATIVE)
-        'š' -> elements.add(0, Affiliation.COALESCENT)
+        's' -> elements.add(0, Extension.PROXIMAL)
+        'š' -> elements.add(0, Extension.INCIPIENT)
+        'f' -> elements.add(0, Extension.ATTENUATIVE)
+        'ţ' -> elements.add(0, Extension.GRADUATIVE)
+        'ç' -> elements.add(0, Extension.DEPLETIVE)
         else -> {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
+            elements.add(0, Extension.DELIMITIVE)
             null
         }
     }
@@ -936,27 +1006,27 @@ fun parseCa(s: String) : List<Precision>? {
         original = original.dropLast(1)
     when (original) {
         "ţ" -> elements.add(0, Uniplex.POTENTIAL)
-        "lt" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.DUPLEX_SIMILAR)
-        }
-        "lk" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.DUPLEX_SIMILAR)
-        }
-        "lp" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.DUPLEX_SIMILAR)
-        }
         "rt" -> {
             elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+            elements.add(0, Similarity.DUPLEX_SIMILAR)
         }
         "rk" -> {
             elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+            elements.add(0, Similarity.DUPLEX_SIMILAR)
         }
         "rp" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.DUPLEX_SIMILAR)
+        }
+        "rn" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+        }
+        "rň" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+        }
+        "rm" -> {
             elements.add(0, Connectedness.FUSED)
             elements.add(0, Similarity.DUPLEX_DISSIMILAR)
         }
@@ -996,21 +1066,15 @@ fun parseCa(s: String) : List<Precision>? {
             elements.add(0, Connectedness.FUSED)
             elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
         }
-        "s" -> {
-            if (Affiliation.CONSOLIDATIVE in elements)
-                return null
+        "lt" -> {
             elements.add(0, Connectedness.SEPARATE)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
-        "š" -> {
-            if (Affiliation.CONSOLIDATIVE in elements)
-                return null
+        "lk" -> {
             elements.add(0, Connectedness.CONNECTED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
-        "f" -> {
-            if (Affiliation.CONSOLIDATIVE in elements)
-                return null
+        "lp" -> {
             elements.add(0, Connectedness.FUSED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
