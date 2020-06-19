@@ -166,7 +166,7 @@ class MessageListener : ListenerAdapter() {
                 val sentences = content.split("\\s*\\.\\s*".toRegex())
                         .mapIndexed { i, s ->
                             if (i == 0) {
-                                s.drop(first.length)
+                                s.drop(first.length + 1)
                             } else {
                                 s
                             }

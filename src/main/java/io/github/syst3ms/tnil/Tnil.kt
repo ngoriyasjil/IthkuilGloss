@@ -4,7 +4,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseSentence("sa'imkadna amérika", 1, false))
+    println(parseSentence("alļalê lı ërle saı'lëçno'a fřans", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -139,7 +139,9 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean, stress: Int? = 
     // Easily-identifiable adjuncts
     if (groups.isEmpty())
         return error("Empty word")
-    return if ((groups[0] == "ç" || groups[0] == "hr") && (groups.size == 2 || groups.size == 4 && groups[2] == "'")) { // Carrier & concatenative adjuncts
+    return if (groups.size == 1 && groups[0].isConsonant()) { // Bias adjunct
+        Bias.byGroup(groups[0])?.toString(precision) ?: return error("Unknown bias : ${groups[0]}")
+    } else if ((groups[0] == "ç" || groups[0] == "hr") && (groups.size == 2 || groups.size == 4 && groups[2] == "'")) { // Carrier & concatenative adjuncts
         val v = if (groups.size == 2) groups[1] else groups[1] + "'" + groups[3]
         (Case.byVowel(v)?.toString(precision) ?: return error("Unknown case value : $v")) + when {
             alone -> ""

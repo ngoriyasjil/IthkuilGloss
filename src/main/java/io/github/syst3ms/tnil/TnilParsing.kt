@@ -108,21 +108,16 @@ fun String.splitGroups(): Array<String> {
     return groups.toTypedArray()
 }
 
-fun scopeToString(letter: String, ignoreDefault: Boolean): String? {
-    if (letter == "a" && ignoreDefault) {
-        return ""
-    }
-    return "{" +
-            when (letter) {
-                "a" -> "{StmDom}"
-                "u" -> "{StmSub}"
-                "e" -> "{CaDom}"
-                "i" -> "{CaSub}"
-                "o" -> "{Form}"
-                "ö" -> "{All}"
-                else -> return null
-            } +
-            "}"
+fun scopeToString(letter: String, ignoreDefault: Boolean) = if (letter == "a" && ignoreDefault) {
+    ""
+} else when (letter) {
+    "a" -> "{StmDom}"
+    "u" -> "{StmSub}"
+    "e" -> "{CaDom}"
+    "i" -> "{CaSub}"
+    "o" -> "{Form}"
+    "ö" -> "{All}"
+    else -> null
 }
 
 fun parseFullReferent(s: String, precision: Int): String? {
