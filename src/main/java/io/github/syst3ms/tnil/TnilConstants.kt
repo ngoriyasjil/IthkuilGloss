@@ -275,12 +275,13 @@ enum class Phase(val short: String, val vp: String) : Precision {
 }
 
 enum class Effect(val short: String) : Precision {
-    BENEFICIAL("BEN"),
-    DETRIMENTAL("DET"),
     NEUTRAL("NEU"),
-    UNKNOWN("UNK");
+    BENEFICIAL("BEN"),
+    UNKNOWN("UNK"),
+    DETRIMENTAL("DET");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
@@ -421,15 +422,15 @@ enum class Case(val short: String, val vc: String, val vfShort: String? = null) 
     COMMUTATIVE("CMM", "uo/io"),
     COMPARATIVE("CMP", "ue/eö"),
     CONSIDERATIVE("CSD", "ua/aö"),
-    CONCESSIVE("CON", "ao"),
-    AVERSIVE("AVS", "ae"),
-    CONVERSIVE("CVS", "ea"),
-    SITUATIVE("SIT", "eo"),
-    FUNCTIVE("FUN", "eë", "ai"),
-    TRANSFORMATIVE("TFM", "öe", "au"),
-    CLASSIFICATIVE("CLA", "oe", "ei"),
-    CONSUMPTIVE("CSM", "öa", "ëi"),
-    RESULTATIVE("RSL", "oa", "eu"),
+    FUNCTIVE("FUN", "ao", "ai"),
+    TRANSFORMATIVE("TFM", "ae", "au"),
+    CLASSIFICATIVE("CLA", "ea", "ei"),
+    RESULTATIVE("RSL", "eo", "eu"),
+    CONSUMPTIVE("CSM", "eë", "ëi"),
+    CONCESSIVE("CON", "öe"),
+    AVERSIVE("AVS", "oe"),
+    CONVERSIVE("CVS", "öa"),
+    SITUATIVE("SIT", "oa"),
     LOCATIVE("LOC", "a'a", "i"),
     ATTENDANT("ATD", "ä'ä"),
     ALLATIVE("ALL", "e'e"),
@@ -438,8 +439,8 @@ enum class Case(val short: String, val vc: String, val vfShort: String? = null) 
     INTERRELATIVE("IRL", "ö'ö"),
     INTRATIVE("INV", "o'o"),
     NAVIGATIVE("NAV", "u'u"),
-    ASSESSIVE("ASS", "a'i"),
-    CONCURSIVE("CNR", "a'u", "iu"),
+    CONCURSIVE("CNR", "a'i", "iu"),
+    ASSESSIVE("ASS", "a'u"),
     PERIODIC("PER", "e'i"),
     PROLAPSIVE("PRO", "e'u"),
     PRECURSIVE("PCV", "ë'i"),
@@ -447,20 +448,20 @@ enum class Case(val short: String, val vc: String, val vfShort: String? = null) 
     ELAPSIVE("ELP", "o'i"),
     PROLIMITIVE("PLM", "u'i"),
     REFERENTIAL("REF", "i'a", "a"),
-    CORRELATIVE("COR", "i'ä", "ë"),
-    COMPOSITIVE("CPS", "i'e", "ëu"),
-    DEPENDENT("DEP", "i'ë"),
-    PREDICATIVE("PRD", "ë'u"),
-    ESSIVE("ESS", "u'ö", "e"),
-    ASSIMILATIVE("ASI", "u'o", "ä"),
-    CONFORMATIVE("CFM", "u'a"),
+    ASSIMILATIVE("ASI", "i'ä", "ä"),
+    ESSIVE("ESS", "i'e", "e"),
+    CORRELATIVE("COR", "i'ë", "ë"),
+    COMPOSITIVE("CPS", "ë'u", "ëu"),
+    COMITATIVE("COM", "u'ö", "ö"),
+    UTILITATIVE("UTL", "u'o", "o"),
+    RELATIVE("RLT", "u'a", "u"),
     ACTIVATIVE("ACT", "a'o", "ui"),
-    SELECTIVE("SEL", "a'e"),
-    COMITATIVE("COM", "e'a", "ö"),
-    UTILITATIVE("UTL", "e'o", "o"),
-    DESCRIPTIVE("DSC", "e'ë", "oi"),
-    RELATIVE("RLT", "ö'e", "u"),
-    TERMINATIVE("TRM", "o'e", "ou"),
+    DESCRIPTIVE("DSC", "a'e", "oi"),
+    TERMINATIVE("TRM", "e'a", "ou"),
+    SELECTIVE("SEL", "e'o"),
+    CONFORMATIVE("CFM", "e'ë"),
+    DEPENDENT("DEP", "ö'e"),
+    PREDICATIVE("PRD", "o'e"),
     VOCATIVE("VOC", "o'a");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
@@ -787,7 +788,7 @@ fun parseVr(s: String): List<Precision>? = when {
 }
 
 
-fun parsePersonalReference(s: String): List<Precision>? = when (s.defaultForm()) {
+fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? = when (val r = s.defaultForm()) {
     "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)
     "r" -> listOf(Referent.MONADIC_SPEAKER, Effect.BENEFICIAL)
     "ř" -> listOf(Referent.MONADIC_SPEAKER, Effect.DETRIMENTAL)
@@ -818,12 +819,12 @@ fun parsePersonalReference(s: String): List<Precision>? = when (s.defaultForm())
     "tç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.NEUTRAL)
     "pç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.BENEFICIAL)
     "kç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
-    "nç" -> listOf(Referent.INANIMATE_IMPERSONAL, Effect.NEUTRAL)
-    "mç" -> listOf(Referent.INANIMATE_IMPERSONAL, Effect.BENEFICIAL)
+    "çn", "nç" -> if (final || r == "çn") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.NEUTRAL) else null
+    "çm", "mç" -> if (final || r == "çm") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.BENEFICIAL) else null
     "ňç" -> listOf(Referent.INANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
-    "lç" -> listOf(Referent.NOMIC_REFERENT, Effect.NEUTRAL)
-    "rç" -> listOf(Referent.NOMIC_REFERENT, Effect.BENEFICIAL)
-    "řç" -> listOf(Referent.NOMIC_REFERENT, Effect.DETRIMENTAL)
+    "çl", "lç" -> if (final || r == "çl") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.NEUTRAL) else null
+    "çr", "rç" -> if (final || r == "çr") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.BENEFICIAL) else null
+    "çř", "řç" -> if (final || r == "çř") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.DETRIMENTAL) else null
     "rr" -> listOf(Referent.ABSTRACT_REFERENT, Effect.NEUTRAL)
     "č" -> listOf(Referent.ABSTRACT_REFERENT, Effect.BENEFICIAL)
     "j" -> listOf(Referent.ABSTRACT_REFERENT, Effect.DETRIMENTAL)

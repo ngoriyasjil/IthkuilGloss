@@ -2,7 +2,6 @@ package io.github.syst3ms.tnil
 
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import java.io.File
-import java.lang.IllegalArgumentException
 import kotlin.streams.toList
 
 val affixData: List<AffixData> by lazy {
@@ -90,19 +89,18 @@ fun String.splitGroups(): Array<String> {
         .map(Char::toString)
         .toList()
     while (chars.isNotEmpty()) {
-        var group: String? = null
-        if (chars[0].isVowel()) {
-            for (i in 2.coerceAtMost(chars.size) downTo 1) {
-                val potentialVowel = chars.subList(0, i).joinToString("")
-                if (potentialVowel.isVowel()) {
-                    group = potentialVowel
-                    break
-                }
+        val group = if (chars[0].isVowel()) {
+            if (chars.getOrNull(1)?.isVowel() == true) {
+                chars[0] + chars[1]
+            } else {
+                chars[0]
             }
+        } else if (!chars[0].isConsonant()) {
+            throw IllegalArgumentException("Non-Ithkuil character : ${chars[0]}")
         } else {
-            group = chars.takeWhile(String::isConsonant).joinToString("")
+            chars.takeWhile(String::isConsonant).joinToString("")
         }
-        chars = chars.subList(group!!.length, chars.size)
+        chars = chars.subList(group.length, chars.size)
         groups += group
     }
     return groups.toTypedArray()
@@ -120,39 +118,39 @@ fun scopeToString(letter: String, ignoreDefault: Boolean) = if (letter == "a" &&
     else -> null
 }
 
-fun parseFullReferent(s: String, precision: Int): String? {
+fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: Boolean = false): String? {
     val singleRef = parsePersonalReference(s)
     if (singleRef != null) {
-        return singleRef.toString(precision)
+        return singleRef.toString(precision, ignoreDefault)
     }
-    val singleJoined = s.toCharArray().map { parsePersonalReference(it.toString()) }
+    val singleJoined = s.toCharArray().map { parsePersonalReference(it.toString(), final) }
     if (singleJoined.none { it == null }) {
         return singleJoined.requireNoNulls()
             .sortedBy { (it[0] as Enum<*>).ordinal }
-            .joinToString("+", "[", "]") { it.toString(precision) }
+            .joinToString("+", "[", "]") { it.toString(precision, ignoreDefault) }
     } else if (s.length == 3) {
         if (s.endsWith("ç") || s.endsWith("h") || s.endsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s[0].toString()) to parsePersonalReference(s.substring(1, 3))
+            val (ref1, ref2) = parsePersonalReference(s[0].toString(), final) to parsePersonalReference(s.substring(1, 3), final)
             return if (ref1 != null && ref2 != null) {
-                "[" + ref1.toString(precision) + "/" + ref2.toString(precision) + "]"
+                "[" + ref1.toString(precision, ignoreDefault) + "/" + ref2.toString(precision, ignoreDefault) + "]"
             } else {
                 null
             }
         } else if (s[1] == 'ç' || s[1] == 'h' || s.startsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s.substring(0, 2)) to parsePersonalReference(s[2].toString())
+            val (ref1, ref2) = parsePersonalReference(s.substring(0, 2), final) to parsePersonalReference(s[2].toString(), final)
             return if (ref1 != null && ref2 != null) {
-                "[" + ref1.toString(precision) + "/" + ref2.toString(precision) + "]"
+                "[" + ref1.toString(precision, ignoreDefault) + "/" + ref2.toString(precision, ignoreDefault) + "]"
             } else {
                 null
             }
         }
     } else if (s.length == 4) {
         val halves = s.chunked(2)
-            .map(::parsePersonalReference)
+            .map { r -> parsePersonalReference(r, final) }
         return if (halves.none { it == null }) {
             halves.requireNoNulls()
                 .sortedBy { (it[0] as Enum<*>).ordinal }
-                .joinToString("+", "[", "]") { it.toString(precision) }
+                .joinToString("+", "[", "]") { it.toString(precision, ignoreDefault) }
         } else {
             null
         }
@@ -191,7 +189,7 @@ fun loadAffixes(): List<AffixData> {
 
 fun parseAffix(c: String, v: String, precision: Int): String {
     val vi = affixVowel.indexOfFirst { it eq v }
-    if (vi == -1) {
+    if (vi == -1 && !(v eq "eä" || v eq "öä")) {
         return "@$v"
     }
     val deg = vi % 10
@@ -224,7 +222,7 @@ fun parseAffix(c: String, v: String, precision: Int): String {
         val ca = parseCa(c) ?: return "^$c"
         return "(" + (if (v eq "öä") {
             if (precision > 0) "delineation-" else "d-"
-        } else "") + "$ca)"
+        } else "") + "${ca.toString(precision)})"
     }
     // Special cases
     return if (aff != null) {

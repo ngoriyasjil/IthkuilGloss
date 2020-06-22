@@ -4,7 +4,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseSentence("alļalê lı ërle saı'lëçno'a fřans", 1, true))
+    println(parseWord("eäẓo", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -677,7 +677,7 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, forc
         groups[0]
     }
     i++
-    val ref = parseFullReferent(refA, precision) ?: return error("Unknown referent : $refA")
+    val ref = parseFullReferent(refA, precision, ignoreDefault) ?: return error("Unknown referent : $refA")
     result += ref.plusSeparator(sep = "/")
     val v1 = if (i+2 < groups.size && groups[i+1] == "'") {
         i += 2
@@ -687,9 +687,9 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, forc
     }
     i++
     result += if (stress == 0) {
-        parseVk(v1)?.toString(precision, ignoreDefault) ?: return error("Unknown illocution/expectation/validation : $v1")
+        parseVk(v1)?.toString(precision) ?: return error("Unknown illocution/expectation/validation : $v1")
     } else {
-        Case.byVowel(v1)?.toString(precision, ignoreDefault) ?: return error("Unknown case vowel : $v1")
+        Case.byVowel(v1)?.toString(precision) ?: return error("Unknown case vowel : $v1")
     }
     if (i+1 < groups.size) {
         assert(groups[i] == "w" || groups[i] == "y")
@@ -700,11 +700,11 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, forc
             groups[i+1]
         }
         i += 2
-        val case = Case.byVowel(v2)?.toString(precision, ignoreDefault) ?: return error("Unknown case vowel : $v2")
+        val case = Case.byVowel(v2)?.toString(precision) ?: return error("Unknown case vowel : $v2")
         if (i < groups.size) {
             if (!(i+1 == groups.size || groups[i+1] == "ë" && i+2 == groups.size))
                 return error("PRA ended unexpectedly : ${groups.joinToString("")}")
-            result += (parseFullReferent(groups[i], precision) ?: return error("Unknown referent : ${groups[i]}")).plusSeparator(start = true)
+            result += (parseFullReferent(groups[i], precision, ignoreDefault, final = true) ?: return error("Unknown referent : ${groups[i]}")).plusSeparator(start = true)
             result += case.plusSeparator(start = true, sep = "/")
         } else {
             result += case.plusSeparator(start = true, sep = "/")
@@ -725,7 +725,7 @@ fun parseCombinationPRA(groups: Array<String>, precision: Int, ignoreDefault: Bo
         result += (parseVvSimple(groups[0])?.toString(precision, ignoreDefault) ?: return error("Unknown Vv value : ${groups[0]}")).plusSeparator()
         i++
     }
-    result += (parseFullReferent(groups[i], precision) ?: return error("Unknown referent : ${groups[i]}")) + "/"
+    result += (parseFullReferent(groups[i], precision, ignoreDefault) ?: return error("Unknown referent : ${groups[i]}")) + "/"
     result += (Case.byVowel(groups[i+1])?.toString(precision) ?: return error("Unknown case value : ${groups[i+1]}")) + "-"
     val specIndex = combinationPRASpecification.indexOf(groups[i+2]) // Cannot be -1 because of preemptive check
     result += Specification.values()[specIndex].toString(precision, ignoreDefault)
