@@ -807,7 +807,7 @@ fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? 
     "z" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
     "ţ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
     "ḑ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "ļ" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
+    "tļ" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
     "f" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
     "v" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
     "x" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.NEUTRAL)
@@ -821,7 +821,11 @@ fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? 
     "kç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
     "çn", "nç" -> if (final || r == "çn") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.NEUTRAL) else null
     "çm", "mç" -> if (final || r == "çm") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.BENEFICIAL) else null
+<<<<<<< HEAD
+    "çň", "ňç" -> if (final || r == "çň") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.DETRIMENTAL) else null
+=======
     "ňç" -> listOf(Referent.INANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
+>>>>>>> e2a026b92361fdf71ce2482558e91db4e3b659cf
     "çl", "lç" -> if (final || r == "çl") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.NEUTRAL) else null
     "çr", "rç" -> if (final || r == "çr") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.BENEFICIAL) else null
     "çř", "řç" -> if (final || r == "çř") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.DETRIMENTAL) else null
@@ -887,8 +891,8 @@ fun parseCa(s: String) : List<Precision>? {
         .replace("č", "tš")
         .replace("c", "ts")
         .replace("rç", "ţç")
-        .replace("rs", "ţţ")
-        .replace("rţ", "ţf")
+        .replace("rţ", "ţţ")
+        .replace("rf", "ţf")
         .replace("ž", "ţš")
         .replace("z", "ţs")
     val a = when {

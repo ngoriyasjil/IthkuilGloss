@@ -1,3 +1,5 @@
+@file:Suppress("IMPLICIT_CAST_TO_ANY")
+
 package io.github.syst3ms.tnil
 
 import java.io.PrintWriter
@@ -163,9 +165,9 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean, stress: Int? = 
             groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && groups[4] matches "[wy]".toRegex())) { // PRA
         parsePRA(groups, precision, ignoreDefault, stress)
     } else if (groups.size >= 4 && groups[0].isVowel() && groups[3] in combinationPRASpecification ||
-            groups.size >= 3 && groups[2] in combinationPRASpecification ||
+            groups.size >= 3 && groups[0] !in CD_CONSONANTS && groups[2] in combinationPRASpecification ||
             groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in combinationPRASpecification ||
-            groups.size >= 5 && groups[2] == "'" && groups[4] in combinationPRASpecification) { // Combination PRA
+            groups.size >= 5 && groups[0] !in CD_CONSONANTS && groups[2] == "'" && groups[4] in combinationPRASpecification) { // Combination PRA
         parseCombinationPRA(groups, precision, ignoreDefault, stress)
     } else if (groups.size >= 2 && groups[0].isVowel() && groups[1].startsWith("'")) { // Affixual scoping adjunct
         parseAffixualScoping(groups, precision, ignoreDefault, stress)
@@ -200,20 +202,24 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         var rootFlag = 0
         val (cd, shortVf) = parseCd(groups[0])
         if (cd[0] == Designation.FORMAL)
-            rootFlag = 1
+            rootFlag = 4
+        val vv = parseVvComplex(groups[3])
+        if (vv != null) {
+            rootFlag = rootFlag or ((vv[3] as Enum<*>).ordinal + 1) % 4
+        }
         val vf = Case.byVowel(groups[1], shortVf) ?: return error("Unknown case value : ${groups[1]}")
-        val ci = parseRoot(groups[2], precision, formal = rootFlag == 1)
+        var stem = rootFlag and 3
+        val ci = parseRoot(groups[2], precision, stem, rootFlag and 4 == 4)
         firstSegment += cd.toString(precision, ignoreDefault, designationUsed = ci.third).plusSeparator()
         firstSegment += vf.toString(precision, false).plusSeparator()
         firstSegment += ci.first.plusSeparator()  // Not gonna bother with the special case of referent roots here
-        val vv = parseVvComplex(groups[3])
         if (vv?.get(0) == Designation.FORMAL)
             rootFlag = 4
         val vr = parseVr(groups[5])
         if (vr != null) {
             rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 4
         }
-        val stem = rootFlag and 3
+        stem = rootFlag and 3
         val cr = parseRoot(groups[4], precision, stem, rootFlag and 4 == 4)
         firstSegment += (vv?.toString(precision, ignoreDefault, designationUsed = cr.third) ?: return error("Unknown Vv value : ${groups[3]}")).plusSeparator()
         firstSegment += if (precision > 0 && stem != 0 && groups[4] == "n") {
@@ -373,9 +379,9 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         } else if (groups[j] == "w" || groups[j] == "y") {
             val vn = parsePhaseContext(groups[j - 1]) ?: return error("Unknown phase/context : ${groups[j - 1]}")
             secondSegment = vn.toString(precision, ignoreDefault).plusSeparator(start = true) + secondSegment
-        } else if (groups[j] == "'w") {
+        } else if (groups[j] == "'w" || groups[j] == "'hlw") {
             val vn = parseLevelContext(groups[j - 1]) ?: return error("Unknown level/context : ${groups[j - 1]}")
-            secondSegment = vn.toString(precision, ignoreDefault).plusSeparator(start = true) + secondSegment
+            secondSegment = vn.toString(precision, ignoreDefault).plusSeparator(start = true) + (if (groups[j] == "'hlw" && precision > 0) "(absolute)" else if (groups[j] == "'hlw") "a" else "") + secondSegment
         } else {
             assert(groups[j] == "'y")
             val vn = parseEffectContext(groups[j - 1], precision, ignoreDefault) ?: return error("Unknown effect/context : ${groups[j - 1]}")
