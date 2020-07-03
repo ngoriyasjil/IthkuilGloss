@@ -162,7 +162,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean, stress: Int? = 
             }
         }
     } else if (groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular() ||
-            groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && groups[4] matches "[wy]".toRegex())) { // PRA
+            groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && (groups.size == 4 || groups[4] matches "[wy]".toRegex()))) { // PRA
         parsePRA(groups, precision, ignoreDefault, stress)
     } else if (groups.size >= 4 && groups[0].isVowel() && groups[3] in combinationPRASpecification ||
             groups.size >= 3 && groups[0] !in CD_CONSONANTS && groups[2] in combinationPRASpecification ||
