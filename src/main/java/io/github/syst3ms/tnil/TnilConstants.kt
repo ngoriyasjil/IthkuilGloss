@@ -501,7 +501,9 @@ enum class Expectation(val short: String) : Precision {
 enum class Validation(val short: String) : Precision {
     OBSERVATIONAL("OBS"),
     RECOLLECTIVE("REC"),
+    PURPORTIVE("PUP"),
     REPORTIVE("RPR"),
+    CONVENTIONAL("CVN"),
     INFERENTIAL("INF"),
     INTUITIVE("ITU"),
     IMAGINARY("IMA");
@@ -678,28 +680,34 @@ fun parseEffectContext(v: String, precision: Int, ignoreDefault: Boolean): Strin
     }
 }
 
-fun parseVk(s: String) : List<Precision>? = when(s.defaultForm()) {
-    "a" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
-    "e" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.RECOLLECTIVE)
-    "i" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.REPORTIVE)
-    "o" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INFERENTIAL)
-    "u" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INTUITIVE)
-    "ä" -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.IMAGINARY)
-    "ai" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
-    "ei" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.RECOLLECTIVE)
-    "ëi" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.REPORTIVE)
-    "oi" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INFERENTIAL)
-    "ui" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INTUITIVE)
-    "ae" -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.IMAGINARY)
-    "au" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
-    "eu" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.RECOLLECTIVE)
-    "ëu" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.REPORTIVE)
-    "ou" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INFERENTIAL)
-    "iu" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INTUITIVE)
-    "ao" -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.IMAGINARY)
-    "ë" -> listOf(Illocution.PERFORMATIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
-    "ö" -> listOf(Illocution.PERFORMATIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
-    "ü" -> listOf(Illocution.PERFORMATIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
+fun parseVk(s: String) : List<Precision>? = when {
+    "a" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
+    "ä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.RECOLLECTIVE)
+    "e" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.PURPORTIVE)
+    "ë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.REPORTIVE)
+    "i" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.CONVENTIONAL)
+    "ö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INFERENTIAL)
+    "o" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INTUITIVE)
+    "ü" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.IMAGINARY)
+    "u" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.COGNITIVE)
+    "ai" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
+    "au" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.RECOLLECTIVE)
+    "ei" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.PURPORTIVE)
+    "eu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.REPORTIVE)
+    "ëi" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.CONVENTIONAL)
+    "ou" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INFERENTIAL)
+    "oi" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INTUITIVE)
+    "iu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.IMAGINARY)
+    "ui" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.RESPONSIVE)
+    "ia/oä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
+    "iä/uä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.RECOLLECTIVE)
+    "ie/oë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.PURPORTIVE)
+    "ië/uë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.REPORTIVE)
+    "ëu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.CONVENTIONAL)
+    "uö/iö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INFERENTIAL)
+    "uo/io" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INTUITIVE)
+    "ue/eö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.IMAGINARY)
+    "ua/aö" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.EXECUTIVE)
     else -> null
 }
 

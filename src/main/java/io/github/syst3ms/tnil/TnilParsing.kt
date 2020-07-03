@@ -17,7 +17,7 @@ fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS 
 
 fun String.isModular() = this matches "'?([wy]|h.*)".toRegex()
 
-fun String.hasStress() = this.defaultForm() != this && this.defaultForm() in VOWEL_FORM
+fun String.hasStress() = this.isVowel() && this.defaultForm() != this
 
 fun String.trimGlottal() = this.replace("'", "")
 
@@ -58,7 +58,7 @@ fun String.defaultForm() = this.replace("á", "a")
         .replace("[ìíı]".toRegex(), "i")
         .replace("ó", "o")
         .replace("ô", "ö")
-        .replace("ú", "u")
+        .replace("[úù]".toRegex(), "u")
         .replace("û", "ü")
         .replace("[ṭŧ]".toRegex(), "ţ")
         .replace("[ḍđ]".toRegex(), "ḑ")
@@ -72,7 +72,10 @@ fun Array<String>.findStress(): Int {
         if (it.isVowel() && it.length == 3) {
             it.toCharArray().map(Char::toString)
         } else {
-            listOf(it.replace("[ìı]".toRegex(), "i"))
+            listOf(
+                    it.replace("[ìı]".toRegex(), "i")
+                      .replace("ù", "u")
+            )
         }
     }.reversed()
         .indexOfFirst { it.hasStress() }

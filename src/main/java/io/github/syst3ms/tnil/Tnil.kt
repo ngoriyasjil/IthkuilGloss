@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("eäẓo", 1, true))
+    println(parseWord("hebzexčoıvalzürerdùá", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -390,7 +390,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         j -= 2
     }
     if (secondSegment.isEmpty() && stress == 0) { // Ensure that CNF/PPS be always marked
-        secondSegment = "-CNF/PPS"
+        secondSegment = "-ASR/COG/OBS"
     }
     if (!contextMarked && (stress == 2 || stress == 3)) {
         secondSegment = "-FNC$secondSegment"
