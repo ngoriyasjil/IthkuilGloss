@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("hebzexčoıvalzürerdùá", 1, true))
+    println(parseWord("ämtalü'hlwa", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -356,7 +356,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         j--
     }
     var contextMarked = false
-    if (j - i >= 2 && groups[j] matches "'?(h[lrwmn]?|[wy])".toRegex()) { // Cn
+    if (j - i >= 2 && groups[j] matches "'?(h[lrwmn]?|[wy]|hlw)".toRegex()) { // Cn
         contextMarked = true // Anything in this block will either mark context(/valence) or imply it's EXS(/MNO)
         if (groups[j].startsWith("h")) {
             val cn = if (stress == 0 || stress == 3) {
@@ -366,7 +366,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             } as Precision? ?: return error("Unknown case-scope/mood : ${groups[j]}")
             val vn = parseValenceContext(groups[j - 1]) ?: return error("Unknown valence/context : ${groups[j - 1]}")
             secondSegment = (vn.toString(precision, ignoreDefault).plusSeparator(sep = "/") + cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
-        } else if (groups[j].startsWith("'h")) {
+        } else if (groups[j].startsWith("'h") && groups[j] != "'hlw") {
             contextMarked = false
             val cnString = groups[j].trimGlottal()
             val cn = if (stress == 0 || stress == 3) {
@@ -381,7 +381,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             secondSegment = vn.toString(precision, ignoreDefault).plusSeparator(start = true) + secondSegment
         } else if (groups[j] == "'w" || groups[j] == "'hlw") {
             val vn = parseLevelContext(groups[j - 1]) ?: return error("Unknown level/context : ${groups[j - 1]}")
-            secondSegment = vn.toString(precision, ignoreDefault).plusSeparator(start = true) + (if (groups[j] == "'hlw" && precision > 0) "(absolute)" else if (groups[j] == "'hlw") "a" else "") + secondSegment
+            secondSegment = vn.toString(precision, ignoreDefault).plusSeparator(start = true) + (if (groups[j] == "'hlw" && precision > 0) "(abs)" else if (groups[j] == "'hlw") "a" else "") + secondSegment
         } else {
             assert(groups[j] == "'y")
             val vn = parseEffectContext(groups[j - 1], precision, ignoreDefault) ?: return error("Unknown effect/context : ${groups[j - 1]}")
