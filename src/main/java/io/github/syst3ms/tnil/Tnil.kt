@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("ämtalü'hlwa", 1, true))
+    println(parseWord("alẓalörsürwu’ö", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -209,6 +209,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         }
         val vf = Case.byVowel(groups[1], shortVf) ?: return error("Unknown case value : ${groups[1]}")
         var stem = rootFlag and 3
+        if (groups[2].isInvalidLexical())
+            return error("'${groups[2]}' can't be a valid root consonant")
         val ci = parseRoot(groups[2], precision, stem, rootFlag and 4 == 4)
         firstSegment += cd.toString(precision, ignoreDefault, designationUsed = ci.third).plusSeparator()
         firstSegment += vf.toString(precision, false).plusSeparator()
@@ -220,6 +222,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 4
         }
         stem = rootFlag and 3
+        if (groups[4].isInvalidLexical())
+            return error("'${groups[4]}' can't be a valid root consonant")
         val cr = parseRoot(groups[4], precision, stem, rootFlag and 4 == 4)
         firstSegment += (vv?.toString(precision, ignoreDefault, designationUsed = cr.third) ?: return error("Unknown Vv value : ${groups[3]}")).plusSeparator()
         firstSegment += if (precision > 0 && stem != 0 && groups[4] == "n") {
@@ -281,6 +285,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             rootFlag = rootFlag or ((v[1] as Enum<*>).ordinal + 1) % 4
         }
         val stem = rootFlag and 3
+        if (groups[0].isInvalidLexical())
+            return error("'${groups[0]}' can't be a valid root consonant")
         val cr = parseRoot(groups[0], precision, stem, rootFlag and 4 == 4)
         firstSegment += (shortVv?.toString(precision, false, designationUsed = cr.third) ?: "").plusSeparator()
         firstSegment += if (precision > 0 && stem != 0 && groups[0] == "n") {
@@ -309,6 +315,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             rootFlag = rootFlag or ((vr[1] as Enum<*>).ordinal + 1) % 4
         }
         val stem = rootFlag and 3
+        if (groups[1].isInvalidLexical())
+            return error("'${groups[1]}' can't be a valid root consonant")
         val cr = parseRoot(groups[1], precision, stem, rootFlag and 4 == 4)
         firstSegment += (vv?.toString(precision, ignoreDefault, designationUsed = cr.third) ?: return error("Unknown Vv value : ${groups[0]}")).plusSeparator()
         firstSegment += if (precision > 0 && stem != 0 && groups[1] == "n") {
@@ -405,6 +413,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 rootFlag = rootFlag or ((v[1] as Enum<*>).ordinal + 1) % 4
             }
             val stem = rootFlag and 3
+            if (groups[0].isInvalidLexical())
+                return error("'${groups[0]}' can't be a valid root consonant")
             val cr = parseRoot(groups[0], precision, stem, rootFlag and 4 == 4)
             firstSegment += Version.COMPLETIVE.toString(precision).plusSeparator()
             firstSegment += if (precision > 0 && stem != 0 && groups[0] == "n") {
@@ -506,7 +516,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 if (it.size == 1) {
                     unrecognized = "\u0000"
                     return@chunked null
-                } else if (it[1].defaultForm() in INVALID_LEXICAL_CONSONANTS) {
+                } else if (it[1].isInvalidLexical()) {
                     unrecognized = "#${it[1]}"
                     return@chunked null
                 }
@@ -521,7 +531,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         if (unrecognized != null) {
             return when {
                 unrecognized == "\u0000" -> error("Affix group (slot VII) ended unexpectedly")
-                unrecognized!!.startsWith("#") -> error("'${unrecognized!!.substring(1)}' cannot be an affix consonant")
+                unrecognized!!.startsWith("#") -> error("'${unrecognized!!.substring(1)}' can't be a valid affix consonant")
                 unrecognized!!.startsWith("&") -> error("Unknown case vowel : ${unrecognized!!.substring(1)}")
                 unrecognized!!.startsWith("^") -> error("Unknown configuration/affiliation/extension/perspective/essence Ca cluster : ${unrecognized!!.substring(1)}")
                 else -> error("Unknown affix vowel : ${unrecognized!!.substring(1)}")
@@ -607,7 +617,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         k += 2
         val aff = parseAffix(c, v, precision)
         when {
-            c.defaultForm() in INVALID_LEXICAL_CONSONANTS -> error("'${c}' cannot be an affix consonant")
+            c.isInvalidLexical() -> error("'${c}' can't be a valid affix consonant")
             aff.startsWith("@") -> return error("Unknown affix vowel : ${aff.substring(1)}")
             aff.startsWith("&") -> return error("Unknown case vowel : ${aff.substring(1)}")
             else -> firstSegment += "$aff-"
@@ -801,7 +811,7 @@ fun parseAffixualScoping(groups: Array<String>, precision: Int, ignoreDefault: B
     }
     aff = parseAffix(c, v, precision)
     when {
-        c.defaultForm() in INVALID_LEXICAL_CONSONANTS -> return error("'${c}' cannot be an affix consonant")
+        c.isInvalidLexical() -> return error("'${c}' can't be an affix consonant")
         aff.startsWith("@") -> return error("Unknown affix vowel : ${aff.substring(1)}")
         aff.startsWith("&") -> return error("Unknown case vowel : ${aff.substring(1)}")
         aff.startsWith("^") -> return error("Unknown configuration/affiliation/extension/perspective/essence Ca cluster : ${aff.substring(1)}")
@@ -812,7 +822,7 @@ fun parseAffixualScoping(groups: Array<String>, precision: Int, ignoreDefault: B
         c = groups[i+1]
         aff = parseAffix(c, v, precision)
         when {
-            c.defaultForm() in INVALID_LEXICAL_CONSONANTS -> return error("'${c}' cannot be an affix consonant")
+            c.isInvalidLexical() -> return error("'${c}' can't be an affix consonant")
             aff.startsWith("@") -> return error("Unknown affix vowel : ${aff.substring(1)}")
             aff.startsWith("&") -> return error("Unknown case vowel : ${aff.substring(1)}")
             aff.startsWith("^") -> return error("Unknown configuration/affiliation/extension/perspective/essence Ca cluster : ${aff.substring(1)}")
@@ -844,7 +854,7 @@ fun parseAffixual(groups: Array<String>, precision: Int, ignoreDefault: Boolean,
     val aff = parseAffix(c, v, precision)
     val scope = if (groups.size == 3) scopeToString(groups[2].defaultForm(), ignoreDefault) else ""
     return when {
-        c.defaultForm() in INVALID_LEXICAL_CONSONANTS -> error("'${c}' cannot be an affix consonant")
+        c.isInvalidLexical() -> error("'${c}' can't be a valid affix consonant")
         aff.startsWith("@") -> error("Unknown affix vowel : ${aff.substring(1)}")
         aff.startsWith("&") -> error("Unknown case vowel : ${aff.substring(1)}")
         aff.startsWith("^") -> error("Unknown configuration/affiliation/extension/perspective/essence Ca cluster : ${aff.substring(1)}")

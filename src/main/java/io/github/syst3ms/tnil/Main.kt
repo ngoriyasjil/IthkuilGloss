@@ -117,7 +117,7 @@ class MessageListener : ListenerAdapter() {
                 val parts = content.split("[\\s.;,:]+".toRegex())
                 val glosses = arrayListOf<String>()
                 for (i in 1 until parts.size) {
-                    var w = parts[i].toLowerCase()
+                    var w = parts[i].toLowerCase().replace("’", "'")
                     if (w.startsWith("_") || w.startsWith("/")) {
                         w = w.substring(1)
                     } else if (w.any { it.toString().defaultForm() !in CONSONANTS
@@ -171,7 +171,7 @@ class MessageListener : ListenerAdapter() {
                                 s
                             }
                         }
-                        .map { parseSentence(it, prec, ignoreDefault) }
+                        .map { parseSentence(it.replace("’", "'"), prec, ignoreDefault) }
                         .map {
                             if (it[0] == "\u0000") {
                                 it[0] + it[1]

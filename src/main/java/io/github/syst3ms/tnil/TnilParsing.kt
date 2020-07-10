@@ -19,6 +19,8 @@ fun String.isModular() = this matches "'?([wy]|h.*)".toRegex()
 
 fun String.hasStress() = this.isVowel() && this.defaultForm() != this
 
+fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
+
 fun String.trimGlottal() = this.replace("'", "")
 
 fun String.trimH() = this.replace("^('?)h".toRegex(), "$1")
@@ -66,6 +68,7 @@ fun String.defaultForm() = this.replace("á", "a")
         .replace("ż", "ẓ")
         .replace("ṇ", "ň")
         .replace("ṛ", "ř")
+
 
 fun Array<String>.findStress(): Int {
     val i = this.flatMap {
