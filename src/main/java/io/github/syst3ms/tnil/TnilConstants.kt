@@ -930,10 +930,15 @@ fun parseCa(s: String) : List<Precision>? {
                             || original[original.lastIndex - 1].toString() !in STOPS
                             || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
                 return null
+            } else if (original.length == 1) {
+                elements.add(Perspective.MONADIC)
+                elements.add(Essence.NORMAL)
+                0
+            } else {
+                elements.add(Perspective.NOMIC)
+                elements.add(Essence.REPRESENTATIVE)
+                1
             }
-            elements.add(Perspective.NOMIC)
-            elements.add(Essence.REPRESENTATIVE)
-            1
         }
         original.endsWith("y") -> {
             if (original.length == 1)
@@ -948,10 +953,15 @@ fun parseCa(s: String) : List<Precision>? {
                             || original[original.lastIndex - 1].toString() !in STOPS
                             || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
                 return null
+            } else if (original.length == 1) {
+                elements.add(Perspective.MONADIC)
+                elements.add(Essence.NORMAL)
+                0
+            } else {
+                elements.add(Perspective.ABSTRACT)
+                elements.add(Essence.REPRESENTATIVE)
+                1
             }
-            elements.add(Perspective.ABSTRACT)
-            elements.add(Essence.REPRESENTATIVE)
-            1
         }
         else -> {
             elements.add(Perspective.MONADIC)
