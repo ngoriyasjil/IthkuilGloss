@@ -120,10 +120,15 @@ class MessageListener : ListenerAdapter() {
                     var w = parts[i].toLowerCase().replace("’", "'")
                     if (w.startsWith("_") || w.startsWith("/")) {
                         w = w.substring(1)
-                    } else if (w.any { it.toString().defaultForm() !in CONSONANTS
-                                    && VOWEL_FORM.none { v -> v eq it.toString() } }) {
-                        glosses += error("Non-ithkuil characters detected in word '$w'")
+                    } else {
+                      val nonIthkuil = w.filter {
+                        it.toString().defaultForm() !in CONSONANTS &&
+                        VOWEL_FORM.none { v -> v eq it.toString() } }
+                      if(nonIthkuil.length > 0) {
+                        glosses += error("Non-ithkuil characters detected: " +
+                          nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString())
                         continue
+                      }
                     }
                     val res = try {
                         parseWord(w, prec, ignoreDefault, alone = true)
