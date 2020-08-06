@@ -28,7 +28,7 @@ val CD_CONSONANTS = listOf(
         "hlw", "hly", "hm", "hn",
         "hmw", "hnw", "hmy", "hny"
 )
-val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ç", "çç", "ř", "h", "w", "y")
+val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
 val affixVowel = listOf(
     "üa", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "üe", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
