@@ -15,7 +15,7 @@ fun String.isVowel() = this.defaultForm() in flatVowelForm
 
 fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
 
-fun String.isModular() = this matches "'?([wy]|h.*)".toRegex()
+fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
 
 fun String.hasStress() = this.isVowel() && this.defaultForm() != this
 

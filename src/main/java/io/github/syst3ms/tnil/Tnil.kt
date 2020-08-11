@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("alẓalörsürwu’ö", 1, true))
+    println(parseWord("lašf", 1, true, alone = true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -169,7 +169,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean, stress: Int? = 
             groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in combinationPRASpecification ||
             groups.size >= 5 && groups[0] !in CD_CONSONANTS && groups[2] == "'" && groups[4] in combinationPRASpecification) { // Combination PRA
         parseCombinationPRA(groups, precision, ignoreDefault, stress)
-    } else if (groups.size >= 2 && groups[0].isVowel() && groups[1].startsWith("'")) { // Affixual scoping adjunct
+    } else if (groups.size >= 2 && groups[0].isVowel() && groups[1].startsWith("'") && !groups[1].isModular()) { // Affixual scoping adjunct
         parseAffixualScoping(groups, precision, ignoreDefault, stress)
     } else if (groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()) { // Single affixual adjunct
         parseAffixual(groups, precision, ignoreDefault, stress)
@@ -189,6 +189,12 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     var firstSegment = ""
     var i = 0
     var possibleSpecialShortForm = false
+    /*
+     * 0 = no glottal stop is used for short-form FML
+     * 1 = a normal glottal stop (at the beginning of a cluster) is used for short-form FML
+     * 2 = a supposed glottal Ca is used for shrot-form FML
+     */
+    var shortFormGlottalUse = 0
     /*
      * First value is 0 for -N- and 1 for -D-
      * Second value is the stem
@@ -262,10 +268,11 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 groups[1] + groups[3]
             }
             i += 4
-        } else if (groups[2].startsWith("'") || groups[2].startsWith("h") && groups[2].length > 1) {
+        } else if (groups[2].isGlottalCa() || groups[2].startsWith("h") && groups[2].length > 1) {
             shortVv = when {
                 // Infixation rules forbid 'h at the beginning of the next consonant
-                groups[2].startsWith("'") -> {
+                groups[2].isGlottalCa() -> {
+                    shortFormGlottalUse = if (groups[2].startsWith("'")) 1 else 2
                     rootFlag = 4
                     listOf(Designation.FORMAL)
                 }
@@ -437,9 +444,9 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             return firstSegment.dropLast(1) + secondSegment
         }
         val c = groups[i]
-        if (c.isGlottalCa())
-            return error("The Ca group marks the end of Slot VII, but Slot VII is empty : $c")
-        val ca = parseCa(c)
+        if (c.isGlottalCa() && shortFormGlottalUse != 2)
+            return error("This Ca group marks the end of Slot VII, but Slot VII is empty : $c")
+        val ca = parseCa(if (c.isGlottalCa()) c.drop(1) else c)
         val alternate = if (c.startsWith("x")) {
             if (stress == 0 || stress == 3) {
                 Mood.byCn(c.replace('x', 'h'))
@@ -569,7 +576,6 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         j = caIndex-1
     }
     // j is now at the vowel before Ca
-    var k = i
     if (possibleSpecialShortForm && groups[i] == "h") {
         var rootFlag = 4
         val vr = groups[1] + groups[3]
@@ -597,10 +603,16 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             firstSegment = firstSegment.replace("@", "'$desc'")
         }
         firstSegment += (v?.toString(precision, ignoreDefault, stemUsed = cr.second) ?: return error("Unknown Vr value : $vr")).plusSeparator()
-        k += 2
+        i += 2
     }
+    var k = i
     while (k <= j) { // Reminder : affixes are CV rather than VC here
-        val c = groups[k]
+        var c = groups[k]
+        if (c.startsWith("'") && k == i && shortFormGlottalUse == 1) {
+            c = c.drop(1)
+        } else if (c.startsWith("'")) {
+            return error("Unexpected glottal stop : $c")
+        }
         var v : String
         if (k + 3 <= j && (groups[k+2] == "'" || groups[k+2] == "w")) { // Standalone end of slot VII or Type 2 delineation
             v = when {
@@ -637,7 +649,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
     var i = 0
     var result = ""
     if (groups[0] == "w" || groups[0] == "y") {
-        result += "{Stm}-"
+        result += "{Stm}"
         i++
     }
     while (i+2 < groups.size && i < 7) {
@@ -648,7 +660,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
                 null -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault))
             } ?: return error("Unknown case-scope/mood : ${groups[i]}")
             val vn = parseValenceContext(groups[i]) ?: return error("Unknown valence/context : ${groups[i]}")
-            result += (vn.toString(precision, ignoreDefault).plusSeparator() + cn).plusSeparator()
+            result = result.plusSeparator() + vn.toString(precision, ignoreDefault).plusSeparator() + cn
         } else if (groups[i+1].startsWith("'h")) {
             val cnString = groups[i+1].trimGlottal()
             val cn = when (verbalFormative) {
@@ -657,18 +669,18 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
                 null -> CaseScope.byCn(cnString)?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(cnString)?.toString(precision, ignoreDefault))
             } ?: return error("Unknown case-scope/mood : ${groups[i]}")
             val vt = Aspect.byVowel(groups[i]) ?: return error("Unknown aspect : ${groups[i]}")
-            result += (vt.toString(precision, ignoreDefault).plusSeparator() + cn).plusSeparator()
+            result = result.plusSeparator() + vt.toString(precision, ignoreDefault).plusSeparator() + cn
         } else if (groups[i+1] == "w" || groups[i+1] == "y") {
             val vn = parsePhaseContext(groups[i]) ?: return error("Unknown phase/context : ${groups[i]}")
-            result += vn.toString(precision, ignoreDefault).plusSeparator()
+            result = result.plusSeparator() + vn.toString(precision, ignoreDefault)
         } else if (groups[i+1] == "'w") {
             val vn = parseLevelContext(groups[i]) ?: return error("Unknown level/context : ${groups[i]}")
-            result += vn.toString(precision, ignoreDefault).plusSeparator()
+            result = result.plusSeparator() + vn.toString(precision, ignoreDefault)
         } else {
             assert(groups[i+1] == "'y")
             val vn = parseEffectContext(groups[i], precision, ignoreDefault)
                     ?: return error("Unknown effect/context : ${groups[i]}")
-            result += vn.plusSeparator()
+            result = result.plusSeparator() + vn.plusSeparator()
         }
         i += 2
     }
@@ -677,7 +689,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
         valence -> parseValenceContext(groups[i]) ?: return error("Unknown valence/context : ${groups[i]}")
         else -> listOf(Aspect.byVowel(groups[i]) ?: return error("Unknown aspect : ${groups[i]}"))
     }
-    return result + vn.toString(precision, ignoreDefault)
+    return result + vn.toString(precision, ignoreDefault).plusSeparator(start = true)
 }
 
 fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, forceStress: Int? = null): String {

@@ -880,17 +880,17 @@ fun parseCa(s: String) : List<Precision>? {
     }
     original = original.replace("mz", "mm")
         .replace("nd", "nn")
-        .replace("lf", "pp")
-        .replace("lš", "kk")
-        .replace("ls", "tt")
+        .replace("sf", "pp")
+        .replace("šf", "kk")
+        .replace("sţ", "tt")
         .replace("j", "čy")
         .replace("nž", "çy")
         .replace("nz", "ňy")
-        .replace("v(?=.)".toRegex(), "nf")
         .replace("fš(?=.)".toRegex(), "kf")
         .replace("fs(?=.)".toRegex(), "tf")
         .replace("ng", "ňk")
         .replace("mb", "np")
+        .replace("v(?=.)".toRegex(), "nf")
         .replace("ḑ", "tţ")
         .replace("č", "tš")
         .replace("c", "ts")
@@ -900,7 +900,7 @@ fun parseCa(s: String) : List<Precision>? {
         .replace("ž", "ţš")
         .replace("z", "ţs")
     val a = when {
-        original.endsWith("ļ") -> {
+        original.endsWith("ř") -> {
             elements.add(Perspective.MONADIC)
             elements.add(Essence.REPRESENTATIVE)
             1
@@ -912,7 +912,7 @@ fun parseCa(s: String) : List<Precision>? {
             elements.add(Essence.NORMAL)
             1
         }
-        original.endsWith("l") -> {
+        original.endsWith("ļ") -> {
             if (original.length == 1)
                 return null
             elements.add(Perspective.POLYADIC)
