@@ -2,6 +2,10 @@ package io.github.syst3ms.tnil
 
 import java.lang.IllegalStateException
 
+const val ALT_VF_FORM = 1
+const val SLOT_THREE_PRESENT = 2
+const val CA_STACKING_VOWEL = "üä"
+
 val VOWEL_FORM = listOf(
     "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
@@ -11,7 +15,7 @@ val VOWEL_FORM = listOf(
     "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
     "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
     "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
-    "awo", "awe", "ewa", "ewo", "ewë", "öwe", "owe", "öwa", "owa"
+    "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
 )
 val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") }
 val CONSONANTS = listOf(
@@ -29,15 +33,16 @@ val CD_CONSONANTS = listOf(
         "hmw", "hnw", "hmy", "hny"
 )
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
+val CASE_AFFIXES = listOf("rl", "ll", "rr", "lw", "ly")
 val affixVowel = listOf(
     "üa", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "üe", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
     "üo", "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
     "üö", "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
-    "üwö", "awo", "awe", "ewa", "ewo", "ewë", "öwe", "owe", "öwa", "owa"
+    "üyö", "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
 )
 val combinationPRASpecification = listOf("bz", "gz", "bž", "gž")
-val affixualScopingConsonants = listOf("w", "y", "h", "'w", "'y", "'h")
+val affixualScopingConsonants = listOf("h", "'h", "'w", "'y", "'hl", "'hr")
 val animateReferentDescriptions = listOf(
         listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
         listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
@@ -51,17 +56,6 @@ val inanimateReferentDescriptions = listOf(
 
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
-}
-
-enum class Designation(val short: String) : Precision {
-    INFORMAL("IFL"),
-    FORMAL("FML");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
 enum class Incorporation(val short: String) : Precision {
@@ -633,9 +627,26 @@ enum class Referent(val short: String) : Precision {
     }
 }
 
-fun parseCd(c: String) : Pair<List<Precision>, Boolean> {
+fun parseCd(c: String) : Pair<List<Precision>, Int> {
     val i = CD_CONSONANTS.indexOf(c.defaultForm())
-    return listOf<Precision>(Designation.values()[(i % 8) % 2], Incorporation.values()[(i % 8)/2 % 2], Version.values()[i%8 / 4]) to (i >= 8)
+    var flag = 0
+    if ((i / 4) % 2 == 1)
+        flag = flag or ALT_VF_FORM
+    if ((i / 4) >= 2)
+        flag = flag or SLOT_THREE_PRESENT
+    return listOf<Precision>(Incorporation.values()[(i % 4) / 2], Version.values()[i % 2]) to flag
+}
+
+fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
+    val i = VOWEL_FORM.indexOfFirst { it eq v }
+    if (i == -1 || i in 36..71)
+        return null
+    return when {
+        i < 9 -> Valence.values()[i % 9].toString(precision, ignoreDefault)
+        i < 18 -> Phase.values()[i % 9].toString(precision, ignoreDefault)
+        i < 27 || i >= 72 -> Level.values()[i % 9].toString(precision, false) + (if (i >= 72 && precision > 0) "(abs)" else if (i >= 72) "a" else "")
+        else -> effectString(precision, i % 9)
+    }
 }
 
 fun parseValenceContext(v: String): List<Precision>? {
@@ -659,14 +670,11 @@ fun parseLevelContext(v: String): List<Precision>? {
     return listOf(Context.values()[i / 9], Level.values()[i % 9])
 }
 
-fun parseEffectContext(v: String, precision: Int, ignoreDefault: Boolean): String? {
-    val i = VOWEL_FORM.indexOfFirst { it eq v }
-    if (i == -1)
-        return null
+fun effectString(precision: Int, effectIndex: Int): String? {
     val ben = Effect.BENEFICIAL.toString(precision)
     val det = Effect.DETRIMENTAL.toString(precision)
     val unk = Effect.UNKNOWN.toString(precision)
-    return Context.values()[i / 9].toString(precision, ignoreDefault).plusSeparator(sep = "/") + when (i % 9) {
+    return when (effectIndex) {
         0 -> "1/$ben"
         1 -> "2/$ben"
         2 -> "3/$ben"
@@ -711,51 +719,51 @@ fun parseVk(s: String) : List<Precision>? = when {
     else -> null
 }
 
-fun parseVvSimple(s: String) : List<Precision>? = when {
-    "a" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED)
-    "ä" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED)
-    "e" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED)
-    "i" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED)
-    "u" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED)
-    "ü" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED)
-    "o" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED)
-    "ö" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED)
+fun parseVvSimple(s: String) : Pair<List<Precision>, Boolean>? = when {
+    "a" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED) to false
+    "ä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED) to false
+    "e" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED) to false
+    "i" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED) to false
+    "u" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED) to true
+    "ü" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED) to true
+    "o" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED) to true
+    "ö" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED) to true
     else -> null
 }
 
-fun parseVvComplex(s: String) : List<Precision>? = when {
-    "a" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE)
-    "ä" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE)
-    "e" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE)
-    "i" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE)
-    "u" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE)
-    "ü" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE)
-    "o" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE)
-    "ö" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE)
-    "ai" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO)
-    "au" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO)
-    "ei" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO)
-    "eu" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO)
-    "ui" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO)
-    "iu" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO)
-    "oi" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO)
-    "ou" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO)
-    "ia/oä" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE)
-    "iä/uä" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE)
-    "ie/oë" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE)
-    "ië/uë" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE)
-    "ua/aö" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE)
-    "ue/eö" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE)
-    "uo/io" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE)
-    "uö/iö" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE)
-    "ao" eq s  -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO)
-    "ae" eq s -> listOf(Designation.INFORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO)
-    "ea" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO)
-    "eo" eq s -> listOf(Designation.INFORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO)
-    "oa" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO)
-    "öa" eq s -> listOf(Designation.FORMAL, Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO)
-    "oe" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO)
-    "öe" eq s -> listOf(Designation.FORMAL, Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO)
+fun parseVvComplex(s: String) : Pair<List<Precision>, Boolean>? = when {
+    "a" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE) to false
+    "ä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE) to false
+    "e" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE) to false
+    "i" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE) to false
+    "u" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE) to true
+    "ü" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE) to true
+    "o" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE) to true
+    "ö" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE) to true
+    "ai" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO) to false
+    "au" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO) to false
+    "ei" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO) to false
+    "eu" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO) to false
+    "ui" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO) to true
+    "iu" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO) to true
+    "oi" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO) to true
+    "ou" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO) to true
+    "ia/oä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE) to false
+    "iä/uä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE) to false
+    "ie/oë" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE) to false
+    "ië/uë" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE) to false
+    "ua/aö" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE) to true
+    "ue/eö" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE) to true
+    "uo/io" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE) to true
+    "uö/iö" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE) to true
+    "ao" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO) to false
+    "ae" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO) to false
+    "ea" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO) to false
+    "eo" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO) to false
+    "oa" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO) to true
+    "öa" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO) to true
+    "oe" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO) to true
+    "öe" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO) to true
     else -> null
 }
 
@@ -886,11 +894,11 @@ fun parseCa(s: String) : List<Precision>? {
         .replace("j", "čy")
         .replace("nž", "çy")
         .replace("nz", "ňy")
+        .replace("v(?=.)".toRegex(), "nf")
         .replace("fš(?=.)".toRegex(), "kf")
         .replace("fs(?=.)".toRegex(), "tf")
         .replace("ng", "ňk")
         .replace("mb", "np")
-        .replace("v(?=.)".toRegex(), "nf")
         .replace("ḑ", "tţ")
         .replace("č", "tš")
         .replace("c", "ts")
@@ -1101,4 +1109,18 @@ fun parseCa(s: String) : List<Precision>? {
         else -> return null
     }
     return elements
+}
+
+internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
+
+fun scopeToString(letter: String, ignoreDefault: Boolean) = if ((letter == "a" || letter == "h") && ignoreDefault) {
+    ""
+} else when (letter) {
+    "a", "h" -> "{StmDom}"
+    "u", "'h" -> "{StmSub}"
+    "e", "'w" -> "{CaDom}"
+    "i", "'y" -> "{CaSub}"
+    "o", "'hl" -> "{Form}"
+    "ö", "'hr" -> "{All}"
+    else -> null
 }

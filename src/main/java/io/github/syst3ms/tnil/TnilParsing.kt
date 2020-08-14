@@ -4,6 +4,9 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import java.io.File
 import kotlin.streams.toList
 
+const val AFFIX_PATH = "./affixes.txt"
+const val ROOTS_PATH = "./roots.txt"
+
 val affixData: List<AffixData> by lazy {
     loadAffixes()
 }
@@ -31,10 +34,10 @@ fun String.plusSeparator(start: Boolean = false, sep: String = "-") = when {
     else -> "$this$sep"
 }
 
-fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed : Boolean = false, designationUsed : Boolean = false) = this
-        .map {
+fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed : Boolean = false) = join(
+        *this.map {
             when {
-                it is Stem && stemUsed || it is Designation && designationUsed -> {
+                it is Stem && stemUsed -> {
                     val s = it.toString(precision, ignoreDefault)
                     when {
                         s.isEmpty() -> ""
@@ -43,9 +46,11 @@ fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, ste
                 }
                 else -> it.toString(precision, ignoreDefault)
             }
-        }
-        .filter { it.isNotEmpty() }
-        .joinToString("/")
+        }.toTypedArray()
+)
+
+fun join(vararg strings: String, sep: String = "/") = strings.filter { it.isNotEmpty() }
+        .joinToString(sep)
 
 infix fun String.eq(s: String): Boolean = if ("/" in this) {
     this.split("/").any { it eq s }
@@ -112,18 +117,6 @@ fun String.splitGroups(): Array<String> {
     return groups.toTypedArray()
 }
 
-fun scopeToString(letter: String, ignoreDefault: Boolean) = if (letter == "a" && ignoreDefault) {
-    ""
-} else when (letter) {
-    "a" -> "{StmDom}"
-    "u" -> "{StmSub}"
-    "e" -> "{CaDom}"
-    "i" -> "{CaSub}"
-    "o" -> "{Form}"
-    "ö" -> "{All}"
-    else -> null
-}
-
 fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: Boolean = false): String? {
     val singleRef = parsePersonalReference(s)
     if (singleRef != null) {
@@ -183,109 +176,106 @@ data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) 
     }
 }
 
-fun loadAffixes(): List<AffixData> {
-    val file = File("./affixes.txt")
-    val reader = file.bufferedReader()
-    return reader.lines()
-            .filter { it.isNotBlank() }
-            .map { it.split("|") }
-            .map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
-            .toList()
-}
+fun File.bufferedReaderOrNull() = if (this.exists()) bufferedReader() else null
 
-fun parseAffix(c: String, v: String, precision: Int): String {
+fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
+        ?.lines()
+        ?.filter { it.isNotBlank() }
+        ?.map { it.split("|") }
+        ?.map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
+        ?.toList() ?: emptyList()
+
+fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slotThree: Boolean = false): String {
     val vi = affixVowel.indexOfFirst { it eq v }
-    if (vi == -1 && !(v eq "eä" || v eq "öä")) {
+    if (vi == -1 && !(v eq "üä" || c in CASE_AFFIXES)) {
         return "@$v"
     }
     val deg = vi % 10
-    var delin = false
+    var specialFormMessage = ""
     val type = if (vi < 30) {
         vi / 10 + 1
     } else {
-        delin = true
+        specialFormMessage = when {
+            slotThree && precision == 0 -> "{Stm}"
+            slotThree -> "{stem only}"
+            !slotThree && precision == 0 -> "{Incp+Main}"
+            else -> "{both incorporated and main}"
+        }
         vi / 10 - 2
     }
     val aff = affixData.find { it.cs == c }
     if (c == "rl") { // case-stacking affix
         val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
-        return "($case" + (if (delin && precision > 0) "(delineation)" else if (delin) "d" else "") + ")"
+        return "($case$specialFormMessage)"
     } else if (c == "ll" || c == "rr") { // case-accessor affix
         val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
         return if (precision > 0) {
-            "($case\\accessor-" + (if (c == "ll") "Type 1" else "Type 2") + (if (delin) "(delineation)" else "") + ")"
+            "($case\\accessor-" + (if (c == "ll") "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
         } else {
-            "(${case}a-" + (if (c == "ll") "T1" else "T2") + (if (delin) "d" else "") + ")"
+            "(${case}a-" + (if (c == "ll") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
         }
     } else if (c == "lw" || c == "ly") { // inverse case-accessor affix
         val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
         return if (precision > 0) {
-            "($case\\inverse accessor-" + (if (c == "lw") "Type 1" else "Type 2") + (if (delin) "(delineation)" else "") + ")"
+            "($case\\inverse accessor-" + (if (c == "lw") "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
         } else {
-            "(${case}ia-" + (if (c == "lw") "T1" else "T2") + (if (delin) "d" else "") + ")"
+            "(${case}ia-" + (if (c == "lw") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
         }
-    } else if (v eq "eä" || v eq "öä") {
+    } else if (v eq "üä") {
         val ca = parseCa(c) ?: return "^$c"
-        return "(" + (if (v eq "öä") {
-            if (precision > 0) "delineation-" else "d-"
-        } else "") + "${ca.toString(precision)})"
+        return if (slotThree) {
+            perspectiveIndexFromCa(ca).toString() + "#"
+        } else {
+            ""
+        } + "(" + ca.toString(precision, ignoreDefault) + ")"
     }
     // Special cases
     return if (aff != null) {
         if (precision > 0 || aff.desc.size == 9 && deg == 0) {
             when (aff.desc.size) {
-                1 -> "'" + aff.desc[0] + "'" + (0x2080 + type).toChar() + (if (delin) "(delineation)" else "") + "/" + deg
-                9 -> "'" + aff.desc[deg - 1] + "'" + (0x2080 + type).toChar() + if (delin) "(delineation)" else ""
+                1 -> "'" + aff.desc[0] + "'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/") + "/" + deg
+                9 -> "'" + aff.desc[deg - 1] + "'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/")
                 else -> throw IllegalArgumentException("Invalid number of affix degrees")
             }
         } else {
-            aff.abbr + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
+            aff.abbr + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/") + "/" + deg
         }
     } else {
-        MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() + (if (delin) "d" else "") + "/" + deg
+        MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/") + "/" + deg
     }
 }
 
 data class RootData(val cr: String, val dsc: List<String>)
 
-fun loadRoots(): List<RootData> {
-    val file = File("./roots.txt")
-    val reader = file.bufferedReader()
-    return reader.lines()
-        .map { it.split("|") }
-        .map { RootData(it[0], it.subList(1, it.size)) }
-        .toList()
-}
+fun loadRoots() = File(ROOTS_PATH).bufferedReaderOrNull()
+        ?.lines()
+        ?.map { it.split("|") }
+        ?.map { RootData(it[0], it.subList(1, it.size)) }
+        ?.toList() ?: emptyList()
 
-fun parseRoot(c: String, precision: Int, stem: Int = 0, formal: Boolean = false) : Triple<String, Boolean, Boolean> {
-    val root = rootData.find { it.cr == c } ?: return Triple(MarkdownUtil.bold(c.defaultForm()), second = false, third = false)
+fun parseRoot(c: String, precision: Int, stem: Int = 0) : Pair<String, Boolean> {
+    val root = rootData.find { it.cr == c } ?: return MarkdownUtil.bold(c.defaultForm()) to false
     if (precision > 0) {
         var stemUsed = false
-        var designationUsed = false
-        val d = when (root.dsc.size) {
+        val d = (when (root.dsc.size) {
             1 -> root.dsc[0] // Only basic description, no precise stem description
-            4 -> {
+            4, 7 -> {
                 stemUsed = true
                 root.dsc[stem] // basic description + IFL Stems 1,2,3
             }
-            7 -> { // basic description + IFL & FML Stems 1,2,3
+            9 -> { // basic description + IFL Stems 0,1,2,3 ; only used for the carrier root
                 stemUsed = true
-                designationUsed = true
-                when {
-                    stem == 0 -> root.dsc[0]
-                    formal -> root.dsc[stem+3]
-                    else -> root.dsc[stem]
-                }
+                root.dsc[stem + 1]
             }
-            9 -> { // basic description + IFL & FML Stems 0,1,2,3 ; only used for the carrier root
-                stemUsed = true
-                designationUsed = true
-                root.dsc[stem + if (formal) 5 else 1]
+            else -> {
+                // basic description + IFL & FML Stems 0,1,2,3 ; only used for the carrier root
+                throw IllegalArgumentException("Root format is invalid : found ${root.dsc.size} arguments in the description of root -${root.cr}-")
             }
-            else -> throw IllegalArgumentException("Root format is invalid : found ${root.dsc.size} arguments in the description of root -${root.cr}-")
-        }.toLowerCase()
-        return Triple("'$d'", stemUsed, designationUsed)
+        }).toLowerCase()
+        return "'$d'" to stemUsed
     } else {
-        return Triple("'${root.dsc[0].toLowerCase()}'", second = false, third = false)
+        return "'${root.dsc[0].toLowerCase()}'" to false
     }
 }
+
+data class PersonalReferentParsingData(var isInanimate: Boolean = false, var stem: Int = 1)
