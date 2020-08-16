@@ -42,7 +42,7 @@ val affixVowel = listOf(
     "üyö", "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
 )
 val combinationPRASpecification = listOf("bz", "gz", "bž", "gž")
-val affixualScopingConsonants = listOf("'w", "'y", "'hl", "'hr", "'hm", "'hn")
+val affixualScopingConsonants = listOf("h", "'h", "'w", "'y", "'hl", "'hr")
 val animateReferentDescriptions = listOf(
         listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
         listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
@@ -720,50 +720,50 @@ fun parseVk(s: String) : List<Precision>? = when {
 }
 
 fun parseVvSimple(s: String) : Pair<List<Precision>, Boolean>? = when {
-    "a" eq s -> listOf<Precision>(Relation.UNFRAMED, Version.PROCESSUAL) to false
-    "ä" eq s -> listOf<Precision>(Relation.UNFRAMED, Version.COMPLETIVE) to false
-    "e" eq s -> listOf<Precision>(Relation.UNFRAMED, Version.PROCESSUAL) to true
-    "i" eq s -> listOf<Precision>(Relation.UNFRAMED, Version.COMPLETIVE) to true
-    "u" eq s -> listOf<Precision>(Relation.FRAMED, Version.PROCESSUAL) to false
-    "ü" eq s -> listOf<Precision>(Relation.FRAMED, Version.COMPLETIVE) to false
-    "o" eq s -> listOf<Precision>(Relation.FRAMED, Version.PROCESSUAL) to true
-    "ö" eq s -> listOf<Precision>(Relation.FRAMED, Version.COMPLETIVE) to true
+    "a" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED) to false
+    "ä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED) to false
+    "e" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED) to false
+    "i" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED) to false
+    "u" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED) to true
+    "ü" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED) to true
+    "o" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED) to true
+    "ö" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED) to true
     else -> null
 }
 
 fun parseVvComplex(s: String) : Pair<List<Precision>, Boolean>? = when {
-    "a" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.UNFRAMED, Version.PROCESSUAL) to false
-    "ä" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.UNFRAMED, Version.COMPLETIVE) to false
-    "e" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.UNFRAMED, Version.PROCESSUAL) to true
-    "i" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.UNFRAMED, Version.COMPLETIVE) to true
-    "u" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.FRAMED, Version.PROCESSUAL) to false
-    "ü" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.FRAMED, Version.COMPLETIVE) to false
-    "o" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.FRAMED, Version.PROCESSUAL) to true
-    "ö" eq s -> listOf<Precision>(Stem.STEM_ONE, Relation.FRAMED, Version.COMPLETIVE) to true
-    "ai" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.UNFRAMED, Version.PROCESSUAL) to false
-    "au" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.UNFRAMED, Version.COMPLETIVE) to false
-    "ei" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.UNFRAMED, Version.PROCESSUAL) to true
-    "eu" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.UNFRAMED, Version.COMPLETIVE) to true
-    "ui" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.FRAMED, Version.PROCESSUAL) to false
-    "iu" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.FRAMED, Version.COMPLETIVE) to false
-    "ou" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.FRAMED, Version.PROCESSUAL) to true
-    "oi" eq s -> listOf<Precision>(Stem.STEM_TWO, Relation.FRAMED, Version.COMPLETIVE) to true
-    "ia/oä" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.UNFRAMED, Version.PROCESSUAL) to false
-    "iä/uä" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.UNFRAMED, Version.COMPLETIVE) to false
-    "ie/oë" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.UNFRAMED, Version.PROCESSUAL) to true
-    "ië/uë" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.UNFRAMED, Version.COMPLETIVE) to true
-    "ua/aö" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.FRAMED, Version.PROCESSUAL) to false
-    "ue/eö" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.FRAMED, Version.COMPLETIVE) to false
-    "uo/io" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.FRAMED, Version.PROCESSUAL) to true
-    "uö/iö" eq s -> listOf<Precision>(Stem.STEM_THREE, Relation.FRAMED, Version.COMPLETIVE) to true
-    "ao" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.UNFRAMED, Version.PROCESSUAL) to false
-    "ae" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.UNFRAMED, Version.COMPLETIVE) to false
-    "ea" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.UNFRAMED, Version.PROCESSUAL) to true
-    "eo" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.UNFRAMED, Version.COMPLETIVE) to true
-    "oa" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.FRAMED, Version.PROCESSUAL) to false
-    "öa" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.FRAMED, Version.COMPLETIVE) to false
-    "oe" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.FRAMED, Version.PROCESSUAL) to true
-    "öe" eq s -> listOf<Precision>(Stem.STEM_ZERO, Relation.FRAMED, Version.COMPLETIVE) to true
+    "a" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE) to false
+    "ä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE) to false
+    "e" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE) to false
+    "i" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE) to false
+    "u" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ONE) to true
+    "ü" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ONE) to true
+    "o" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ONE) to true
+    "ö" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ONE) to true
+    "ai" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO) to false
+    "au" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO) to false
+    "ei" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO) to false
+    "eu" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO) to false
+    "ui" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_TWO) to true
+    "iu" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_TWO) to true
+    "oi" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_TWO) to true
+    "ou" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_TWO) to true
+    "ia/oä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE) to false
+    "iä/uä" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE) to false
+    "ie/oë" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE) to false
+    "ië/uë" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE) to false
+    "ua/aö" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_THREE) to true
+    "ue/eö" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_THREE) to true
+    "uo/io" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_THREE) to true
+    "uö/iö" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_THREE) to true
+    "ao" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO) to false
+    "ae" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO) to false
+    "ea" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO) to false
+    "eo" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO) to false
+    "oa" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.UNFRAMED, Stem.STEM_ZERO) to true
+    "öa" eq s -> listOf<Precision>(Version.PROCESSUAL, Relation.FRAMED, Stem.STEM_ZERO) to true
+    "oe" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.UNFRAMED, Stem.STEM_ZERO) to true
+    "öe" eq s -> listOf<Precision>(Version.COMPLETIVE, Relation.FRAMED, Stem.STEM_ZERO) to true
     else -> null
 }
 
@@ -1111,7 +1111,7 @@ fun parseCa(s: String) : List<Precision>? {
     return elements
 }
 
-internal fun perspectiveIndexFromCa(ca: List<Precision>?) = if (ca != null) Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective) else null
+internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
 
 fun scopeToString(letter: String, ignoreDefault: Boolean) = if ((letter == "a" || letter == "h") && ignoreDefault) {
     ""

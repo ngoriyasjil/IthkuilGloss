@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("ařtüř", 1, true, alone = true))
+    println(parseSentence("ërduo'weömţ eu'hwiuhuo çwepļļäkšöřgennţproptöéhleo'šštļ", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean) : List<String> {
@@ -193,12 +193,11 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     var i = 0
     var verbal = false
     /*
-     * null = the formative isn't short-form
      * 0 = no glottal stop is used for short-form FML
      * 1 = a normal glottal stop (at the beginning of a cluster) is used for short-form FML
      * 2 = a supposed glottal Ca is used for short-form FML
      */
-    var shortFormGlottalUse : Int? = null
+    var shortFormGlottalUse = 0
     var referentParsingData : PersonalReferentParsingData? = null
     // First we need to determine if the formative is short, simple or complex
     if (groups[0] in CD_CONSONANTS) { // Complex formative
@@ -291,35 +290,21 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         if (groups.size < 3) { // Minimum possible for a short formative
             return error("Short formative ended unexpectedly : ${groups.joinToString("")}")
         }
-        shortFormGlottalUse = 0
         var shortVv = ""
         val vr: String?
-        if (groups.size >= 5 && groups[2] matches "'h?|h".toRegex()) {
-            if (groups[2].startsWith("'"))
-                verbal = true
-            if (groups[2].endsWith("h"))
-                shortVv = Version.COMPLETIVE.toString(precision)
+        if (groups.size >= 5 && groups[2] == "'") {
+            shortVv = Version.COMPLETIVE.toString(precision)
             vr = if (groups[1] == groups[3]) {
                 groups[1]
             } else {
                 groups[1] + groups[3]
             }
             i += 4
-        } else if (groups[2].isGlottalCa() || groups[2].startsWith("h") && groups[2].length > 1) {
-            when {
-                // Infixation rules forbid 'h at the beginning of the next consonant
-                groups[2].isGlottalCa() -> {
-                    shortFormGlottalUse = if (groups[2].startsWith("'")) 1 else 2
-                    verbal = true
-                }
-                groups[2].startsWith("h") -> {
-                    shortVv = Version.COMPLETIVE.toString(precision)
-                }
-                else -> throw IllegalStateException()
-            }
-            vr = groups[1]
-            i += 2
         } else {
+            if (groups[2].isGlottalCa()) {
+                shortVv = Version.COMPLETIVE.toString(precision)
+                shortFormGlottalUse = if (groups[2].startsWith("'")) 1 else 2
+            }
             vr = groups[1]
             i += 2
         }
@@ -449,27 +434,27 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     // j is now either at Ca, or at the end of Slot X
     if (i == j) { // We're at Ca, slots VIII and X are empty
         val c = groups[i]
-        if (c.isGlottalCa() && (shortFormGlottalUse == null || shortFormGlottalUse == 0))
+        if (c.isGlottalCa() && shortFormGlottalUse != 2)
             return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty : $c")
-        val slotEight = if (c.isGlottalCa()) c.drop(1) else c.trimH()
-        val ca = parseCa(slotEight)
-        val alternate = if (slotEight != "h" && shortFormGlottalUse == null && slotEight.startsWith("h")
-                || shortFormGlottalUse != null && slotEight.startsWith("x")) {
+        val ca = parseCa(if (c.isGlottalCa()) c.drop(1) else c)
+        val alternate = if (c != "h" && c.startsWith("h")) {
             if (verbal) {
-                Mood.byCn(slotEight.replace('x', 'h'))?.toString(precision)
+                Mood.byCn(c)?.toString(precision)
             } else {
-                CaseScope.byCn(slotEight.replace('x', 'h'))?.toString(precision)
+                CaseScope.byCn(c)?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
-        if (referentParsingData?.isInanimate == false) {
-            val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca) ?: 0]
-            firstSegment = firstSegment.replace("@", "'$desc'")
-            caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-        } else if (referentParsingData?.isInanimate == true) {
-            val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca) ?: 0]
-            firstSegment = firstSegment.replace("@", "'$desc'")
-            caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+        if (ca != null) {
+            if (referentParsingData?.isInanimate == false) {
+                val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            } else if (referentParsingData?.isInanimate == true) {
+                val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            }
         }
         return (if (verbal && isInSentence) "!" else if (isInSentence) ":" else "") +
                 firstSegment.dropLast(1) +
@@ -478,22 +463,24 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
         val c = groups[j].drop(1)
         val ca = parseCa(c)
-        val alternate = if (c != "h" && shortFormGlottalUse == null && c.startsWith("h") || shortFormGlottalUse != null && c.startsWith("x")) {
+        val alternate = if (c != "h" && c.startsWith("h")) {
             if (verbal) {
-                Mood.byCn(c.replace('x', 'h'))?.toString(precision)
+                Mood.byCn(c)?.toString(precision)
             } else {
-                CaseScope.byCn(c.replace('x', 'h'))?.toString(precision)
+                CaseScope.byCn(c)?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
-        if (referentParsingData?.isInanimate == false) {
-            val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca) ?: 0]
-            firstSegment = firstSegment.replace("@", "'$desc'")
-            caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-        } else if (referentParsingData?.isInanimate == true) {
-            val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca) ?: 0]
-            firstSegment = firstSegment.replace("@", "'$desc'")
-            caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+        if (ca != null) {
+            if (referentParsingData?.isInanimate == false) {
+                val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            } else if (referentParsingData?.isInanimate == true) {
+                val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            }
         }
         secondSegment = (caString ?: (alternate ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
         j--
@@ -543,22 +530,24 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         }
         val c = if (groups[caIndex].isGlottalCa()) groups[caIndex].drop(1) else groups[caIndex]
         val ca = parseCa(c.trimH())
-        val alternate = if (c != "h" && shortFormGlottalUse == null && c.startsWith("h") || shortFormGlottalUse != null && c.startsWith("x")) {
+        val alternate = if (c != "h" && c.startsWith("h")) {
             if (verbal) {
-                Mood.byCn(c.replace('x', 'h'))?.toString(precision)
+                Mood.byCn(c)?.toString(precision)
             } else {
-                CaseScope.byCn(c.replace('x', 'h'))?.toString(precision)
+                CaseScope.byCn(c)?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
-        if (referentParsingData?.isInanimate == false) {
-            val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca) ?: 0]
-            firstSegment = firstSegment.replace("@", "'$desc'")
-            caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-        } else if (referentParsingData?.isInanimate == true) {
-            val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca) ?: 0]
-            firstSegment = firstSegment.replace("@", "'$desc'")
-            caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+        if (ca != null) {
+            if (referentParsingData?.isInanimate == false) {
+                val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            } else if (referentParsingData?.isInanimate == true) {
+                val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
+                firstSegment = firstSegment.replace("@", "'$desc'")
+                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
+            }
         }
         secondSegment = (caString ?: (alternate ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
         j = caIndex-1
@@ -755,7 +744,7 @@ fun parseCombinationPRA(groups: Array<String>, precision: Int, ignoreDefault: Bo
             }
         }
         if (slotSixFilled == 1) {
-            result += if (stress != 1 && groups.last() == "a") {
+            result += if (stress == 0 && groups.last() == "a") {
                 return result
             } else if (!verbal) {
                 Case.byVowel(groups.last())?.toString(precision)

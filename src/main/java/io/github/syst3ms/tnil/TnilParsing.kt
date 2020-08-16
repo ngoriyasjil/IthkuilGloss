@@ -187,7 +187,7 @@ fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
 
 fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slotThree: Boolean = false): String {
     val vi = affixVowel.indexOfFirst { it eq v }
-    if (vi == -1 && !(v eq CA_STACKING_VOWEL || c in CASE_AFFIXES)) {
+    if (vi == -1 && !(v eq "üä" || c in CASE_AFFIXES)) {
         return "@$v"
     }
     val deg = vi % 10
@@ -221,7 +221,7 @@ fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slo
         } else {
             "(${case}ia-" + (if (c == "lw") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
         }
-    } else if (v eq CA_STACKING_VOWEL) {
+    } else if (v eq "üä") {
         val ca = parseCa(c) ?: return "^$c"
         return if (slotThree) {
             perspectiveIndexFromCa(ca).toString() + "#"
