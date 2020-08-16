@@ -208,7 +208,7 @@ fun parseFormative(groups: Array<String>,
                    isInSentence: Boolean = false,
                    rtiAffixScope: String? = null): String {
     val stress = forceStress ?: groups.findStress().coerceAtLeast(0)
-    var firstSegment = ""
+    var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
     var i = 0
     var tppDegree: Int? = null
     var rtiScope = rtiAffixScope
