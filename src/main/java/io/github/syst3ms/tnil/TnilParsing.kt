@@ -1,281 +1,425 @@
 package io.github.syst3ms.tnil
 
-import net.dv8tion.jda.api.utils.MarkdownUtil
-import java.io.File
-import kotlin.streams.toList
+import java.lang.IllegalStateException
 
-const val AFFIX_PATH = "./affixes.txt"
-const val ROOTS_PATH = "./roots.txt"
-
-val affixData: List<AffixData> by lazy {
-    loadAffixes()
-}
-val rootData: List<RootData> by lazy {
-    loadRoots()
-}
-
-fun String.isVowel() = this.defaultForm() in flatVowelForm
-
-fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
-
-fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
-
-fun String.hasStress() = this.isVowel() && this.defaultForm() != this
-
-fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
-
-fun String.trimGlottal() = this.replace("'", "")
-
-fun String.trimH() = this.replace("^('?)h".toRegex(), "$1")
-
-fun String.plusSeparator(start: Boolean = false, sep: String = "-") = when {
-    this.isEmpty() -> this
-    start -> "$sep$this"
-    else -> "$this$sep"
-}
-
-fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed : Boolean = false) = join(
-        *this.map {
-            when {
-                it is Stem && stemUsed -> {
-                    val s = it.toString(precision, ignoreDefault)
-                    when {
-                        s.isEmpty() -> ""
-                        else -> MarkdownUtil.underline(s)
-                    }
-                }
-                else -> it.toString(precision, ignoreDefault)
-            }
-        }.toTypedArray()
+val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") }
+val animateReferentDescriptions = listOf(
+        listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
+        listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
+        listOf("monadic animate 3rd party (ma), \"he/she/they\"", "polyadic animate 3rd party (pa), \"they (pl.)\"", "impersonal animate (IPa), \"one\"", "all that (s)he/they are")
 )
+val inanimateReferentDescriptions = listOf(
+        listOf("monadic inanimate 3rd party (mi), \"it\"", "polyadic inanimate 3rd party (pi), \"them/those\"", "impersonal inanimate (IPi), \"something\"", "all that it/they are"),
+        listOf("monadic obviative (mObv)", "polyadic obviative (pObv)", "Nai, \"it\" as a generic concept", "Aai, \"it\" as an abstract referent"),
+        listOf("monadic mixed animate+inanimate (mMx)", "polyadic mixed animate+inanimate (pMx)", "impersonal mixed animate+inanimate (IPx)", "everything and everyone, all about the world")
+)
+val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
-fun join(vararg strings: String, sep: String = "/") = strings.filter { it.isNotEmpty() }
-        .joinToString(sep)
-
-infix fun String.eq(s: String): Boolean = if ("/" in this) {
-    this.split("/").any { it eq s }
-} else {
-    this.defaultForm() == s.defaultForm()
+fun parseCd(c: String) : Pair<List<Precision>, Int> {
+    val i = CD_CONSONANTS.indexOf(c.defaultForm())
+    var flag = 0
+    if ((i / 4) % 2 == 1)
+        flag = flag or ALT_VF_FORM
+    if ((i / 4) >= 2)
+        flag = flag or SLOT_THREE_PRESENT
+    return listOf<Precision>(Incorporation.values()[(i % 4) / 2], Version.values()[i % 2]) to flag
 }
 
-fun String.defaultForm() = this.replace("á", "a")
-        .replace("â", "ä")
-        .replace("é", "e")
-        .replace("ê", "ë")
-        .replace("[ìíı]".toRegex(), "i")
-        .replace("ó", "o")
-        .replace("ô", "ö")
-        .replace("[úù]".toRegex(), "u")
-        .replace("û", "ü")
-        .replace("[ṭŧ]".toRegex(), "ţ")
-        .replace("[ḍđ]".toRegex(), "ḑ")
-        .replace("[łḷ]".toRegex(), "ļ")
-        .replace("ż", "ẓ")
-        .replace("ṇ", "ň")
-        .replace("ṛ", "ř")
-
-
-fun Array<String>.findStress(): Int {
-    val i = this.flatMap {
-        if (it.isVowel() && it.length == 3) {
-            it.toCharArray().map(Char::toString)
-        } else {
-            listOf(
-                    it.replace("[ìı]".toRegex(), "i")
-                      .replace("ù", "u")
-            )
-        }
-    }.reversed()
-        .indexOfFirst { it.hasStress() }
+fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
+    val i = VOWEL_FORM.indexOfFirst { it eq v }
+    if (i == -1 || i in 36..71)
+        return null
     return when {
-        this.count(String::isVowel) == 1 -> -1
-        i == -1 -> 1
-        else -> i / 2
+        i < 9 -> Valence.values()[i % 9].toString(precision, ignoreDefault)
+        i < 18 -> Phase.values()[i % 9].toString(precision, ignoreDefault)
+        i < 27 -> effectString(precision, i % 9)
+        else -> Level.values()[i % 9].toString(precision, false) + (if (i >= 72 && precision > 0) "(abs)" else if (i >= 72) "a" else "")
     }
 }
 
-fun String.splitGroups(): Array<String> {
-    val groups = arrayListOf<String>()
-    var chars = toCharArray()
-        .map(Char::toString)
-        .toList()
-    while (chars.isNotEmpty()) {
-        val group = if (chars[0].isVowel()) {
-            if (chars.getOrNull(1)?.isVowel() == true) {
-                chars[0] + chars[1]
-            } else {
-                chars[0]
-            }
-        } else if (!chars[0].isConsonant()) {
-            throw IllegalArgumentException("Non-Ithkuil character : ${chars[0]}")
-        } else {
-            chars.takeWhile(String::isConsonant).joinToString("")
-        }
-        chars = chars.subList(group.length, chars.size)
-        groups += group
+fun effectString(precision: Int, effectIndex: Int): String? {
+    val ben = Effect.BENEFICIAL.toString(precision)
+    val det = Effect.DETRIMENTAL.toString(precision)
+    val unk = Effect.UNKNOWN.toString(precision)
+    return when (effectIndex) {
+        0 -> "1/$ben"
+        1 -> "2/$ben"
+        2 -> "3/$ben"
+        3 -> "all/$ben"
+        4 -> unk
+        5 -> "all/$det"
+        6 -> "3/$det"
+        7 -> "2/$det"
+        8 -> "1/$det"
+        else -> throw IllegalStateException()
     }
-    return groups.toTypedArray()
 }
 
-fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: Boolean = false): String? {
-    val singleRef = parsePersonalReference(s)
-    if (singleRef != null) {
-        return singleRef.toString(precision, ignoreDefault)
-    }
-    val singleJoined = s.toCharArray().map { parsePersonalReference(it.toString(), final) }
-    if (singleJoined.none { it == null }) {
-        return singleJoined.requireNoNulls()
-            .sortedBy { (it[0] as Enum<*>).ordinal }
-            .joinToString("+", "[", "]") { it.toString(precision, ignoreDefault) }
-    } else if (s.length == 3) {
-        if (s.endsWith("ç") || s.endsWith("h") || s.endsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s[0].toString(), final) to parsePersonalReference(s.substring(1, 3), final)
-            return if (ref1 != null && ref2 != null) {
-                "[" + ref1.toString(precision, ignoreDefault) + "/" + ref2.toString(precision, ignoreDefault) + "]"
-            } else {
-                null
-            }
-        } else if (s[1] == 'ç' || s[1] == 'h' || s.startsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s.substring(0, 2), final) to parsePersonalReference(s[2].toString(), final)
-            return if (ref1 != null && ref2 != null) {
-                "[" + ref1.toString(precision, ignoreDefault) + "/" + ref2.toString(precision, ignoreDefault) + "]"
-            } else {
-                null
+fun parseVk(s: String) : List<Precision>? = when {
+    "a" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
+    "ä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.RECOLLECTIVE)
+    "e" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.PURPORTIVE)
+    "ë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.REPORTIVE)
+    "i" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.CONVENTIONAL)
+    "ö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INFERENTIAL)
+    "o" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INTUITIVE)
+    "ü" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.IMAGINARY)
+    "u" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.COGNITIVE)
+    "ai" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
+    "au" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.RECOLLECTIVE)
+    "ei" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.PURPORTIVE)
+    "eu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.REPORTIVE)
+    "ëi" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.CONVENTIONAL)
+    "ou" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INFERENTIAL)
+    "oi" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INTUITIVE)
+    "iu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.IMAGINARY)
+    "ui" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.RESPONSIVE)
+    "ia/oä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
+    "iä/uä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.RECOLLECTIVE)
+    "ie/oë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.PURPORTIVE)
+    "ië/uë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.REPORTIVE)
+    "ëu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.CONVENTIONAL)
+    "uö/iö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INFERENTIAL)
+    "uo/io" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INTUITIVE)
+    "ue/eö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.IMAGINARY)
+    "ua/aö" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.EXECUTIVE)
+    else -> null
+}
+
+fun parseVvSimple(s: String) : Pair<List<Precision>, Int>? {
+    val i = SIMPLE_VV_FORMS.indexOfFirst { it eq s }
+    if (i == -1)
+        return null
+    return listOf<Precision>(Context.values()[i % 8 / 2], Version.values()[i % 2]) to i / 8
+}
+
+fun parseVvComplex(s: String) : List<Precision>? {
+    val i = VR_FORMS.indexOfFirst { it eq s } // The vowel forms are the same
+    if (i == -1)
+        return null
+    return listOf(Context.values()[i % 8 / 2], Version.values()[i % 2], Stem.values()[i / 8])
+}
+
+fun parseVr(s: String): List<Precision>? {
+    val i = VR_FORMS.indexOfFirst { it eq s }
+    if (i == -1)
+        return null
+    return listOf(Function.values()[i % 8 / 4], Specification.values()[i % 4], Stem.values()[i / 8])
+}
+
+fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? = when (val r = s.defaultForm()) {
+    "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)
+    "r" -> listOf(Referent.MONADIC_SPEAKER, Effect.BENEFICIAL)
+    "ř" -> listOf(Referent.MONADIC_SPEAKER, Effect.DETRIMENTAL)
+    "s" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.NEUTRAL)
+    "š" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.BENEFICIAL)
+    "ž" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.DETRIMENTAL)
+    "n" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.NEUTRAL)
+    "t" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.BENEFICIAL)
+    "d" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.DETRIMENTAL)
+    "m" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.NEUTRAL)
+    "p" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
+    "b" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
+    "ň" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.NEUTRAL)
+    "k" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
+    "g" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
+    "z" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
+    "ţ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
+    "ḑ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
+    "tļ" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
+    "f" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
+    "v" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
+    "x" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.NEUTRAL)
+    "c" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.BENEFICIAL)
+    "ż" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.DETRIMENTAL)
+    "th" -> listOf(Referent.OBVIATIVE, Effect.NEUTRAL)
+    "ph" -> listOf(Referent.OBVIATIVE, Effect.BENEFICIAL)
+    "kh" -> listOf(Referent.OBVIATIVE, Effect.DETRIMENTAL)
+    "tç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.NEUTRAL)
+    "pç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.BENEFICIAL)
+    "kç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
+    "çn", "nç" -> if (final || r == "çn") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.NEUTRAL) else null
+    "çm", "mç" -> if (final || r == "çm") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.BENEFICIAL) else null
+    "çň", "ňç" -> if (final || r == "çň") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.DETRIMENTAL) else null
+    "çl", "lç" -> if (final || r == "çl") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.NEUTRAL) else null
+    "çr", "rç" -> if (final || r == "çr") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.BENEFICIAL) else null
+    "çř", "řç" -> if (final || r == "çř") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.DETRIMENTAL) else null
+    "rr" -> listOf(Referent.ABSTRACT_REFERENT, Effect.NEUTRAL)
+    "č" -> listOf(Referent.ABSTRACT_REFERENT, Effect.BENEFICIAL)
+    "j" -> listOf(Referent.ABSTRACT_REFERENT, Effect.DETRIMENTAL)
+    else -> null
+}
+
+fun String.isGlottalCa(): Boolean {
+    if (startsWith("'")) {
+        return true
+    } else if (length >= 3) {
+        val pre = take(2)
+        if (pre[0] == pre[1]) {
+            if (pre[0] == 'r' ||
+                    pre[0] == 'l' ||
+                    pre[0].toString() in NASALS ||
+                    pre[0].toString() in FRICATIVES ||
+                    pre[0].toString() in AFFRICATES) {
+                return true
+            } else if (pre[0].toString() in STOPS && this[2].toString() in listOf("l", "r", "ř", "w", "y")) {
+                return true
             }
         }
-    } else if (s.length == 4) {
-        val halves = s.chunked(2)
-            .map { r -> parsePersonalReference(r, final) }
-        return if (halves.none { it == null }) {
-            halves.requireNoNulls()
-                .sortedBy { (it[0] as Enum<*>).ordinal }
-                .joinToString("+", "[", "]") { it.toString(precision, ignoreDefault) }
+    }
+    return false
+}
+
+fun parseCa(s: String) : List<Precision>? {
+    val elements = arrayListOf<Precision>()
+    var original = s.defaultForm()
+    if (original.isEmpty())
+        return null
+    when (original) {
+        "l" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "ř" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.REPRESENTATIVE)
+        "r" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.NORMAL)
+        "tļ" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.REPRESENTATIVE)
+        "v" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.NORMAL)
+        "lm" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.REPRESENTATIVE)
+        "ẓ" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.NORMAL)
+        "ln" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.REPRESENTATIVE)
+        "d" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.ASSOCIATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "g" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.COALESCENT, Perspective.MONADIC, Essence.NORMAL)
+        "b" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.VARIATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "lţ" -> return listOf(Uniplex.POTENTIAL, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
+    }
+    original = original.replace("mz", "mm")
+        .replace("nd", "nn")
+        .replace("sf", "pp")
+        .replace("šf", "kk")
+        .replace("sţ", "tt")
+        .replace("j", "čy")
+        .replace("nž", "çy")
+        .replace("nz", "ňy")
+        .replace("v(?=.)".toRegex(), "nf")
+        .replace("fš(?=.)".toRegex(), "kf")
+        .replace("fs(?=.)".toRegex(), "tf")
+        .replace("ng", "ňk")
+        .replace("mb", "np")
+        .replace("ḑ", "tţ")
+        .replace("č", "tš")
+        .replace("c", "ts")
+        .replace("rç", "ţç")
+        .replace("rţ", "ţţ")
+        .replace("rf", "ţf")
+        .replace("ž", "ţš")
+        .replace("z", "ţs")
+    val a = when {
+        original.endsWith("ř") -> {
+            elements.add(Perspective.MONADIC)
+            elements.add(Essence.REPRESENTATIVE)
+            1
+        }
+        original.endsWith("r") || original.endsWith("v") -> {
+            if (original.endsWith("v") && !(original.startsWith("ř") || original.getOrNull(original.length - 2) in listOf('b', 'd', 'g')))
+                return null
+            elements.add(Perspective.POLYADIC)
+            elements.add(Essence.NORMAL)
+            1
+        }
+        original.endsWith("ļ") -> {
+            if (original.length == 1)
+                return null
+            elements.add(Perspective.POLYADIC)
+            elements.add(Essence.REPRESENTATIVE)
+            1
+        }
+        original.endsWith("w") -> {
+            elements.add(Perspective.NOMIC)
+            elements.add(Essence.NORMAL)
+            1
+        }
+        original.endsWith("m") || original.endsWith("h") -> {
+            if (original.endsWith("h") &&
+                    (original.length < 3
+                            || original[original.lastIndex - 1].toString() !in STOPS
+                            || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
+                return null
+            } else if (original.length == 1) {
+                elements.add(Perspective.MONADIC)
+                elements.add(Essence.NORMAL)
+                0
+            } else {
+                elements.add(Perspective.NOMIC)
+                elements.add(Essence.REPRESENTATIVE)
+                1
+            }
+        }
+        original.endsWith("y") -> {
+            if (original.length == 1)
+                return null
+            elements.add(Perspective.ABSTRACT)
+            elements.add(Essence.NORMAL)
+            1
+        }
+        original.endsWith("n") || original.endsWith("ç") -> {
+            if (original.endsWith("ç") &&
+                    (original.length < 3
+                            || original[original.lastIndex - 1].toString() !in STOPS
+                            || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
+                return null
+            } else if (original.length == 1) {
+                elements.add(Perspective.MONADIC)
+                elements.add(Essence.NORMAL)
+                0
+            } else {
+                elements.add(Perspective.ABSTRACT)
+                elements.add(Essence.REPRESENTATIVE)
+                1
+            }
+        }
+        else -> {
+            elements.add(Perspective.MONADIC)
+            elements.add(Essence.NORMAL)
+            0
+        }
+    }
+    original = original.dropLast(a)
+    when (original) {
+        "d" -> {
+            elements.add(0, Affiliation.ASSOCIATIVE)
+            return elements
+        }
+        "g" -> {
+            elements.add(0, Affiliation.COALESCENT)
+            return elements
+        }
+        "b" -> {
+            elements.add(0, Affiliation.VARIATIVE)
+            return elements
+        }
+    }
+    val b = when (original.lastOrNull()) { // Dirty hack exploiting the fact that in Kotlin, 'void' functions return a singleton object called Unit
+        't' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
+            null
         } else {
+            elements.add(0, Affiliation.ASSOCIATIVE)
+        }
+        'k' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
+            null
+        } else {
+            elements.add(0, Affiliation.COALESCENT)
+        }
+        'p' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
+            null
+        } else {
+            elements.add(0, Affiliation.VARIATIVE)
+        }
+        else -> {
+            elements.add(0, Affiliation.CONSOLIDATIVE)
             null
         }
     }
-    return null
+    if (b == Unit)
+        original = original.dropLast(1)
+    val c = when (original.lastOrNull()) {
+        's' -> elements.add(0, Extension.PROXIMAL)
+        'š' -> elements.add(0, Extension.INCIPIENT)
+        'f' -> elements.add(0, Extension.ATTENUATIVE)
+        'ţ' -> elements.add(0, Extension.GRADUATIVE)
+        'ç' -> elements.add(0, Extension.DEPLETIVE)
+        else -> {
+            elements.add(0, Extension.DELIMITIVE)
+            null
+        }
+    }
+    if (c == Unit)
+        original = original.dropLast(1)
+    when (original) {
+        "ţ" -> elements.add(0, Uniplex.POTENTIAL)
+        "rt" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.DUPLEX_SIMILAR)
+        }
+        "rk" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.DUPLEX_SIMILAR)
+        }
+        "rp" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.DUPLEX_SIMILAR)
+        }
+        "rn" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+        }
+        "rň" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+        }
+        "rm" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
+        }
+        "řt" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.DUPLEX_FUZZY)
+        }
+        "řk" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.DUPLEX_FUZZY)
+        }
+        "řp" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.DUPLEX_FUZZY)
+        }
+        "t" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.MULTIPLEX_SIMILAR)
+        }
+        "k" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.MULTIPLEX_SIMILAR)
+        }
+        "p" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.MULTIPLEX_SIMILAR)
+        }
+        "n" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
+        }
+        "ň" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
+        }
+        "m" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
+        }
+        "lt" -> {
+            elements.add(0, Connectedness.SEPARATE)
+            elements.add(0, Similarity.MULTIPLEX_FUZZY)
+        }
+        "lk" -> {
+            elements.add(0, Connectedness.CONNECTED)
+            elements.add(0, Similarity.MULTIPLEX_FUZZY)
+        }
+        "lp" -> {
+            elements.add(0, Connectedness.FUSED)
+            elements.add(0, Similarity.MULTIPLEX_FUZZY)
+        }
+        "" -> elements.add(0, Uniplex.SPECIFIC)
+        else -> return null
+    }
+    return elements
 }
 
-data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as AffixData
-        if (cs != other.cs) return false
-        if (abbr != other.abbr) return false
-        if (!desc.contentEquals(other.desc)) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = cs.hashCode()
-        result = 31 * result + abbr.hashCode()
-        result = 31 * result + desc.contentHashCode()
-        return result
+internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
+fun scopeToString(letter: String, ignoreDefault: Boolean): String? {
+    val i = SCOPING_VALUES.indexOf(letter.defaultForm())
+    return when {
+        i == -1 -> null
+        i % 6 == 0 && ignoreDefault -> ""
+        else -> scopes[i % 6]
     }
 }
-
-fun File.bufferedReaderOrNull() = if (this.exists()) bufferedReader() else null
-
-fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
-        ?.lines()
-        ?.filter { it.isNotBlank() }
-        ?.map { it.split("|") }
-        ?.map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
-        ?.toList() ?: emptyList()
-
-fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slotThree: Boolean = false): String {
-    val vi = affixVowel.indexOfFirst { it eq v }
-    if (vi == -1 && !(v eq "üä" || c in CASE_AFFIXES)) {
-        return "@$v"
-    }
-    val deg = vi % 10
-    var specialFormMessage = ""
-    val type = if (vi < 30) {
-        vi / 10 + 1
-    } else {
-        specialFormMessage = when {
-            slotThree && precision == 0 -> "{Stm}"
-            slotThree -> "{stem only}"
-            !slotThree && precision == 0 -> "{Incp+Main}"
-            else -> "{both incorporated and main}"
-        }
-        vi / 10 - 2
-    }
-    val aff = affixData.find { it.cs == c }
-    if (c == "rl") { // case-stacking affix
-        val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
-        return "($case$specialFormMessage)"
-    } else if (c == "ll" || c == "rr") { // case-accessor affix
-        val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
-        return if (precision > 0) {
-            "($case\\accessor-" + (if (c == "ll") "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-        } else {
-            "(${case}a-" + (if (c == "ll") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
-        }
-    } else if (c == "lw" || c == "ly") { // inverse case-accessor affix
-        val case = Case.byVowel(v)?.toString(precision) ?: return "&$v"
-        return if (precision > 0) {
-            "($case\\inverse accessor-" + (if (c == "lw") "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-        } else {
-            "(${case}ia-" + (if (c == "lw") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
-        }
-    } else if (v eq "üä") {
-        val ca = parseCa(c) ?: return "^$c"
-        return if (slotThree) {
-            perspectiveIndexFromCa(ca).toString() + "#"
-        } else {
-            ""
-        } + "(" + ca.toString(precision, ignoreDefault) + ")"
-    }
-    // Special cases
-    return if (aff != null) {
-        if (precision > 0 || aff.desc.size == 9 && deg == 0) {
-            when (aff.desc.size) {
-                1 -> "'" + aff.desc[0] + "'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/") + "/" + deg
-                9 -> "'" + aff.desc[deg - 1] + "'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/")
-                else -> throw IllegalArgumentException("Invalid number of affix degrees")
-            }
-        } else {
-            aff.abbr + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/") + "/" + deg
-        }
-    } else {
-        MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = "/") + "/" + deg
-    }
-}
-
-data class RootData(val cr: String, val dsc: List<String>)
-
-fun loadRoots() = File(ROOTS_PATH).bufferedReaderOrNull()
-        ?.lines()
-        ?.map { it.split("|") }
-        ?.map { RootData(it[0], it.subList(1, it.size)) }
-        ?.toList() ?: emptyList()
-
-fun parseRoot(c: String, precision: Int, stem: Int = 0) : Pair<String, Boolean> {
-    val root = rootData.find { it.cr == c } ?: return MarkdownUtil.bold(c.defaultForm()) to false
-    if (precision > 0) {
-        var stemUsed = false
-        val d = (when (root.dsc.size) {
-            1 -> root.dsc[0] // Only basic description, no precise stem description
-            4, 7 -> {
-                stemUsed = true
-                root.dsc[stem] // basic description + IFL Stems 1,2,3
-            }
-            9 -> { // basic description + IFL Stems 0,1,2,3 ; only used for the carrier root
-                stemUsed = true
-                root.dsc[stem + 1]
-            }
-            else -> {
-                // basic description + IFL & FML Stems 0,1,2,3 ; only used for the carrier root
-                throw IllegalArgumentException("Root format is invalid : found ${root.dsc.size} arguments in the description of root -${root.cr}-")
-            }
-        }).toLowerCase()
-        return "'$d'" to stemUsed
-    } else {
-        return "'${root.dsc[0].toLowerCase()}'" to false
-    }
-}
-
-data class PersonalReferentParsingData(var isInanimate: Boolean = false, var stem: Int = 1)

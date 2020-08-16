@@ -131,7 +131,7 @@ class MessageListener : ListenerAdapter() {
                       }
                     }
                     val res = try {
-                        parseWord(w, prec, ignoreDefault, alone = true)
+                        parseWord(w, prec, ignoreDefault)
                     } catch (ex: Exception) {
                         if (prec < 3) {
                             error("A severe exception occurred during sentence parsing. We are unable to give more information. " +
