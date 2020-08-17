@@ -219,15 +219,12 @@ fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slo
     }
     // Special cases
     return if (aff != null) {
-        if (precision > 0 || aff.desc.size == 9 && deg == 0) {
-            when (aff.desc.size) {
-                1 -> "'" + aff.desc[0] + "'" +
+        if (precision > 0 || deg == 0) {
+            aff.desc.getOrNull(deg - 1)
+                    ?.let { "'$it'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) }
+                    ?: "'" + aff.desc[0] + "'" +
                         (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) +
                         CATEGORY_SEPARATOR + deg
-                9 -> "'" + aff.desc[deg - 1] + "'" +
-                        (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR)
-                else -> throw IllegalArgumentException("Invalid number of affix degrees")
-            }
         } else {
             aff.abbr + (0x2080 + type).toChar() +
                     specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) + CATEGORY_SEPARATOR + deg
@@ -300,3 +297,9 @@ data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) 
 data class RootData(val cr: String, val dsc: List<String>)
 
 data class PersonalReferentParsingData(var isInanimate: Boolean = false, var stem: Int = 1)
+
+data class SentenceParsingState(var carrier: Boolean = false,
+                                var register: Register? = null,
+                                var concatenative: Boolean = false,
+                                var isLastFormativeVerbal : Boolean? = null,
+                                var rtiAffixScope: String? = null)

@@ -415,6 +415,7 @@ fun parseCa(s: String) : List<Precision>? {
 }
 
 internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
+
 fun scopeToString(letter: String, ignoreDefault: Boolean): String? {
     val i = SCOPING_VALUES.indexOf(letter.defaultForm())
     return when {

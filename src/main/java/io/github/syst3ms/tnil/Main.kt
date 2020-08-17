@@ -124,7 +124,7 @@ class MessageListener : ListenerAdapter() {
                       val nonIthkuil = w.filter {
                         it.toString().defaultForm() !in CONSONANTS &&
                         VOWEL_FORM.none { v -> v eq it.toString() } }
-                      if(nonIthkuil.length > 0) {
+                      if(nonIthkuil.isNotEmpty()) {
                         glosses += error("Non-ithkuil characters detected: " +
                           nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString())
                         continue

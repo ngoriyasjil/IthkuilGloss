@@ -10,7 +10,6 @@ const val REFERENT_START = "["
 const val REFERENT_END = "]"
 const val CA_STACKING_VOWEL = "üä"
 const val LOW_TONE_MARKER = "_"
-const val FORMATIVE_SENTENCE_MARKER = "§"
 const val CARRIER_START = "\""
 const val CARRIER_END = "\""
 const val REGISTER_START = "{"
@@ -24,10 +23,8 @@ const val AFFIX_UNKNOWN_VOWEL_MARKER = "@"
 const val AFFIX_UNKNOWN_CASE_MARKER = "&&"
 const val AFFIX_UNKNOWN_CA_MARKER = "^"
 const val AFFIX_STACKED_CA_MARKER = "##"
-const val AFFIX_NON_LEXICAL_MARKER = "$"
 const val NOMINAL_FORMATIVE_IDENTIFIER = ":"
 const val VERBAL_FORMATIVE_IDENTIFIER = "!"
-const val RTI_SCOPE_DATA_MARKER = "##"
 const val TPP_AFFIX_CONSONANT = "kt"
 const val RTI_AFFIX_CONSONANT = "lt"
 
@@ -91,7 +88,7 @@ interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
 }
 
-enum class Incorporation(val short: String) : Precision {
+enum class Incorporation(private val short: String) : Precision {
     TYPE_ONE("T1"),
     TYPE_TWO("T2");
 
@@ -102,7 +99,7 @@ enum class Incorporation(val short: String) : Precision {
     }
 }
 
-enum class Version(val short: String) : Precision {
+enum class Version(private val short: String) : Precision {
     PROCESSUAL("PRC"),
     COMPLETIVE("CPT");
 
@@ -113,7 +110,7 @@ enum class Version(val short: String) : Precision {
     }
 }
 
-enum class Relation(val short: String) : Precision {
+enum class Relation(private val short: String) : Precision {
     UNFRAMED("UNF"),
     FRAMED("FRA");
 
@@ -124,7 +121,7 @@ enum class Relation(val short: String) : Precision {
     }
 }
 
-enum class Stem(val short: String) : Precision {
+enum class Stem(private val short: String) : Precision {
     STEM_ONE("S1"),
     STEM_TWO("S2"),
     STEM_THREE("S3"),
@@ -137,7 +134,7 @@ enum class Stem(val short: String) : Precision {
     }
 }
 
-enum class Specification(val short: String) : Precision {
+enum class Specification(private val short: String) : Precision {
     BASIC("BSC"),
     CONTENTIAL("CTE"),
     CONSTITUTIVE("CSV"),
@@ -149,7 +146,7 @@ enum class Specification(val short: String) : Precision {
         else -> short
     }
 }
-enum class Function(val short: String) : Precision {
+enum class Function(private val short: String) : Precision {
     STATIVE("STA"),
     DYNAMIC("DYN");
 
@@ -160,7 +157,7 @@ enum class Function(val short: String) : Precision {
     }
 }
 
-enum class Uniplex(val short: String) : Precision {
+enum class Uniplex(private val short: String) : Precision {
     SPECIFIC("UXS"),
     POTENTIAL("UPX");
 
@@ -171,7 +168,7 @@ enum class Uniplex(val short: String) : Precision {
     }
 }
 
-enum class Similarity(val short: String) : Precision {
+enum class Similarity(private val short: String) : Precision {
     DUPLEX_SIMILAR("DPS"),
     DUPLEX_DISSIMILAR("DPD"),
     DUPLEX_FUZZY("DPF"),
@@ -185,7 +182,7 @@ enum class Similarity(val short: String) : Precision {
     }
 }
 
-enum class Connectedness(val short: String) : Precision {
+enum class Connectedness(private val short: String) : Precision {
     SEPARATE("SEP"),
     CONNECTED("CND"),
     FUSED("FSD");
@@ -196,7 +193,7 @@ enum class Connectedness(val short: String) : Precision {
     }
 }
 
-enum class Affiliation(val short: String) : Precision {
+enum class Affiliation(private val short: String) : Precision {
     CONSOLIDATIVE("CSL"),
     ASSOCIATIVE("ASO"),
     VARIATIVE("VAR"),
@@ -209,7 +206,7 @@ enum class Affiliation(val short: String) : Precision {
     }
 }
 
-enum class Extension(val short: String) : Precision {
+enum class Extension(private val short: String) : Precision {
     DELIMITIVE("DEL"),
     PROXIMAL("PRX"),
     INCIPIENT("ICP"),
@@ -224,7 +221,7 @@ enum class Extension(val short: String) : Precision {
     }
 }
 
-enum class Perspective(val short: String) : Precision {
+enum class Perspective(private val short: String) : Precision {
     MONADIC("M"),
     POLYADIC("P"),
     NOMIC("N"),
@@ -237,7 +234,7 @@ enum class Perspective(val short: String) : Precision {
     }
 }
 
-enum class Essence(val short: String) : Precision {
+enum class Essence(private val short: String) : Precision {
     NORMAL("NRM"),
     REPRESENTATIVE("RPV");
 
@@ -248,7 +245,7 @@ enum class Essence(val short: String) : Precision {
     }
 }
 
-enum class Context(val short: String) : Precision {
+enum class Context(private val short: String) : Precision {
     EXISTENTIAL("EXS"),
     FUNCTIONAL("FNC"),
     REPRESENTATIONAL("RPS"),
@@ -261,7 +258,7 @@ enum class Context(val short: String) : Precision {
     }
 }
 
-enum class Valence(val short: String) : Precision {
+enum class Valence(private val short: String) : Precision {
     MONOACTIVE("MNO"),
     PARALLEL("PRL"),
     COROLLARY("CRO"),
@@ -279,29 +276,25 @@ enum class Valence(val short: String) : Precision {
     }
 }
 
-enum class Phase(val short: String, val vp: String) : Precision {
-    CONTEXTUAL("CTX", "wa"),
-    PUNCTUAL("PCT", "wä"),
-    ITERATIVE("ITR", "we"),
-    REPETITIVE("REP", "wë"),
-    INTERMITTENT("ITM", "wi"),
-    RECURRENT("RCT", "wö"),
-    FREQUENTATIVE("FRE", "wo"),
-    FRAGMENTATIVE("FRG", "wü"),
-    FLUCTUATIVE("FLC", "wu");
+enum class Phase(private val short: String) : Precision {
+    CONTEXTUAL("CTX"),
+    PUNCTUAL("PCT"),
+    ITERATIVE("ITR"),
+    REPETITIVE("REP"),
+    INTERMITTENT("ITM"),
+    RECURRENT("RCT"),
+    FREQUENTATIVE("FRE"),
+    FRAGMENTATIVE("FRG"),
+    FLUCTUATIVE("FLC");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
-
-    companion object {
-        fun byVowel(vp: String) = values().find { it.vp eq vp }
-    }
 }
 
-enum class Effect(val short: String) : Precision {
+enum class Effect(private val short: String) : Precision {
     NEUTRAL("NEU"),
     BENEFICIAL("BEN"),
     UNKNOWN("UNK"),
@@ -314,7 +307,7 @@ enum class Effect(val short: String) : Precision {
     }
 }
 
-enum class Level(val short: String) : Precision {
+enum class Level(private val short: String) : Precision {
     EQUATIVE("EQU"),
     SURPASSIVE("SUR"),
     DEFICIENT("DFC"),
@@ -331,7 +324,7 @@ enum class Level(val short: String) : Precision {
     }
 }
 
-enum class Aspect(val short: String, val vt: String) : Precision {
+enum class Aspect(private val short: String, val vt: String) : Precision {
     RETROSPECTIVE("RTR", "a"),
     PROSPECTIVE("PRS", "ä"),
     HABITUAL("HAB", "e"),
@@ -379,7 +372,7 @@ enum class Aspect(val short: String, val vt: String) : Precision {
     }
 }
 
-enum class Mood(val short: String, val cn: String, val cy: String) : Precision {
+enum class Mood(private val short: String, val cn: String, val cy: String) : Precision {
     FACTUAL("FAC", "h/ç", ""),
     SUBJUNCTIVE("SUB", "hl", "x"),
     ASSUMPTIVE("ASM", "hr", "rz"),
@@ -400,7 +393,7 @@ enum class Mood(val short: String, val cn: String, val cy: String) : Precision {
     }
 }
 
-enum class CaseScope(val short: String, val cn: String, val cy: String) : Precision {
+enum class CaseScope(private val short: String, val cn: String, val cy: String) : Precision {
     CCH("CCh", "h/ç", ""),
     CCL("CCl", "hl", "x"),
     CCR("CCr", "hr", "rz"),
@@ -421,7 +414,7 @@ enum class CaseScope(val short: String, val cn: String, val cy: String) : Precis
     }
 }
 
-enum class Case(val short: String, val vc: String, val vfShort: String? = null) : Precision {
+enum class Case(private val short: String, val vc: String, val vfShort: String? = null) : Precision {
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
     ABSOLUTIVE("ABS", "e"),
@@ -502,7 +495,7 @@ enum class Case(val short: String, val vc: String, val vfShort: String? = null) 
     }
 }
 
-enum class Illocution(val short: String) : Precision {
+enum class Illocution(private val short: String) : Precision {
     ASSERTIVE("ASR"),
     PERFORMATIVE("PFM");
 
@@ -513,7 +506,7 @@ enum class Illocution(val short: String) : Precision {
     }
 }
 
-enum class Expectation(val short: String) : Precision {
+enum class Expectation(private val short: String) : Precision {
     COGNITIVE("COG"),
     RESPONSIVE("RSP"),
     EXECUTIVE("EXE");
@@ -525,7 +518,7 @@ enum class Expectation(val short: String) : Precision {
     }
 }
 
-enum class Validation(val short: String) : Precision {
+enum class Validation(private val short: String) : Precision {
     OBSERVATIONAL("OBS"),
     RECOLLECTIVE("REC"),
     PURPORTIVE("PUP"),
@@ -542,7 +535,7 @@ enum class Validation(val short: String) : Precision {
     }
 }
 
-enum class Bias(val short: String, val cb: String) : Precision {
+enum class Bias(private val short: String, val cb: String) : Precision {
     DOLOROUS("DOL", "řřx"),
     SKEPTICAL("SKP", "rnž"),
     IMPATIENT("IPT", "zzv"),
@@ -613,7 +606,7 @@ enum class Bias(val short: String, val cb: String) : Precision {
     }
 }
 
-enum class Register(val short: String, val initial: String, val final: String) : Precision {
+enum class Register(private val short: String, val initial: String, val final: String) : Precision {
     DISCURSIVE("DSV", "a", "ai"),
     PARENTHETICAL("PNT", "e", "ei"),
     COGITANT("CGT", "o", "oi"),
@@ -639,7 +632,7 @@ enum class Register(val short: String, val initial: String, val final: String) :
     }
 }
 
-enum class Referent(val short: String) : Precision {
+enum class Referent(private val short: String) : Precision {
     MONADIC_SPEAKER("1m"),
     MONADIC_ADDRESSEE("2m"),
     POLYADIC_ADDRESSEE("2p"),
