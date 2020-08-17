@@ -298,8 +298,16 @@ data class RootData(val cr: String, val dsc: List<String>)
 
 data class PersonalReferentParsingData(var isInanimate: Boolean = false, var stem: Int = 1)
 
-data class SentenceParsingState(var carrier: Boolean = false,
+class SentenceParsingState(var carrier: Boolean = false,
                                 var register: Register? = null,
                                 var concatenative: Boolean = false,
+                                stress: Int? = null,
                                 var isLastFormativeVerbal : Boolean? = null,
-                                var rtiAffixScope: String? = null)
+                                var rtiAffixScope: String? = null) {
+    var forcedStress : Int? = stress
+        get() {
+            val old = field
+            forcedStress = null
+            return old
+        }
+}

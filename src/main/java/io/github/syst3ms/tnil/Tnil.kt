@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("axviašfoišmelcöehu'a", 1, true))
+    println(parseSentence("'a' lola", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -16,7 +16,6 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
     val words = s.toLowerCase()
             .split("\\s+".toRegex())
     val state = SentenceParsingState()
-    var forcedStress : Int? = null
     var modularIndex : Int? = null
     var modularForcedStress : Int? = null
     val result = arrayListOf<String>()
@@ -29,7 +28,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 toParse = toParse.drop(1)
                 state.register = null
             } else if (toParse matches "'[aeoui]'".toRegex()) {
-                forcedStress = when (toParse[1]) {
+                state.forcedStress = when (toParse[1]) {
                     'a' -> -1
                     'e' -> 0
                     'o' -> 1
@@ -50,7 +49,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 continue
             } else if (res == MODULAR_PLACEHOLDER) { // Modular adjunct
                 modularIndex = i
-                modularForcedStress = forcedStress
+                modularForcedStress = state.forcedStress
                 continue
             } else if (res.startsWith("\u0000")) {
                 return errorList("**Parsing error** : ${res.drop(1)}")
@@ -63,7 +62,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                         precision,
                         ignoreDefault,
                         res.startsWith(VERBAL_FORMATIVE_IDENTIFIER),
-                        modularForcedStress
+                        sentenceParsingState = state
                 )
                 if (mod.startsWith("\u0000")) {
                     return errorList("**Parsing error** : ${mod.drop(1)}")
@@ -72,7 +71,6 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 modularIndex = null
                 modularForcedStress = null
             }
-            forcedStress = null
             result += (if (res.startsWith(NOMINAL_FORMATIVE_IDENTIFIER) || res.startsWith(VERBAL_FORMATIVE_IDENTIFIER)) res.drop(1) else res) + " "
         } catch (e: Exception) {
             if (state.carrier) {
@@ -155,20 +153,20 @@ fun parseWord(s: String,
         }
     } else if (groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular() ||
             groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && (groups.size == 4 || groups[4] matches "[wy]".toRegex()))) { // PRA
-        parsePRA(groups, precision, ignoreDefault, stress, sentenceParsingState)
+        parsePRA(groups, precision, ignoreDefault, sentenceParsingState)
     } else if (groups.size >= 4 && groups[0].isVowel() && groups[3] in COMBINATION_PRA_SPECIFICATION
             || groups.size >= 3 && groups[0] !in CD_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
             || groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in COMBINATION_PRA_SPECIFICATION
             || groups.size >= 5 && groups[0] !in CD_CONSONANTS && groups[2] == "'" && groups[4] in COMBINATION_PRA_SPECIFICATION) { // Combination PRA
-        parseCombinationPRA(groups, precision, ignoreDefault, stress, sentenceParsingState)
+        parseCombinationPRA(groups, precision, ignoreDefault, sentenceParsingState)
     } else if (groups.size >= 5 && groups[0].isConsonant() && groups[2] in SCOPING_VALUES
             || groups.size >= 7 && groups[0].isConsonant() && groups[2] == "y" && groups[4] in SCOPING_VALUES
             || groups.size >= 6 && groups[0] == "ë" && groups[3] in SCOPING_VALUES
             || groups.size >= 8 && groups[0] == "ë" && groups[3] == "y" && groups[5] in SCOPING_VALUES) { // Affixual scoping adjunct
-        parseAffixualScoping(groups, precision, ignoreDefault, stress, sentenceParsingState)
+        parseAffixualScoping(groups, precision, ignoreDefault, sentenceParsingState)
     } else if (groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
             || groups.size in 4..5 && groups[1] == "'" && groups[3] in CASE_AFFIXES) { // Single affixual adjunct
-        parseAffixual(groups, precision, ignoreDefault, stress, sentenceParsingState)
+        parseAffixual(groups, precision, ignoreDefault, sentenceParsingState)
     } else if (groups.all { it.isVowel() || it.isModular() }) { // Modular adjunct
         if (sentenceParsingState == null) {
             parseModular(groups, precision, ignoreDefault, verbalFormative = null)
@@ -176,16 +174,15 @@ fun parseWord(s: String,
             MODULAR_PLACEHOLDER
         }
     } else {
-        parseFormative(groups, precision, ignoreDefault, stress, sentenceParsingState)
+        parseFormative(groups, precision, ignoreDefault, sentenceParsingState)
     }
 }
 
 fun parseFormative(groups: Array<String>,
                    precision: Int,
                    ignoreDefault: Boolean,
-                   forceStress: Int? = null,
                    sentenceParsingState: SentenceParsingState? = null): String {
-    val stress = forceStress ?: groups.findStress().coerceAtLeast(0)
+    val stress = (sentenceParsingState?.forcedStress ?: groups.findStress()).coerceAtLeast(0)
     var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
     var i = 0
     var tppDegree: Int? = null
@@ -633,9 +630,8 @@ fun parseModular(groups: Array<String>,
                  precision: Int,
                  ignoreDefault: Boolean,
                  verbalFormative: Boolean? = false,
-                 forceStress: Int? = null,
-                 isInSentence: Boolean = false): String {
-    var stress = forceStress ?: groups.findStress()
+                 sentenceParsingState: SentenceParsingState? = null): String {
+    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     if (stress == -1) // Monosyllabic
         stress = 1
     var i = 0
@@ -682,15 +678,15 @@ fun parseModular(groups: Array<String>,
         else -> Aspect.byVowel(groups[i])?.toString(precision, ignoreDefault)
                 ?: return error("Unknown aspect : ${groups[i]}")
     }
-    return (if (isInSentence) "§" else "") + if (result.endsWith(SLOT_SEPARATOR)) result.dropLast(SLOT_SEPARATOR.length) else result
+    sentenceParsingState?.rtiAffixScope = null
+    return if (result.endsWith(SLOT_SEPARATOR)) result.dropLast(SLOT_SEPARATOR.length) else result
 }
 
 fun parsePRA(groups: Array<String>,
              precision: Int,
              ignoreDefault: Boolean,
-             forceStress: Int? = null,
              sentenceParsingState: SentenceParsingState? = null): String {
-    var stress = forceStress ?: groups.findStress()
+    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     if (stress == -1)
         stress = 1
     var result = ""
@@ -745,9 +741,8 @@ fun parsePRA(groups: Array<String>,
 fun parseCombinationPRA(groups: Array<String>,
                         precision: Int,
                         ignoreDefault: Boolean,
-                        forceStress: Int? = null,
                         sentenceParsingState: SentenceParsingState? = null): String {
-    var stress = forceStress ?: groups.findStress()
+    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     if (stress == -1) // Monosyllabic
         stress = 1 // I'll be consistent with 2011 Ithkuil, this precise behaviour is actually not documented
     var result = ""
@@ -830,7 +825,6 @@ fun parseCombinationPRA(groups: Array<String>,
 fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,
                          ignoreDefault: Boolean,
-                         forceStress: Int? = null,
                          sentenceParsingState: SentenceParsingState? = null): String {
     var rtiScope: String? = sentenceParsingState?.rtiAffixScope
     var result = ""
@@ -893,7 +887,7 @@ fun parseAffixualScoping(groups: Array<String>,
     if (sc != "" && rtiScope == "")
         rtiScope = sc
     result += (sc ?: return error("Invalid scope : ${groups[i]}")).plusSeparator(start = true)
-    val stress = forceStress ?: groups.findStress()
+    val stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     result += when (stress) {
         0 -> "{Incp}".plusSeparator(start = true)
         1 -> ""
@@ -907,10 +901,9 @@ fun parseAffixualScoping(groups: Array<String>,
 fun parseAffixual(groups: Array<String>,
                   precision: Int,
                   ignoreDefault: Boolean,
-                  forceStress: Int? = null,
                   sentenceParsingState: SentenceParsingState? = null): String {
     var rtiScope = sentenceParsingState?.rtiAffixScope
-    var stress = forceStress ?: groups.findStress()
+    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     if (stress == -1) // Monosyllabic
         stress = 1 // I'll be consistent with 2011 Ithkuil, this precise behaviour is actually not documented
     val v = groups[0]
