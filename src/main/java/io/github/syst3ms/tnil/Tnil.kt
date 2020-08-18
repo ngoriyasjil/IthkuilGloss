@@ -109,7 +109,6 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 fun parseWord(s: String,
               precision: Int,
               ignoreDefault: Boolean,
-              stress: Int? = null,
               sentenceParsingState: SentenceParsingState? = null): String {
     val groups = s.splitGroups()
     // Easily-identifiable adjuncts
@@ -372,7 +371,7 @@ fun parseFormative(groups: Array<String>,
             Mood.byCy(c)
         } else {
             CaseScope.byCy(c)
-        } as Precision?
+        }
         secondSegment += (bias?.toString(precision)
                 ?: alternate?.toString(precision)
                 ?: return error("Unknown bias/case-scope/mood : $c")).plusSeparator(start = true)
@@ -400,7 +399,7 @@ fun parseFormative(groups: Array<String>,
                 Mood.byCn(groups[j])
             } else {
                 CaseScope.byCn(groups[j])
-            } as Precision? ?: return error("Unknown case-scope/mood : ${groups[j]}")
+            } ?: return error("Unknown case-scope/mood : ${groups[j]}")
             val vn = when {
                 groups[j-2] == "y" -> {
                     j -= 2
@@ -417,7 +416,7 @@ fun parseFormative(groups: Array<String>,
                 Mood.byCn(cnString)
             } else {
                 CaseScope.byCn(cnString)
-            } as Precision? ?: return error("Unknown case-scope/mood : $cnString")
+            } ?: return error("Unknown case-scope/mood : $cnString")
             val vt = Aspect.byVowel(groups[j-1]) ?: return error("Unknown aspect : ${groups[j-1]}")
             secondSegment = join(vt.toString(precision, ignoreDefault), cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
         } else {
