@@ -63,14 +63,16 @@ val AFFIX_VOWELS = listOf(
     "üyö", "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
 )
 val SIMPLE_VV_FORMS = listOf(
-        "a", "ä", "e", "i", "u", "ü", "o", "ö",
-        "ai", "au", "ei", "eu", "ui", "iu", "oi", "ou",
-        "ia/öa", "iä/uä", "ie/oë", "ië/uë", "ua/aö", "ue/eö", "uo/io", "uö/iö",
-        "ao", "ae", "ea", "eo", "oa", "öa", "oe", "öe",
-        "awo", "awe", "ewa", "ewo", "owa", "öwa", "owe", "öwe",
-        "ayo", "aye", "eya", "eyo", "oya", "öya", "oye", "öye",
-        "a'wo", "a'we", "e'wa", "e'wo", "o'wa", "ö'wa", "o'we", "ö'we",
-        "a'yo", "a'ye", "e'ya", "e'yo", "o'ya", "ö'ya", "o'ye", "ö'ye"
+        "a", "ä", "e", "i", "ö", "o", "ü", "u",
+        "awë", "äwë", "ewë", "iwë", "öwë", "owë", "üwë", "uwë",
+        "ai", "au", "ei", "eu", "ou", "oi", "iu", "ui",
+        "ia", "iä", "ie", "ië", "uö", "uo", "ue", "ua",
+        "ao", "ae", "ea", "eo", "öe", "oe", "öa", "oa",
+        "awa", "äwä", "ewe", "iwi", "öwö", "owo", "üwü", "uyu",
+        "awi", "awu", "ewi", "eyu", "oyu", "owi", "iwu", "uwi",
+        "iwa", "iwä", "iwe", "iwë", "uyö", "uyo", "uye", "uya",
+        "awo", "awe", "ewa", "ewo", "öwe", "owe", "öwa", "owa",
+        "ayo", "aye", "eya", "eyo", "öye", "oye", "öya", "oya"
 )
 val VR_FORMS = listOf(
         "a", "ä", "e", "i", "u", "ü", "o", "ö",

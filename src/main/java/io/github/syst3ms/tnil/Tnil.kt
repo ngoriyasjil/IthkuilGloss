@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseSentence("'a' lola", 1, true))
+    println(parseSentence("önfuolind", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -615,7 +615,6 @@ fun parseFormative(groups: Array<String>,
     if (firstSegment.contains(TPP_SHORTCUT_PLACEHOLDER) && tppDegree != null) {
         firstSegment = firstSegment.replace(TPP_SHORTCUT_PLACEHOLDER, tppAffixString(tppDegree, rtiScope, precision))
     }
-    secondSegment += Context.values()[stress].toString(precision, ignoreDefault).plusSeparator(start = true)
     sentenceParsingState?.rtiAffixScope = null
     sentenceParsingState?.isLastFormativeVerbal = stress == 0
     return if (secondSegment.isEmpty() || secondSegment.startsWith(SLOT_SEPARATOR)) {

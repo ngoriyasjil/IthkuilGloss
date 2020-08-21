@@ -87,7 +87,7 @@ fun parseVk(s: String) : List<Precision>? = when {
 }
 
 fun parseVvSimple(s: String) : Pair<List<Precision>, Int>? {
-    val i = SIMPLE_VV_FORMS.indexOfFirst { it eq s }
+    val i = SIMPLE_VV_FORMS.indexOf(s.defaultForm())
     if (i == -1)
         return null
     return listOf<Precision>(Context.values()[i % 8 / 2], Version.values()[i % 2]) to i / 8
