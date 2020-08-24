@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("hlyatta'elmaufgaiskëimmţkogheyowe'érs", 1, true))
+    println(parseWord("žreuliäl", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -527,6 +527,7 @@ fun parseFormative(groups: Array<String>,
                 break
             }
         }
+        var potentialPraShortcut : Pair<String, String>? = null
         var k = caIndex + 1
         while (k <= j) {
             if (k + 1 > j) {
@@ -541,16 +542,32 @@ fun parseFormative(groups: Array<String>,
             val c = groups[k+1]
             if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
                 return error("'$c' can't be a valid affix consonant")
-            val a = parseAffix(c, v, precision, ignoreDefault)
+            val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = k == caIndex + 1)
             when {
                 a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
                 a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
                 a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+                a == PRA_SHORTCUT_AFFIX_MARKER && potentialPraShortcut == null -> potentialPraShortcut = c to v
             }
             secondSegment = a.plusSeparator(start = true) + secondSegment
             if (c == RTI_AFFIX_CONSONANT)
                 rtiScope = rtiScope ?: "{Ca}"
             k += 2
+        }
+        if (potentialPraShortcut != null && k == caIndex + 3) { // PRA shortcut
+            val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
+                    ?: return error("Unknown personal referent : '" + potentialPraShortcut.first + "'")
+            secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
+        } else if (potentialPraShortcut != null) {
+            val a = parseAffix(potentialPraShortcut.first, potentialPraShortcut.second, precision, ignoreDefault)
+            when {
+                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+            }
+            if (potentialPraShortcut.first == RTI_AFFIX_CONSONANT)
+                rtiScope = rtiScope ?: "{Ca}"
+            secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, a)
         }
         val c = if (groups[caIndex].isGlottalCa()) groups[caIndex].drop(1) else groups[caIndex]
         val ca = parseCa(c.trimH())
@@ -578,6 +595,7 @@ fun parseFormative(groups: Array<String>,
         j = caIndex - 1
     }
     // j is now at the vowel before Ca
+    var potentialPraShortcut : Pair<String, String>? = null
     var k = i
     while (k <= j) { // Reminder : affixes are CV rather than VC here
         var c = groups[k]
@@ -601,16 +619,32 @@ fun parseFormative(groups: Array<String>,
         }
         if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
             return error("'$c' can't be a valid affix consonant")
-        val aff = parseAffix(c, v, precision, ignoreDefault)
+        val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = k == i)
         when {
-            aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-            aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-            aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+            a == PRA_SHORTCUT_AFFIX_MARKER && potentialPraShortcut == null -> potentialPraShortcut = c to v
         }
-        firstSegment += aff.plusSeparator()
+        firstSegment += a.plusSeparator()
         if (c == RTI_AFFIX_CONSONANT)
             rtiScope = rtiScope ?: "{Stm}"
         k += 2
+    }
+    if (potentialPraShortcut != null && k == i + 2) { // PRA shortcut
+        val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
+                ?: return error("Unknown personal referent : '" + potentialPraShortcut.first + "'")
+        secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
+    } else if (potentialPraShortcut != null) {
+        val a = parseAffix(potentialPraShortcut.first, potentialPraShortcut.second, precision, ignoreDefault)
+        when {
+            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+        }
+        if (potentialPraShortcut.first == RTI_AFFIX_CONSONANT)
+            rtiScope = rtiScope ?: "{Ca}"
+        secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, a)
     }
     if (firstSegment.contains(TPP_SHORTCUT_PLACEHOLDER) && tppDegree != null) {
         firstSegment = firstSegment.replace(TPP_SHORTCUT_PLACEHOLDER, tppAffixString(tppDegree, rtiScope, precision))

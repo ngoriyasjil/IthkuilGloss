@@ -173,7 +173,12 @@ fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
         ?.map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
         ?.toList() ?: emptyList()
 
-fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slotThree: Boolean = false): String {
+fun parseAffix(c: String,
+               v: String,
+               precision: Int,
+               ignoreDefault: Boolean,
+               slotThree: Boolean = false,
+               canBePraShortcut: Boolean = false): String {
     val vi = AFFIX_VOWELS.indexOfFirst { it eq v }
     if (vi == -1 && v.defaultForm() != CA_STACKING_VOWEL) {
         return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
@@ -235,7 +240,9 @@ fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slo
         } + "(" + ca.toString(precision, ignoreDefault) + ")"
     }
     // Special cases
-    return if (aff != null) {
+    return if (type == 3 && canBePraShortcut) {
+        PRA_SHORTCUT_AFFIX_MARKER
+    } else if (aff != null) {
         if (precision > 0 || deg == 0) {
             aff.desc.getOrNull(deg - 1)
                     ?.let { "'$it'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) }

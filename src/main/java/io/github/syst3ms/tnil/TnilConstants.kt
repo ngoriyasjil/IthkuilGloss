@@ -1,5 +1,7 @@
 package io.github.syst3ms.tnil
 
+import java.lang.AssertionError
+
 const val ALT_VF_FORM = 1
 const val SLOT_THREE_PRESENT = 2
 
@@ -27,6 +29,7 @@ const val NOMINAL_FORMATIVE_IDENTIFIER = ":"
 const val VERBAL_FORMATIVE_IDENTIFIER = "!"
 const val TPP_AFFIX_CONSONANT = "kt"
 const val RTI_AFFIX_CONSONANT = "lt"
+const val PRA_SHORTCUT_AFFIX_MARKER = "%%"
 
 val VOWEL_FORM = listOf(
     "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
@@ -657,4 +660,21 @@ enum class Referent(private val short: String) : Precision {
     }
 }
 
-
+fun parsePraShortcut(c: String, v: String, precision: Int): String? {
+    val i = AFFIX_VOWELS.indexOfFirst { it eq v }
+    assert(i / 10 == 2 && i != 20)
+    val case = when (i % 10) {
+        1 -> Case.POSSESSIVE
+        2 -> Case.PROPRIETIVE
+        3 -> Case.GENITIVE
+        4 -> Case.ATTRIBUTIVE
+        5 -> Case.PRODUCTIVE
+        6 -> Case.INTERPRETIVE
+        7 -> Case.ORIGINATIVE
+        8 -> Case.COMITATIVE
+        9 -> Case.CORRELATIVE
+        else -> throw AssertionError()
+    }
+    val ref = parsePersonalReference(c) ?: return null
+    return "(" + join(ref.toString(precision), case.toString(precision)) + ")"
+}
