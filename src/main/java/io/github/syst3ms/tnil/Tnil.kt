@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("žreuliäl", 1, true))
+    println(parseWord("alfìelarkìerál", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -528,21 +528,21 @@ fun parseFormative(groups: Array<String>,
             }
         }
         var potentialPraShortcut : Pair<String, String>? = null
-        var k = caIndex + 1
-        while (k <= j) {
-            if (k + 1 > j) {
+        val startJ = j
+        while (j > caIndex) {
+            if (j - 1 <= caIndex) {
                 return error("Affix group (slot X) ended unexpectedly")
             }
-            val v = if (groups[k+1] == "y") {
-                k += 2
-                groups[k-2] + "y" + groups[k]
+            val c = groups[j]
+            val v = if (groups[j-2] == "y") {
+                j -= 2
+                groups[j-1] + "y" + groups[j+1]
             } else {
-                groups[k]
+                groups[j-1]
             }
-            val c = groups[k+1]
             if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
                 return error("'$c' can't be a valid affix consonant")
-            val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = k == caIndex + 1)
+            val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = j == startJ)
             when {
                 a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
                 a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
@@ -552,9 +552,9 @@ fun parseFormative(groups: Array<String>,
             secondSegment = a.plusSeparator(start = true) + secondSegment
             if (c == RTI_AFFIX_CONSONANT)
                 rtiScope = rtiScope ?: "{Ca}"
-            k += 2
+            j -= 2
         }
-        if (potentialPraShortcut != null && k == caIndex + 3) { // PRA shortcut
+        if (potentialPraShortcut != null && j == startJ - 2) { // PRA shortcut
             val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
                     ?: return error("Unknown personal referent : '" + potentialPraShortcut.first + "'")
             secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
