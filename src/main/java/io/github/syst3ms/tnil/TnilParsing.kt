@@ -15,6 +15,20 @@ val inanimateReferentDescriptions = listOf(
 )
 val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
+fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
+    val i = VOWEL_FORM.indexOfFirst { it eq v }
+    if (i == -1 || secondHalf && i % 9 == 7) // one of the unused values
+        return null
+    return if (secondHalf) {
+        when {
+            i % 9 == 8 -> Case.values()[36 + i - i/9 - 1] // We have to move back 1 for each 8th vowel form that's skipped
+            else -> Case.values()[36 + i - i/9] // Likewise
+        }
+    } else {
+        Case.values()[i]
+    }
+}
+
 fun parseCd(c: String) : Pair<List<Precision>, Int> {
     val i = CD_CONSONANTS.indexOf(c.defaultForm())
     var flag = 0
@@ -91,13 +105,6 @@ fun parseVvSimple(s: String) : Pair<List<Precision>, Int>? {
     if (i == -1)
         return null
     return listOf<Precision>(Context.values()[i % 8 / 2], Version.values()[i % 2]) to i / 8
-}
-
-fun parseVvComplex(s: String) : List<Precision>? {
-    val i = VR_FORMS.indexOfFirst { it eq s } // The vowel forms are the same
-    if (i == -1)
-        return null
-    return listOf(Context.values()[i % 8 / 2], Version.values()[i % 2], Stem.values()[i / 8])
 }
 
 fun parseVr(s: String): List<Precision>? {

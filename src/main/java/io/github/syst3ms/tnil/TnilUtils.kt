@@ -175,7 +175,7 @@ fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
 
 fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slotThree: Boolean = false): String {
     val vi = AFFIX_VOWELS.indexOfFirst { it eq v }
-    if (vi == -1 && !(v eq CA_STACKING_VOWEL || c in CASE_AFFIXES)) {
+    if (vi == -1 && v.defaultForm() != CA_STACKING_VOWEL) {
         return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
     }
     val deg = vi % 10
@@ -192,22 +192,39 @@ fun parseAffix(c: String, v: String, precision: Int, ignoreDefault: Boolean, slo
         vi / 10 - 2
     }
     val aff = affixData.find { it.cs == c }
-    if (c == "rl") { // case-stacking affix
-        val case = Case.byVowel(v)?.toString(precision) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$v"
-        return "($case$specialFormMessage)"
-    } else if (c == "ll" || c == "rr") { // case-accessor affix
-        val case = Case.byVowel(v)?.toString(precision) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$v"
-        return if (precision > 0) {
-            "($case\\accessor-" + (if (c == "ll") "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-        } else {
-            "(${case}a-" + (if (c == "ll") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+    if (c in CASE_STACKING_AFFIXES) { // case-stacking affix
+        val secondHalf = CASE_STACKING_AFFIXES.indexOf(c) % 2 == 1
+        val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
+            secondHalf && v.length == 1 -> "$v'$v"
+            secondHalf -> v[0] + "'" + v[1]
+            else -> v
         }
-    } else if (c == "lw" || c == "ly") { // inverse case-accessor affix
-        val case = Case.byVowel(v)?.toString(precision) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$v"
+        return "($case$specialFormMessage)"
+    } else if (c in CASE_ACCESSOR_AFFIXES) { // case-accessor affix
+        val typeOne = CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
+        val secondHalf = CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
+        val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
+            secondHalf && v.length == 1 -> "$v'$v"
+            secondHalf -> v[0] + "'" + v[1]
+            else -> v
+        }
         return if (precision > 0) {
-            "($case\\inverse accessor-" + (if (c == "lw") "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
+            "($case\\accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
         } else {
-            "(${case}ia-" + (if (c == "lw") "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+            "(${case}a-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+        }
+    } else if (c in INVERSE_CASE_ACCESSOR_AFFIXES) { // inverse case-accessor affix
+        val typeOne = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
+        val secondHalf = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
+        val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
+            secondHalf && v.length == 1 -> "$v'$v"
+            secondHalf -> v[0] + "'" + v[1]
+            else -> v
+        }
+        return if (precision > 0) {
+            "($case\\inverse accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
+        } else {
+            "(${case}ia-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
         }
     } else if (v eq CA_STACKING_VOWEL) {
         val ca = parseCa(c) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$c"

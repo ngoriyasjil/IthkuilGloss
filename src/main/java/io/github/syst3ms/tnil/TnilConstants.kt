@@ -49,12 +49,14 @@ val NASALS = listOf("m", "n", "ň")
 val STOPS = listOf("p", "b", "t", "d", "k", "g")
 val CD_CONSONANTS = listOf(
         "h", "ç", "w", "y",
-        "hw", "çw", "hl", "hr",
-        "hlw", "hly", "hm", "hn",
-        "hmw", "hnw", "hmy", "hny"
+        "hw", "hh", "çw", "çç",
+        "hl", "hr", "hm", "hn",
+        "hlw", "hly", "hmw", "hmy"
 )
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
-val CASE_AFFIXES = listOf("rl", "ll", "rr", "lw", "ly")
+val CASE_ACCESSOR_AFFIXES = listOf("ll", "rr", "tt", "dd")
+val INVERSE_CASE_ACCESSOR_AFFIXES = listOf("kk", "gg", "pp", "bb")
+val CASE_STACKING_AFFIXES = listOf("lw", "ly")
 val AFFIX_VOWELS = listOf(
     "üa", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "üe", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
@@ -63,16 +65,16 @@ val AFFIX_VOWELS = listOf(
     "üyö", "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
 )
 val SIMPLE_VV_FORMS = listOf(
-        "a", "ä", "e", "i", "ö", "o", "ü", "u",
-        "awë", "äwë", "ewë", "iwë", "öwë", "owë", "üwë", "uwë",
-        "ai", "au", "ei", "eu", "ou", "oi", "iu", "ui",
-        "ia", "iä", "ie", "ië", "uö", "uo", "ue", "ua",
-        "ao", "ae", "ea", "eo", "öe", "oe", "öa", "oa",
-        "awa", "äwä", "ewe", "iwi", "öwö", "owo", "üwü", "uyu",
-        "awi", "awu", "ewi", "eyu", "oyu", "owi", "iwu", "uwi",
-        "iwa", "iwä", "iwe", "iwë", "uyö", "uyo", "uye", "uya",
-        "awo", "awe", "ewa", "ewo", "öwe", "owe", "öwa", "owa",
-        "ayo", "aye", "eya", "eyo", "öye", "oye", "öya", "oya"
+        "a", "ä", "e", "i", "u", "ü", "o", "ö",
+        "ai", "au", "ei", "eu", "ui", "iu", "oi", "ou",
+        "ia", "iä", "ie", "ië", "ua", "ue", "uo", "uö",
+        "oä", "uä", "oë", "uë", "aö", "eö", "iö", "io",
+        "ao", "ae", "ea", "eo", "oa", "öa", "oe", "öe",
+        "awa", "äwä", "ewe", "iwi", "uyu", "üwü", "owo", "öwö",
+        "awi", "awu", "ewi", "ewu", "uwi", "iwu", "owi", "owu",
+        "iwa", "iwä", "iwe", "iwë", "uya", "uye", "uyo", "uyö",
+        "owä", "uwä", "owë", "uwë", "awö", "ewö", "iwo", "iwö",
+        "awo", "awe", "ewa", "ewo", "owa", "öwa", "owe", "öwe"
 )
 val VR_FORMS = listOf(
         "a", "ä", "e", "i", "u", "ü", "o", "ö",
@@ -377,10 +379,10 @@ enum class Aspect(private val short: String, val vt: String) : Precision {
 enum class Mood(private val short: String, val cn: String, val cy: String) : Precision {
     FACTUAL("FAC", "h/ç", ""),
     SUBJUNCTIVE("SUB", "hl", "x"),
-    ASSUMPTIVE("ASM", "hr", "rz"),
-    SPECULATIVE("SPC", "hw", "rž"),
-    COUNTERFACTIVE("COU", "hm", "lz"),
-    HYPOTHETICAL("HYP", "hn", "lž");
+    ASSUMPTIVE("ASM", "hr", "rs"),
+    SPECULATIVE("SPC", "hw", "rš"),
+    COUNTERFACTIVE("COU", "hm", "rz"),
+    HYPOTHETICAL("HYP", "hn", "rž");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -398,10 +400,10 @@ enum class Mood(private val short: String, val cn: String, val cy: String) : Pre
 enum class CaseScope(private val short: String, val cn: String, val cy: String) : Precision {
     CCH("CCh", "h/ç", ""),
     CCL("CCl", "hl", "x"),
-    CCR("CCr", "hr", "rz"),
-    CCW("CCw", "hw", "rž"),
-    CCM("CCm", "hm", "lz"),
-    CCn("CCn", "hn", "lž");
+    CCR("CCr", "hr", "rs"),
+    CCW("CCw", "hw", "rš"),
+    CCM("CCm", "hm", "rz"),
+    CCn("CCn", "hn", "rž");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""

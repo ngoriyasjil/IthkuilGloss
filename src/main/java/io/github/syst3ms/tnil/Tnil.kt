@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseSentence("önfuolind", 1, true))
+    println(parseWord("hlyatta'elmaufgaiskëimmţkogheyowe'érs", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -164,7 +164,7 @@ fun parseWord(s: String,
             || groups.size >= 8 && groups[0] == "ë" && groups[3] == "y" && groups[5] in SCOPING_VALUES) { // Affixual scoping adjunct
         parseAffixualScoping(groups, precision, ignoreDefault, sentenceParsingState)
     } else if (groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
-            || groups.size in 4..5 && groups[1] == "'" && groups[3] in CASE_AFFIXES) { // Single affixual adjunct
+            || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular()) { // Single affixual adjunct
         parseAffixual(groups, precision, ignoreDefault, sentenceParsingState)
     } else if (groups.all { it.isVowel() || it.isModular() }) { // Modular adjunct
         if (sentenceParsingState == null) {
@@ -216,7 +216,7 @@ fun parseFormative(groups: Array<String>,
                         v = groups[i+1] + "y" + groups[i+3]
                         stop = groups[i+2] == "'y"
                     } else { // Single glottal stop
-                        v = if (groups[i+1] == groups[i+3]) {
+                        v = if (groups[i+1] eq groups[i+3]) {
                             groups[i+1]
                         } else {
                             groups[i+1] + groups[i+3]
@@ -233,7 +233,6 @@ fun parseFormative(groups: Array<String>,
                      return error("'$c' can't be a valid affix consonant")
                 val aff = parseAffix(c, v, precision, ignoreDefault, slotThree = true)
                 when {
-
                     aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
                     aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
                     aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
@@ -247,8 +246,9 @@ fun parseFormative(groups: Array<String>,
                 }
             }
         }
-        val vv = parseVvComplex(groups[i+1]) ?: return error("Unknown Vv value : ${groups[i+1]}")
-        var stem = ((vv[2] as Enum<*>).ordinal + 1) % 4
+        // Complex Vv and Vr have the exact same values
+        val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value : ${groups[i+1]}")
+        var stem = ((complexVv[2] as Enum<*>).ordinal + 1) % 4
         if (groups[i].isInvalidLexical())
             return error("'${groups[i]}' can't be a valid root consonant")
         val ci = parseRoot(groups[i], precision, stem)
@@ -271,7 +271,7 @@ fun parseFormative(groups: Array<String>,
         if (groups[i+2].isInvalidLexical())
             return error("'${groups[i+2]}' can't be a valid root consonant")
         val cr = parseRoot(groups[i+2], precision, stem)
-        firstSegment += vv.toString(precision, ignoreDefault, stemUsed = ci.second).plusSeparator()
+        firstSegment += complexVv.toString(precision, ignoreDefault, stemUsed = ci.second).plusSeparator()
         firstSegment += if (precision > 0 && stem != 0 && groups[i+2] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
             REFERENT_ROOT_PLACEHOLDER
@@ -325,7 +325,7 @@ fun parseFormative(groups: Array<String>,
         if (groups.size < 4) {
             return error("Simple formative ended unexpectedly : ${groups.joinToString("")}")
         }
-        val vvParse = if (groups[1] matches "'?[wy]".toRegex()) {
+        val vvParse = if (groups[1] matches "[wy]".toRegex()) {
             i += 2
             groups[0] + groups[1] + groups[2]
         } else {
@@ -340,7 +340,10 @@ fun parseFormative(groups: Array<String>,
         firstSegment += join(
                 vv.toString(precision, ignoreDefault),
                 if (shortcutIndex > 0) {
-                    tppDegree = shortcutIndex + 1
+                    tppDegree = when (shortcutIndex) {
+                        in 1..4 -> 5 - shortcutIndex
+                        else -> shortcutIndex
+                    }
                     TPP_SHORTCUT_PLACEHOLDER
                 } else {
                     ""
@@ -362,7 +365,7 @@ fun parseFormative(groups: Array<String>,
     var secondSegment = ""
     var j = groups.lastIndex
     // Start from the end to easily identify each slot
-    val noGlottalTail = j >= 6 && groups[j-1].isVowel() && groups[j-2].startsWith("'")
+    val noGlottalTail = j >= 6 && groups[j-1].isVowel() && groups[j-2] == "'"
     val glottalTail = j >= 6 && groups[j].startsWith("'")
     if (noGlottalTail || glottalTail) { // Bias
         val c = groups[j].trimGlottal()
@@ -378,9 +381,16 @@ fun parseFormative(groups: Array<String>,
         j--
     }
     if (groups[j].isVowel()) { // Vc/Vk
-        val v = if (groups[j-1] == "'") {
+        val v = if (groups[j-1] == "'" && stress > 0) {
             j -= 2
             groups[j] + "'" + groups[j+2]
+        } else if (groups[j-1] == "'") {
+            j -= 2
+            when {
+                // We've already established stress, it doesn't really matter which one of the two bears it
+                groups[j] eq groups[j+2] -> groups[j]
+                else -> groups[j] + groups[j+2]
+            }
         } else {
             groups[j]
         }
@@ -525,15 +535,6 @@ fun parseFormative(groups: Array<String>,
             val v = if (groups[k+1] == "y") {
                 k += 2
                 groups[k-2] + "y" + groups[k]
-            } else if (groups[k+1] == "'") { // Can only happen with case-stacking
-                when {
-                    k + 3 > j -> return error("Affix group (slot X) ended unexpectedly")
-                    groups[k+3] !in CASE_AFFIXES -> return error("Expected a case-stacking or case-accessor affix, but found the affix -${groups[k+3]}- instead")
-                    else -> {
-                        k += 2
-                        groups[k-2] + "'" + groups[k]
-                    }
-                }
             } else {
                 groups[k]
             }
@@ -589,8 +590,7 @@ fun parseFormative(groups: Array<String>,
         if (k + 3 <= j && groups[k+2] matches "'?y".toRegex()) { // Standalone end of slot VIII or Type 2 "delineation"
             v = when {
                 "y" in groups[k+2] -> groups[k+1] + "y" + groups[k+3]
-                c in CASE_AFFIXES -> groups[k+1] + "'" + groups[k+3]
-                groups[k+1] == groups[k+3] -> groups[k+1]
+                groups[k+1] eq groups[k+3] -> groups[k+1]
                 else -> groups[k+1] + groups[k+3]
             }
             k += 2
@@ -639,19 +639,19 @@ fun parseModular(groups: Array<String>,
         i++
     }
     while (i + 2 < groups.size && i < 7) {
-        if (groups[i+1].startsWith("h")) {
-            val cn = when (verbalFormative) {
-                true -> Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault)
-                false -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)
-                null -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault))
-            } ?: return error("Unknown case-scope/mood : ${groups[i]}")
+        if (groups[i+1].startsWith("h") || groups[i+1] == "y" && groups.getOrNull(i+3)?.startsWith("h") == true) {
             val vn = when {
-                groups.getOrNull(i-1) == "y" -> {
+                groups.getOrNull(i+1) == "y" -> {
                     i += 2
                     groups[i-2] + "y" + groups[i]
                 }
                 else -> groups[i]
             }
+            val cn = when (verbalFormative) {
+                true -> Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault)
+                false -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)
+                null -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault))
+            } ?: return error("Unknown case-scope/mood : ${groups[i]}")
             val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
                     ?: return error("Unknown valence/phase/level/effect : $vn")
             result += join(patternOne, cn).plusSeparator()
@@ -665,7 +665,30 @@ fun parseModular(groups: Array<String>,
             val vt = Aspect.byVowel(groups[i]) ?: return error("Unknown aspect : ${groups[i]}")
             result += join(vt.toString(precision, ignoreDefault), cn).plusSeparator()
         } else {
-            return error("Invalid Cn group for a modular adjunct : " + groups[i] + groups[i+1])
+            assert(groups[i+1] matches "'?[wy]".toRegex()
+                    || groups[i+1] == "y"
+                        && !groups[i].endsWith("u")
+                        && groups.getOrNull(i+3)?.matches("'?[wy]".toRegex()) == true
+            )
+            val vn = when {
+                groups[i+1] == "y" && !groups[i].endsWith("u") -> {
+                    i += 2
+                    groups[i-2] + "y" + groups[i]
+                }
+                else -> groups[i]
+            }
+            val fncCn = if (groups[i].defaultForm().endsWith("u")) {
+                "y"
+            } else {
+                "w"
+            }
+            val contextIndex = listOf(fncCn, "'w", "'y").indexOf(groups[i+1])
+            if (contextIndex == -1)
+                return error("Expected the Cn value to be $fncCn, but found '${groups[i+1]}'")
+            val context = Context.values()[contextIndex + 1]
+            val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
+                    ?: return error("Unknown phase/context : $vn")
+            result += join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator()
         }
         i += 2
     }
@@ -768,22 +791,15 @@ fun parseCombinationPRA(groups: Array<String>,
     } else {
         val slotSixFilled = (groups.size - i) % 2
         val limit = groups.size - slotSixFilled
-        outer@while (i < limit) {
+        while (i < limit) {
             if (i + 1 >= limit) {
                 return error("Affix group of combination PRA ended unexpectedly")
             }
             val v = if (groups[i+1] == "y") {
                 i += 2
                 groups[i-2] + "y" + groups[i]
-            } else if (groups[i+1] == "'") { // Can only happen with case-stacking, or with slot VI being Series 5+
-                when {
-                    i + 3 > limit -> if (slotSixFilled == 1) break@outer else return error("Affix group of combination PRA ended unexpectedly")
-                    groups[i+3] !in CASE_AFFIXES -> return error("Expected a case-stacking or case-accessor affix, but found the affix -${groups[i+3]}- instead")
-                    else -> {
-                        i += 2
-                        groups[i-2] + "'" + groups[i]
-                    }
-                }
+            } else if (groups[i+1] == "'") { // Can only happen with slot VI being Series 5+
+                if (i+3 > limit && slotSixFilled == 1) break else return error("Affix group of combination PRA ended unexpectedly")
             } else {
                 groups[i]
             }
@@ -829,21 +845,18 @@ fun parseAffixualScoping(groups: Array<String>,
     var i = 0
     if (groups[0] == "ë")
         i++
-    var c: String
+    var c = groups[i]
     var v: String
-    var aff: String
     if (groups[i+2] == "y") {
-        c = groups[i]
         v = groups[i+1] + "y" + groups[i+3]
         i += 4
     } else {
-        c = groups[i]
         v = groups[i+1]
         i += 2
     }
     if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
         return error("'$c' can't be a valid affix consonant")
-    aff = parseAffix(c, v, precision, ignoreDefault)
+    var aff = parseAffix(c, v, precision, ignoreDefault)
     when {
         aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
         aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
@@ -904,17 +917,23 @@ fun parseAffixual(groups: Array<String>,
     var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     if (stress == -1) // Monosyllabic
         stress = 1 // I'll be consistent with 2011 Ithkuil, this precise behaviour is actually not documented
-    val v = groups[0]
-    val c = groups[1]
+    var i = 0
+    val v = if (groups[1] == "y") {
+        i += 2
+        groups[0] + "y" + groups[2]
+    } else {
+        groups[0]
+    }
+    val c = groups[i+1]
     if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
         return error("'$c' can't be a valid affix consonant")
     val aff = parseAffix(c, v, precision, ignoreDefault)
-    val scope = if (groups.size == 3) scopeToString(groups[2].defaultForm(), ignoreDefault) else ""
+    val scope = if (groups.size == i+3) scopeToString(groups[i+2].defaultForm(), ignoreDefault) else ""
     return when {
         aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
         aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
         aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-        scope == null -> error("Invalid scope : ${groups[2]}")
+        scope == null -> error("Invalid scope : ${groups[i+2]}")
         else -> {
             if (c == RTI_AFFIX_CONSONANT)
                 rtiScope = rtiScope ?: scope
