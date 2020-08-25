@@ -6,15 +6,14 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("alfìelarkìerál", 1, true))
+    println(parseSentence("ahla hlao karleušštçoêzao", 1, true).joinToString(""))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
     if (s.isBlank()) {
         return errorList("Nothing to parse.")
     }
-    val words = s.toLowerCase()
-            .split("\\s+".toRegex())
+    val words = s.toLowerCase().split("\\s+".toRegex())
     val state = SentenceParsingState()
     var modularIndex : Int? = null
     var modularForcedStress : Int? = null
@@ -23,10 +22,10 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         var toParse = word
         if (!state.carrier) {
             if (toParse.startsWith(LOW_TONE_MARKER)) { // Register end
-                if (state.register == null)
-                    return errorList("*Syntax error* : low tone can't mark the end of non-default register, since no such register is active.")
+                if (state.register.isEmpty())
+                    return errorList("*Syntax error*: low tone can't mark the end of non-default register, since no such register is active.")
                 toParse = toParse.drop(1)
-                state.register = null
+                state.register.dropLast(1)
             } else if (toParse matches "'[aeoui]'".toRegex()) {
                 state.forcedStress = when (toParse[1]) {
                     'a' -> -1
@@ -40,7 +39,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
             }
         }
         if (toParse.any { !it.toString().isConsonant() && !it.toString().isVowel() }) {
-            return errorList("**Parsing error** : '$word' contains non-Ithkuil characters")
+            return errorList("**Parsing error**: '$word' contains non-Ithkuil characters")
         }
         try {
             val res = parseWord(toParse, precision, ignoreDefault, sentenceParsingState = state)
@@ -52,26 +51,31 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 modularForcedStress = state.forcedStress
                 continue
             } else if (res.startsWith("\u0000")) {
-                return errorList("**Parsing error** : ${res.drop(1)}")
+                return errorList("**Parsing error**: ${res.drop(1)}")
             } else if (word.startsWith(LOW_TONE_MARKER)) {
                 result += "$res } "
                 continue
-            } else if (state.isLastFormativeVerbal != null && modularIndex != null && modularForcedStress != null) { // Now we can know the stress of the formative and finally parse the adjunct properly
+            } else if ((state.isLastFormativeVerbal != null || state.quotativeAdjunct) && modularIndex != null) {
+                // Now we can know the stress of the formative and finally parse the adjunct properly
                 val mod = parseModular(
                         words[modularIndex].splitGroups(),
                         precision,
-                        ignoreDefault,
-                        res.startsWith(VERBAL_FORMATIVE_IDENTIFIER),
+                        // If quotativeAdjunct is true, case-scope needs default values like CTX or MNO to be shown, and we want to ignore them
+                        state.quotativeAdjunct || ignoreDefault,
+                        // This is fine because if quotativeAdjunct is false that means isLastFormativeVerbal is non-null
+                        !state.quotativeAdjunct && state.isLastFormativeVerbal!!,
+                        modularForcedStress,
                         sentenceParsingState = state
                 )
                 if (mod.startsWith("\u0000")) {
-                    return errorList("**Parsing error** : ${mod.drop(1)}")
+                    return errorList("**Parsing error**: ${mod.drop(1)}")
                 }
                 result.add(modularIndex, "$mod ")
+                state.quotativeAdjunct = false
                 modularIndex = null
                 modularForcedStress = null
             }
-            result += (if (res.startsWith(NOMINAL_FORMATIVE_IDENTIFIER) || res.startsWith(VERBAL_FORMATIVE_IDENTIFIER)) res.drop(1) else res) + " "
+            result += "$res "
         } catch (e: Exception) {
             if (state.carrier) {
                 result += "$word "
@@ -95,13 +99,17 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         return errorList("A modular adjunct needs an adjacent formative. If you want to parse the adjunct by itself, use ??gloss, ??short or ??full.")
     }
     if (state.carrier) {
-        result += CARRIER_END
+        result += "$CARRIER_END "
     }
-    if (state.register != null) {
-        result += REGISTER_END
+    for (reg in state.register.asReversed()) {
+        result += if (reg == Register.DISCURSIVE) {
+            "$DISCURSIVE_END "
+        } else {
+            "$REGISTER_END "
+        }
     }
     if (state.concatenative) {
-        result += CONCATENATIVE_END
+        result += "$CONCATENATIVE_END "
     }
     return result
 }
@@ -115,14 +123,19 @@ fun parseWord(s: String,
     if (groups.isEmpty())
         return error("Empty word")
     return if (groups.size == 1 && groups[0].isConsonant()) { // Bias adjunct
-        Bias.byGroup(groups[0])?.toString(precision) ?: return error("Unknown bias : ${groups[0]}")
-    } else if ((groups[0] == "ç" || groups[0] == "hr") && (groups.size == 2 || groups.size == 4 && groups[2] == "'")) { // Carrier & concatenative adjuncts
+        Bias.byGroup(groups[0])?.toString(precision) ?: return error("Unknown bias: ${groups[0]}")
+    } else if ((groups[0] == "ç" || groups[0] == "hr" || groups[0] == "hl") && (groups.size == 2 || groups.size == 4 && groups[2] == "'")) { // Carrier & concatenative adjuncts
         val v = if (groups.size == 2) groups[1] else groups[1] + "'" + groups[3]
-        (Case.byVowel(v)?.toString(precision) ?: return error("Unknown case value : $v")) + when {
+        (Case.byVowel(v)?.toString(precision) ?: return error("Unknown case value: $v")) + when {
             sentenceParsingState == null -> ""
             groups[0] == "ç" -> {
                 sentenceParsingState.carrier = true
                 " $CARRIER_START"
+            }
+            groups[0] == "hl" -> {
+                sentenceParsingState.quotativeAdjunct = true
+                sentenceParsingState.register.add(Register.DISCURSIVE)
+                " $DISCURSIVE_START"
             }
             else -> {
                 sentenceParsingState.concatenative = true
@@ -130,24 +143,38 @@ fun parseWord(s: String,
             }
         }
     } else if (s matches "h[aeëoöiuü][iu]?".toRegex()) { // Register adjunct
-        val (reg, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct : $s")
+        val (reg, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
         reg.toString(precision) + sentenceParsingState?.let {
             if (initial) {
-                it.register = reg
-                " $REGISTER_START"
-            } else if (reg == Register.CARRIER_END) {
-                if (!it.carrier)
-                    return error("*Syntax error* : '$s' doesn't mark the end of any carrier root/adjunct.")
-                it.carrier = false
-                "$CARRIER_END "
-            } else {
-                if (it.register == null) {
-                    return error("*Syntax error* : '$s' doesn't mark the end of any active register.")
-                } else if (it.register != reg) {
-                    return error("*Syntax error* : '$s' doesn't conclude the content of its corresponding initial adjunct.")
+                it.register.add(reg)
+                if (reg == Register.DISCURSIVE) {
+                    " $DISCURSIVE_START"
+                } else {
+                    " $REGISTER_START"
                 }
-                it.register = null
-                "$REGISTER_END "
+            } else if (reg == Register.CARRIER_END) {
+                if (!it.carrier && it.register.lastOrNull() != Register.DISCURSIVE)
+                    return error("*Syntax error*: '$s' doesn't mark the end of any carrier root/adjunct.")
+                if (it.carrier) {
+                    it.carrier = false
+                    "$CARRIER_END "
+                } else {
+                    it.register.dropLast(1)
+                    "$DISCURSIVE_END "
+                }
+            } else {
+                if (it.register.isEmpty()) {
+                    return error("*Syntax error*: '$s' doesn't mark the end of any active register.")
+                } else if (it.register.last() != reg) {
+                    return error("*Syntax error*: '$s' doesn't conclude the content of its corresponding initial adjunct.")
+                } else {
+                    it.register.dropLast(1)
+                    if (reg == Register.DISCURSIVE) {
+                        "$DISCURSIVE_END "
+                    } else {
+                        "$REGISTER_END "
+                    }
+                }
             }
         }
     } else if (groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular() ||
@@ -196,12 +223,12 @@ fun parseFormative(groups: Array<String>,
     // First we need to determine if the formative is short, simple or complex
     if (groups[0] in CD_CONSONANTS) { // Complex formative
         if (groups.size < 7) { // Minimum possible for a complex formative
-            return error("Complex formative ended unexpectedly : ${groups.joinToString("")}")
+            return error("Complex formative ended unexpectedly: ${groups.joinToString("")}")
         }
         var stackedPerspectiveIndex: Int? = null
         val (cd, cdFlag) = parseCd(groups[0])
         val vf = Case.byVowel(groups[1], cdFlag and ALT_VF_FORM == ALT_VF_FORM)
-                ?: return error("Unknown case value : ${groups[1]}")
+                ?: return error("Unknown case value: ${groups[1]}")
         firstSegment += cd.toString(precision, ignoreDefault).plusSeparator()
         firstSegment += vf.toString(precision).plusSeparator()
         i = 2 // Slot III begins at index 2
@@ -211,18 +238,13 @@ fun parseFormative(groups: Array<String>,
             while (i < limit && !stop) {
                 val c = groups[i]
                 var v: String
-                if (i + 3 < limit && groups[i+2] matches "'y?|y".toRegex()) {
-                    if ("y" in groups[i+2]) {
-                        v = groups[i+1] + "y" + groups[i+3]
-                        stop = groups[i+2] == "'y"
-                    } else { // Single glottal stop
-                        v = if (groups[i+1] eq groups[i+3]) {
-                            groups[i+1]
-                        } else {
-                            groups[i+1] + groups[i+3]
-                        }
-                        stop = true
+                if (i + 3 < limit && groups[i+2] == "'") {
+                    v = if (groups[i+1] eq groups[i+3]) {
+                        groups[i+1]
+                    } else {
+                        groups[i+1] + groups[i+3]
                     }
+                    stop = true
                     i += 4
                 } else {
                     v = groups[i+1]
@@ -233,9 +255,9 @@ fun parseFormative(groups: Array<String>,
                      return error("'$c' can't be a valid affix consonant")
                 val aff = parseAffix(c, v, precision, ignoreDefault, slotThree = true)
                 when {
-                    aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                    aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                    aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+                    aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+                    aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+                    aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
                     aff.contains(AFFIX_STACKED_CA_MARKER) -> { // We handle the case of personal referents if the affix is Ca-stacking
                         if (stackedPerspectiveIndex == null) {
                             stackedPerspectiveIndex = aff.substringBefore(AFFIX_STACKED_CA_MARKER).toInt()
@@ -247,7 +269,7 @@ fun parseFormative(groups: Array<String>,
             }
         }
         // Complex Vv and Vr have the exact same values
-        val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value : ${groups[i+1]}")
+        val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
         var stem = ((complexVv[2] as Enum<*>).ordinal + 1) % 4
         if (groups[i].isInvalidLexical())
             return error("'${groups[i]}' can't be a valid root consonant")
@@ -266,7 +288,7 @@ fun parseFormative(groups: Array<String>,
         } else {
             firstSegment += ci.first.plusSeparator()
         }
-        val vr = parseVr(groups[i+3]) ?: return error("Unknown Vr value : ${groups[i+3]}")
+        val vr = parseVr(groups[i+3]) ?: return error("Unknown Vr value: ${groups[i+3]}")
         stem = ((vr[1] as Enum<*>).ordinal + 1) % 4
         if (groups[i+2].isInvalidLexical())
             return error("'${groups[i+2]}' can't be a valid root consonant")
@@ -285,7 +307,7 @@ fun parseFormative(groups: Array<String>,
         i += 4
     } else if (groups[0].isConsonant()) { // Short formative
         if (groups.size < 3) { // Minimum possible for a short formative
-            return error("Short formative ended unexpectedly : ${groups.joinToString("")}")
+            return error("Short formative ended unexpectedly: ${groups.joinToString("")}")
         }
         var shortVv = ""
         val vr: String?
@@ -305,7 +327,7 @@ fun parseFormative(groups: Array<String>,
             vr = groups[1]
             i += 2
         }
-        val v = parseVr(vr) ?: return error("Unknown Vr value : $vr")
+        val v = parseVr(vr) ?: return error("Unknown Vr value: $vr")
         val stem = ((v[1] as Enum<*>).ordinal + 1) % 4
         if (groups[0].isInvalidLexical())
             return error("'${groups[0]}' can't be a valid root consonant")
@@ -323,7 +345,7 @@ fun parseFormative(groups: Array<String>,
         firstSegment += v.toString(precision, ignoreDefault, stemUsed = cr.second).plusSeparator()
     } else { // Simple formative
         if (groups.size < 4) {
-            return error("Simple formative ended unexpectedly : ${groups.joinToString("")}")
+            return error("Simple formative ended unexpectedly: ${groups.joinToString("")}")
         }
         val vvParse = if (groups[1] matches "[wy]".toRegex()) {
             i += 2
@@ -331,8 +353,8 @@ fun parseFormative(groups: Array<String>,
         } else {
             groups[0]
         }
-        val (vv, shortcutIndex) = parseVvSimple(vvParse) ?: return error("Unknown Vv value : $vvParse")
-        val vr = parseVr(groups[i+2]) ?: return error("Unknown Vr value : ${groups[i+2]}")
+        val (vv, shortcutIndex) = parseVvSimple(vvParse) ?: return error("Unknown Vv value: $vvParse")
+        val vr = parseVr(groups[i+2]) ?: return error("Unknown Vr value: ${groups[i+2]}")
         val stem = ((vr[2] as Enum<*>).ordinal + 1) % 4
         if (groups[i+1].isInvalidLexical())
             return error("'${groups[i+1]}' can't be a valid root consonant")
@@ -377,7 +399,7 @@ fun parseFormative(groups: Array<String>,
         }
         secondSegment += (bias?.toString(precision)
                 ?: alternate?.toString(precision)
-                ?: return error("Unknown bias/case-scope/mood : $c")).plusSeparator(start = true)
+                ?: return error("Unknown bias/case-scope/mood: $c")).plusSeparator(start = true)
         j--
     }
     if (groups[j].isVowel()) { // Vc/Vk
@@ -396,9 +418,9 @@ fun parseFormative(groups: Array<String>,
         }
         val vcvk = if (stress == 0) {
             parseVk(v)?.toString(precision, ignoreDefault)
-                    ?: return error("Unknown illocution/expectation/validation : $v")
+                    ?: return error("Unknown illocution/expectation/validation: $v")
         } else {
-            Case.byVowel(v)?.toString(precision, ignoreDefault) ?: return error("Unknown case vowel : $v")
+            Case.byVowel(v)?.toString(precision, ignoreDefault) ?: return error("Unknown case vowel: $v")
         }.plusSeparator(start = true)
         secondSegment = "$vcvk$secondSegment"
         j--
@@ -409,7 +431,7 @@ fun parseFormative(groups: Array<String>,
                 Mood.byCn(groups[j])
             } else {
                 CaseScope.byCn(groups[j])
-            } ?: return error("Unknown case-scope/mood : ${groups[j]}")
+            } ?: return error("Unknown case-scope/mood: ${groups[j]}")
             val vn = when {
                 groups[j-2] == "y" -> {
                     j -= 2
@@ -418,7 +440,7 @@ fun parseFormative(groups: Array<String>,
                 else -> groups[j-1]
             }
             val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown valence/phase/level/effect : $vn")
+                    ?: return error("Unknown valence/phase/level/effect: $vn")
             secondSegment = join(patternOne, cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
         } else if (groups[j].startsWith("'h")) {
             val cnString = groups[j].trimGlottal()
@@ -426,8 +448,8 @@ fun parseFormative(groups: Array<String>,
                 Mood.byCn(cnString)
             } else {
                 CaseScope.byCn(cnString)
-            } ?: return error("Unknown case-scope/mood : $cnString")
-            val vt = Aspect.byVowel(groups[j-1]) ?: return error("Unknown aspect : ${groups[j-1]}")
+            } ?: return error("Unknown case-scope/mood: $cnString")
+            val vt = Aspect.byVowel(groups[j-1]) ?: return error("Unknown aspect: ${groups[j-1]}")
             secondSegment = join(vt.toString(precision, ignoreDefault), cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
         } else {
             assert(groups[j] matches "'?[wy]".toRegex())
@@ -448,7 +470,7 @@ fun parseFormative(groups: Array<String>,
                 else -> groups[j-1]
             }
             val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown phase/context : $vn")
+                    ?: return error("Unknown phase/context: $vn")
             secondSegment = join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
         }
         j -= 2
@@ -460,7 +482,7 @@ fun parseFormative(groups: Array<String>,
     if (i == j) { // We're at Ca, slots VIII and X are empty
         val c = groups[i]
         if (c.isGlottalCa() && shortFormGlottalUse != 2)
-            return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty : $c")
+            return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: $c")
         val ca = parseCa(if (c.isGlottalCa()) c.drop(1) else c)
         val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
@@ -489,7 +511,7 @@ fun parseFormative(groups: Array<String>,
         return firstSegment.dropLast(SLOT_SEPARATOR.length) +
             (caString
                     ?: alternate
-                    ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood : ${groups[i]}")).plusSeparator(start = true) +
+                    ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: ${groups[i]}")).plusSeparator(start = true) +
             secondSegment
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
         val c = groups[j].drop(1)
@@ -514,7 +536,7 @@ fun parseFormative(groups: Array<String>,
             }
         }
         secondSegment = (caString ?: (alternate
-                ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
+                ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: $c"))) + secondSegment
         j--
     } else {
         var caIndex = i
@@ -528,8 +550,9 @@ fun parseFormative(groups: Array<String>,
             }
         }
         var potentialPraShortcut : Pair<String, String>? = null
-        val startJ = j
+        var isAlone : Boolean? = null
         while (j > caIndex) {
+            isAlone = isAlone == null
             if (j - 1 <= caIndex) {
                 return error("Affix group (slot X) ended unexpectedly")
             }
@@ -542,11 +565,11 @@ fun parseFormative(groups: Array<String>,
             }
             if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
                 return error("'$c' can't be a valid affix consonant")
-            val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = j == startJ)
+            val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = isAlone)
             when {
-                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
                 a == PRA_SHORTCUT_AFFIX_MARKER && potentialPraShortcut == null -> potentialPraShortcut = c to v
             }
             secondSegment = a.plusSeparator(start = true) + secondSegment
@@ -554,16 +577,16 @@ fun parseFormative(groups: Array<String>,
                 rtiScope = rtiScope ?: "{Ca}"
             j -= 2
         }
-        if (potentialPraShortcut != null && j == startJ - 2) { // PRA shortcut
+        if (potentialPraShortcut != null && isAlone == true) { // PRA shortcut
             val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
-                    ?: return error("Unknown personal referent : '" + potentialPraShortcut.first + "'")
+                    ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
             secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
         } else if (potentialPraShortcut != null) {
             val a = parseAffix(potentialPraShortcut.first, potentialPraShortcut.second, precision, ignoreDefault)
             when {
-                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
             }
             if (potentialPraShortcut.first == RTI_AFFIX_CONSONANT)
                 rtiScope = rtiScope ?: "{Ca}"
@@ -591,18 +614,20 @@ fun parseFormative(groups: Array<String>,
             }
         }
         secondSegment = (caString ?: (alternate
-                ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood : $c"))) + secondSegment
+                ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: $c"))) + secondSegment
         j = caIndex - 1
     }
     // j is now at the vowel before Ca
     var potentialPraShortcut : Pair<String, String>? = null
+    var isAlone : Boolean? = null
     var k = i
     while (k <= j) { // Reminder : affixes are CV rather than VC here
+        isAlone = isAlone == null
         var c = groups[k]
         if (c.startsWith("'") && k == i && shortFormGlottalUse == 1) {
             c = c.drop(1)
         } else if (c.startsWith("'")) {
-            return error("Unexpected glottal stop : $c")
+            return error("Unexpected glottal stop: $c")
         }
         var v: String
         if (k + 3 <= j && groups[k+2] matches "'?y".toRegex()) { // Standalone end of slot VIII or Type 2 "delineation"
@@ -619,11 +644,11 @@ fun parseFormative(groups: Array<String>,
         }
         if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
             return error("'$c' can't be a valid affix consonant")
-        val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = k == i)
+        val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = isAlone)
         when {
-            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
             a == PRA_SHORTCUT_AFFIX_MARKER && potentialPraShortcut == null -> potentialPraShortcut = c to v
         }
         firstSegment += a.plusSeparator()
@@ -631,16 +656,16 @@ fun parseFormative(groups: Array<String>,
             rtiScope = rtiScope ?: "{Stm}"
         k += 2
     }
-    if (potentialPraShortcut != null && k == i + 2) { // PRA shortcut
+    if (potentialPraShortcut != null && isAlone == true) { // PRA shortcut
         val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
-                ?: return error("Unknown personal referent : '" + potentialPraShortcut.first + "'")
+                ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
         secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
     } else if (potentialPraShortcut != null) {
         val a = parseAffix(potentialPraShortcut.first, potentialPraShortcut.second, precision, ignoreDefault)
         when {
-            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
         }
         if (potentialPraShortcut.first == RTI_AFFIX_CONSONANT)
             rtiScope = rtiScope ?: "{Ca}"
@@ -662,8 +687,9 @@ fun parseModular(groups: Array<String>,
                  precision: Int,
                  ignoreDefault: Boolean,
                  verbalFormative: Boolean? = false,
+                 modularForcedStress: Int? = null,
                  sentenceParsingState: SentenceParsingState? = null): String {
-    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
+    var stress = modularForcedStress ?: groups.findStress()
     if (stress == -1) // Monosyllabic
         stress = 1
     var i = 0
@@ -685,9 +711,9 @@ fun parseModular(groups: Array<String>,
                 true -> Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault)
                 false -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)
                 null -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault))
-            } ?: return error("Unknown case-scope/mood : ${groups[i]}")
+            } ?: return error("Unknown case-scope/mood: ${groups[i]}")
             val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown valence/phase/level/effect : $vn")
+                    ?: return error("Unknown valence/phase/level/effect: $vn")
             result += join(patternOne, cn).plusSeparator()
         } else if (groups[i+1].startsWith("'h")) {
             val cnString = groups[i+1].trimGlottal()
@@ -695,8 +721,8 @@ fun parseModular(groups: Array<String>,
                 true -> Mood.byCn(cnString)?.toString(precision, ignoreDefault)
                 false -> CaseScope.byCn(cnString)?.toString(precision, ignoreDefault)
                 null -> CaseScope.byCn(cnString)?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(cnString)?.toString(precision, ignoreDefault))
-            } ?: return error("Unknown case-scope/mood : ${groups[i]}")
-            val vt = Aspect.byVowel(groups[i]) ?: return error("Unknown aspect : ${groups[i]}")
+            } ?: return error("Unknown case-scope/mood: ${groups[i]}")
+            val vt = Aspect.byVowel(groups[i]) ?: return error("Unknown aspect: ${groups[i]}")
             result += join(vt.toString(precision, ignoreDefault), cn).plusSeparator()
         } else {
             assert(groups[i+1] matches "'?[wy]".toRegex()
@@ -721,7 +747,7 @@ fun parseModular(groups: Array<String>,
                 return error("Expected the Cn value to be $fncCn, but found '${groups[i+1]}'")
             val context = Context.values()[contextIndex + 1]
             val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown phase/context : $vn")
+                    ?: return error("Unknown phase/context: $vn")
             result += join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator()
         }
         i += 2
@@ -729,9 +755,9 @@ fun parseModular(groups: Array<String>,
     val valence = i > 1 && stress == 1
     result += when {
         valence -> parseVnPatternOne(groups[i], precision, ignoreDefault)
-                ?: return error("Unknown valence/context : ${groups[i]}")
+                ?: return error("Unknown valence/context: ${groups[i]}")
         else -> Aspect.byVowel(groups[i])?.toString(precision, ignoreDefault)
-                ?: return error("Unknown aspect : ${groups[i]}")
+                ?: return error("Unknown aspect: ${groups[i]}")
     }
     sentenceParsingState?.rtiAffixScope = null
     return if (result.endsWith(SLOT_SEPARATOR)) result.dropLast(SLOT_SEPARATOR.length) else result
@@ -753,7 +779,7 @@ fun parsePRA(groups: Array<String>,
         groups[0]
     }
     i++
-    val ref = parseFullReferent(refA, precision, ignoreDefault) ?: return error("Unknown referent : $refA")
+    val ref = parseFullReferent(refA, precision, ignoreDefault) ?: return error("Unknown referent: $refA")
     result += ref.plusSeparator(sep = CATEGORY_SEPARATOR)
     val v1 = if (i + 2 < groups.size && groups[i+1] == "'") {
         i += 2
@@ -763,9 +789,9 @@ fun parsePRA(groups: Array<String>,
     }
     i++
     result += if (stress == 0) {
-        parseVk(v1)?.toString(precision) ?: return error("Unknown illocution/expectation/validation : $v1")
+        parseVk(v1)?.toString(precision) ?: return error("Unknown illocution/expectation/validation: $v1")
     } else {
-        Case.byVowel(v1)?.toString(precision) ?: return error("Unknown case vowel : $v1")
+        Case.byVowel(v1)?.toString(precision) ?: return error("Unknown case vowel: $v1")
     }
     if (i + 1 < groups.size) {
         assert(groups[i] == "w" || groups[i] == "y")
@@ -776,18 +802,18 @@ fun parsePRA(groups: Array<String>,
             groups[i+1]
         }
         i += 2
-        val case = Case.byVowel(v2)?.toString(precision) ?: return error("Unknown case vowel : $v2")
+        val case = Case.byVowel(v2)?.toString(precision) ?: return error("Unknown case vowel: $v2")
         if (i < groups.size) {
             if (!(i + 1 == groups.size || groups[i+1] == "ë" && i + 2 == groups.size))
-                return error("PRA ended unexpectedly : ${groups.joinToString("")}")
+                return error("PRA ended unexpectedly: ${groups.joinToString("")}")
             result += (parseFullReferent(groups[i], precision, ignoreDefault, final = true)
-                    ?: return error("Unknown referent : ${groups[i]}")).plusSeparator(start = true)
+                    ?: return error("Unknown referent: ${groups[i]}")).plusSeparator(start = true)
             result += case.plusSeparator(start = true, sep = CATEGORY_SEPARATOR)
         } else {
             result += case.plusSeparator(start = true, sep = CATEGORY_SEPARATOR)
         }
     } else if (i + 1 == groups.size) { // Slot III isn't there all the way
-        return error("PRA ended unexpectedly : ${groups.joinToString("")}")
+        return error("PRA ended unexpectedly: ${groups.joinToString("")}")
     }
     sentenceParsingState?.rtiAffixScope = null
     return result
@@ -803,12 +829,12 @@ fun parseCombinationPRA(groups: Array<String>,
     var result = ""
     var i = 0
     if (groups[0].isVowel()) {
-        val (vv, _) = parseVvSimple(groups[0]) ?: return error("Unknown Vv value : ${groups[0]}")
+        val (vv, _) = parseVvSimple(groups[0]) ?: return error("Unknown Vv value: ${groups[0]}")
         result += vv.toString(precision, ignoreDefault).plusSeparator()
         i++
     }
     result += (parseFullReferent(groups[i], precision, ignoreDefault)
-            ?: return error("Unknown referent : ${groups[i]}"))
+            ?: return error("Unknown referent: ${groups[i]}"))
             .plusSeparator(sep = CATEGORY_SEPARATOR)
     val case = if (groups[i+2] == "'") {
         i += 2
@@ -816,7 +842,7 @@ fun parseCombinationPRA(groups: Array<String>,
     } else {
         groups[i+1]
     }
-    result += Case.byVowel(case)?.toString(precision) ?: return error("Unknown case value : $case")
+    result += Case.byVowel(case)?.toString(precision) ?: return error("Unknown case value: $case")
     val specIndex = COMBINATION_PRA_SPECIFICATION.indexOf(groups[i+2]) // Cannot be -1 because of preemptive check
     result += Specification.values()[specIndex].toString(precision, ignoreDefault)
     i += 3 // Beginning of affixes
@@ -842,9 +868,9 @@ fun parseCombinationPRA(groups: Array<String>,
                 return error("'$c' can't be a valid affix consonant")
             val a = parseAffix(c, v, precision, ignoreDefault)
             when {
-                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
             }
             result += a.plusSeparator(start = true)
             i += 2
@@ -860,9 +886,9 @@ fun parseCombinationPRA(groups: Array<String>,
             result += when {
                 stress == 2 && last == "a" -> return result
                 stress == 1 -> Case.byVowel(last)?.toString(precision)
-                        ?: return error("Unknown case value : $last")
+                        ?: return error("Unknown case value: $last")
                 else -> parseVk(last)?.toString(precision)
-                        ?: return error("Unknown illocution/sanction : $last")
+                        ?: return error("Unknown illocution/sanction: $last")
             }.plusSeparator(start = true)
         }
     }
@@ -892,12 +918,12 @@ fun parseAffixualScoping(groups: Array<String>,
         return error("'$c' can't be a valid affix consonant")
     var aff = parseAffix(c, v, precision, ignoreDefault)
     when {
-        aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+        aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+        aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+        aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
     }
     result += aff.plusSeparator()
-    val scope = scopeToString(groups[i], ignoreDefault) ?: return error("Invalid scope : ${groups[i]}")
+    val scope = scopeToString(groups[i], ignoreDefault) ?: return error("Invalid scope: ${groups[i]}")
     if (c == RTI_AFFIX_CONSONANT)
         rtiScope = rtiScope ?: scope
     result += scope.plusSeparator()
@@ -919,9 +945,9 @@ fun parseAffixualScoping(groups: Array<String>,
             return error("'$c' can't be a valid affix consonant")
         aff = parseAffix(c, v, precision, ignoreDefault)
         when {
-            aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-            aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-            aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+            aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+            aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+            aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
         }
         if (c == RTI_AFFIX_CONSONANT)
             rtiScope = rtiScope ?: ""
@@ -931,12 +957,12 @@ fun parseAffixualScoping(groups: Array<String>,
     val sc = if (i < groups.size) scopeToString(groups[i], ignoreDefault) else ""
     if (sc != "" && rtiScope == "")
         rtiScope = sc
-    result += (sc ?: return error("Invalid scope : ${groups[i]}")).plusSeparator(start = true)
+    result += (sc ?: return error("Invalid scope: ${groups[i]}")).plusSeparator(start = true)
     val stress = sentenceParsingState?.forcedStress ?: groups.findStress()
     result += when (stress) {
         0 -> "{Incp}".plusSeparator(start = true)
         1 -> ""
-        else -> return error("Couldn't parse stress : stress was on syllable $stress from the end")
+        else -> return error("Couldn't parse stress: stress was on syllable $stress from the end")
     }
     if (rtiScope != null)
         sentenceParsingState?.rtiAffixScope = rtiScope
@@ -964,10 +990,10 @@ fun parseAffixual(groups: Array<String>,
     val aff = parseAffix(c, v, precision, ignoreDefault)
     val scope = if (groups.size == i+3) scopeToString(groups[i+2].defaultForm(), ignoreDefault) else ""
     return when {
-        aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> error("Unknown affix vowel : ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> error("Unknown case vowel : ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> error("Unknown Ca cluster : ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-        scope == null -> error("Invalid scope : ${groups[i+2]}")
+        aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
+        aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
+        aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+        scope == null -> error("Invalid scope: ${groups[i+2]}")
         else -> {
             if (c == RTI_AFFIX_CONSONANT)
                 rtiScope = rtiScope ?: scope

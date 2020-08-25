@@ -54,29 +54,29 @@ class MessageListener : ListenerAdapter() {
             "help" -> {
                 val newMessage = MessageBuilder()
                         .append("Prefixes: \n")
-                        .append("  - `?` : commands used with this prefix won't write the default values of some grammatical categories.\n")
-                        .append("  - `??` : commands used with this prefix will write the values of all morphological categories even when default.\n")
+                        .append("  - `?`: commands used with this prefix won't write the default values of some grammatical categories.\n")
+                        .append("  - `??`: commands used with this prefix will write the values of all morphological categories even when default.\n")
                         .append("\n")
-                        .append("General commands (must be preceded by the proper prefix) :\n")
-                        .append("  - `gloss` : gives a morphological analysis of each subsequent word, with default precision\n")
-                        .append("  - `full` : gives a morphological analysis of each subsequent word, with strong precision\n")
-                        .append("  - `short` : gives a morphological analysis of each subsequent word, with weak precision\n")
-                        .append("  - `s` or `sgloss` : gives a morphological analysis of the whole following sentence, with default precision\n")
-                        .append("  - `sfull` : gives a morphological analysis of the whole following sentence, with strong precision\n")
-                        .append("  - `sshort` : gives a morphological analysis of the whole following sentence, with weak precision\n")
+                        .append("General commands (must be preceded by the proper prefix):\n")
+                        .append("  - `gloss`: gives a morphological analysis of each subsequent word, with default precision\n")
+                        .append("  - `full`: gives a morphological analysis of each subsequent word, with strong precision\n")
+                        .append("  - `short`: gives a morphological analysis of each subsequent word, with weak precision\n")
+                        .append("  - `s` or `sgloss`: gives a morphological analysis of the whole following sentence, with default precision\n")
+                        .append("  - `sfull`: gives a morphological analysis of the whole following sentence, with strong precision\n")
+                        .append("  - `sshort`: gives a morphological analysis of the whole following sentence, with weak precision\n")
                         .append("\n")
                         .append("Precision:\n")
-                        .append("  - Default precision : all morphological components except affixes are abbreviated, roots may change depending on the stem\n")
-                        .append("  - Strong precision : all morphological components are completely written out, roots may change depending on the stem\n")
-                        .append("  - Weak precision : all morphological components are abbreviated, roots will only display their generic title\n")
+                        .append("  - Default precision: all morphological components except affixes are abbreviated, roots may change depending on the stem\n")
+                        .append("  - Strong precision: all morphological components are completely written out, roots may change depending on the stem\n")
+                        .append("  - Weak precision: all morphological components are abbreviated, roots will only display their generic title\n")
                         .append("\n")
                 val second = MessageBuilder()
-                        .append("Formatting details :\n")
+                        .append("Formatting details:\n")
                         .append("  - **Bold text** in place of a root/affix means that it's just not in the current database\n")
                         .append("  - __Underlined text__ means that the corresponding category was taken into account when looking for a description of the root.\n")
                         .append("   For example, \" 'description'/S2 \" indicates that S2 contributed nothing to the final result of 'description' ;\n")
                         .append("   However, \" 'description'/__S2__ \" indicates that 'description' was specifically picked because S2 was specified.\n")
-                        .append("   NOTE : this only applies to Stem, and in the special case of -N- and -D-, Perspective\n")
+                        .append("   NOTE: this only applies to Stem, and in the special case of -N- and -D-, Perspective\n")
                         .append("\n")
                         .append("The parsing logic is far from perfect (and also difficult to improve substantially), so if an error message looks like nonsense to you,\n")
                         .append("it's probably actual nonsense caused by the algorithm not interpreting the structure of your input properly. If however the error pertains to\n")
@@ -114,7 +114,7 @@ class MessageListener : ListenerAdapter() {
                 } else {
                     1
                 }
-                val parts = content.split("[\\s.;,:]+".toRegex())
+                val parts = content.split("[\\s.;,:]+".toRegex()).filter(String::isNotBlank)
                 val glosses = arrayListOf<String>()
                 for (i in 1 until parts.size) {
                     var w = parts[i].toLowerCase().replace("’", "'")
@@ -149,12 +149,12 @@ class MessageListener : ListenerAdapter() {
                     glosses += res.trim()
                 }
                 val newMessage = glosses.mapIndexed { i, s ->
-                    MarkdownUtil.bold(parts[i+1] + " :") + " " + if (s.startsWith("\u0000")) {
+                    MarkdownUtil.bold(parts[i+1] + ":") + " " + if (s.startsWith("\u0000")) {
                         MarkdownUtil.italics(s.substring(1, s.length))
                     } else {
                         s
                     }
-                }.joinToString("\n", MarkdownUtil.underline("Gloss : ") + "\n")
+                }.joinToString("\n", MarkdownUtil.underline("Gloss: ") + "\n")
                 chan.sendMessage(newMessage)
                     .queue()
             }
@@ -192,7 +192,7 @@ class MessageListener : ListenerAdapter() {
                                 else -> "$acc  //  $s"
                             }
                         }
-                val newMessage = MarkdownUtil.underline("Gloss :") + " " + if (sentences.startsWith("\u0000")) {
+                val newMessage = MarkdownUtil.underline("Gloss:") + " " + if (sentences.startsWith("\u0000")) {
                     MarkdownUtil.italics(sentences.drop(1))
                 } else {
                     sentences

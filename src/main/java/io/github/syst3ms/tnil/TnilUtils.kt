@@ -76,21 +76,21 @@ fun String.defaultForm() = this.replace("á", "a")
 
 
 fun Array<String>.findStress(): Int {
-    val i = this.flatMap {
-        if (it.isVowel() && it.length == 3) {
-            it.toCharArray().map(Char::toString)
-        } else {
-            listOf(
-                    it.replace("[ìı]".toRegex(), "i")
-                            .replace("ù", "u")
-            )
-        }
-    }.reversed()
-     .indexOfFirst { it.hasStress() }
+    val i = this.filter(String::isVowel)
+            .map { it.replace("[ìı]".toRegex(), "i").replace("ù", "u") }
+            .flatMap {
+                if (it.length == 2 && flatVowelForm.indexOf(it.defaultForm()) !in 9 until 17) {
+                    it.toCharArray().map(Char::toString)
+                } else {
+                    listOf(it)
+                }
+            }
+            .reversed()
+            .indexOfFirst { it.hasStress() }
     return when {
         this.count(String::isVowel) == 1 -> -1
         i == -1 -> 1
-        else -> i / 2
+        else -> i
     }
 }
 
@@ -107,7 +107,7 @@ fun String.splitGroups(): Array<String> {
                 chars[0]
             }
         } else if (!chars[0].isConsonant()) {
-            throw IllegalArgumentException("Non-Ithkuil character : ${chars[0]}")
+            throw IllegalArgumentException("Non-Ithkuil character: ${chars[0]}")
         } else {
             chars.takeWhile(String::isConsonant).joinToString("")
         }
@@ -231,6 +231,9 @@ fun parseAffix(c: String,
         } else {
             "(${case}ia-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
         }
+    } else if (c == VK_AFFIX_CONSONANT) {
+        val vk = parseVk(v) ?: return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
+        return "(" + vk.toString(precision, ignoreDefault) + ")"
     } else if (v eq CA_STACKING_VOWEL) {
         val ca = parseCa(c) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$c"
         return if (slotThree) {
@@ -290,7 +293,7 @@ fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
             }
             else -> {
                 // basic description + IFL & FML Stems 0,1,2,3 ; only used for the carrier root
-                throw IllegalArgumentException("Root format is invalid : found ${root.dsc.size} arguments in the description of root -${root.cr}-")
+                throw IllegalArgumentException("Root format is invalid: found ${root.dsc.size} arguments in the description of root -${root.cr}-")
             }
         }).toLowerCase()
         return "'$d'" to stemUsed
@@ -323,11 +326,12 @@ data class RootData(val cr: String, val dsc: List<String>)
 data class PersonalReferentParsingData(var isInanimate: Boolean = false, var stem: Int = 1)
 
 class SentenceParsingState(var carrier: Boolean = false,
-                                var register: Register? = null,
-                                var concatenative: Boolean = false,
-                                stress: Int? = null,
-                                var isLastFormativeVerbal : Boolean? = null,
-                                var rtiAffixScope: String? = null) {
+                           var register: MutableList<Register> = mutableListOf(),
+                           var quotativeAdjunct: Boolean = false,
+                           var concatenative: Boolean = false,
+                           stress: Int? = null,
+                           var isLastFormativeVerbal : Boolean? = null,
+                           var rtiAffixScope: String? = null) {
     var forcedStress : Int? = stress
         get() {
             val old = field
