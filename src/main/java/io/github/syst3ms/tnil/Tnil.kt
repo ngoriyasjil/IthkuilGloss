@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseSentence("ahla hlao karleušštçoêzao", 1, true).joinToString(""))
+    println(parseWord("nailunhôrpëran", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -294,7 +294,7 @@ fun parseFormative(groups: Array<String>,
             return error("'${groups[i+2]}' can't be a valid root consonant")
         val cr = parseRoot(groups[i+2], precision, stem)
         firstSegment += complexVv.toString(precision, ignoreDefault, stemUsed = ci.second).plusSeparator()
-        firstSegment += if (precision > 0 && stem != 0 && groups[i+2] == "n") {
+        firstSegment += (if (precision > 0 && stem != 0 && groups[i+2] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
             REFERENT_ROOT_PLACEHOLDER
         } else if (precision > 0 && stem != 0 && groups[i+2] == "d") {
@@ -302,7 +302,7 @@ fun parseFormative(groups: Array<String>,
             REFERENT_ROOT_PLACEHOLDER
         } else {
             cr.first
-        }.plusSeparator()
+        }).plusSeparator()
         firstSegment += vr.toString(precision, ignoreDefault, stemUsed = cr.second).plusSeparator()
         i += 4
     } else if (groups[0].isConsonant()) { // Short formative
@@ -328,12 +328,12 @@ fun parseFormative(groups: Array<String>,
             i += 2
         }
         val v = parseVr(vr) ?: return error("Unknown Vr value: $vr")
-        val stem = ((v[1] as Enum<*>).ordinal + 1) % 4
+        val stem = ((v[2] as Enum<*>).ordinal + 1) % 4
         if (groups[0].isInvalidLexical())
             return error("'${groups[0]}' can't be a valid root consonant")
         val cr = parseRoot(groups[0], precision, stem)
         firstSegment += shortVv.plusSeparator()
-        firstSegment += if (precision > 0 && stem != 0 && groups[0] == "n") {
+        firstSegment += (if (precision > 0 && stem != 0 && groups[0] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
             REFERENT_ROOT_PLACEHOLDER
         } else if (precision > 0 && stem != 0 && groups[0] == "d") {
@@ -341,7 +341,7 @@ fun parseFormative(groups: Array<String>,
             REFERENT_ROOT_PLACEHOLDER
         } else {
             cr.first
-        }.plusSeparator()
+        }).plusSeparator()
         firstSegment += v.toString(precision, ignoreDefault, stemUsed = cr.second).plusSeparator()
     } else { // Simple formative
         if (groups.size < 4) {
@@ -371,7 +371,7 @@ fun parseFormative(groups: Array<String>,
                     ""
                 }
         ).plusSeparator()
-        firstSegment += if (precision > 0 && stem != 0 && groups[i+1] == "n") {
+        firstSegment += (if (precision > 0 && stem != 0 && groups[i+1] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
             REFERENT_ROOT_PLACEHOLDER
         } else if (precision > 0 && stem != 0 && groups[i+1] == "d") {
@@ -379,7 +379,7 @@ fun parseFormative(groups: Array<String>,
             REFERENT_ROOT_PLACEHOLDER
         } else {
             cr.first
-        }.plusSeparator()
+        }).plusSeparator()
         firstSegment += vr.toString(precision, ignoreDefault, stemUsed = cr.second).plusSeparator()
         i += 3
     }
