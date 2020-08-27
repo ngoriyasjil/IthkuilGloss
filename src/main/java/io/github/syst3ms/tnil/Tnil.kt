@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("nailunhôrpëran", 1, true))
+    println(parseWord("hmwaçnëı'kšamžaıläçnuřt", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -271,9 +271,9 @@ fun parseFormative(groups: Array<String>,
         // Complex Vv and Vr have the exact same values
         val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
         var stem = ((complexVv[2] as Enum<*>).ordinal + 1) % 4
-        if (groups[i].isInvalidLexical())
+        if (groups[i].isInvalidLexical() && !(groups[i].startsWith("'") && groups[i].length > 1)) // We don't want to error if it's just slot III marking
             return error("'${groups[i]}' can't be a valid root consonant")
-        val ci = parseRoot(groups[i], precision, stem)
+        val ci = parseRoot(groups[i].trimGlottal(), precision, stem)
         if (precision > 0 && stem != 0 && stackedPerspectiveIndex != null && (groups[i] == "n" || groups[i] == "d")) {
             if (groups[i] == "n") {
                 val desc = animateReferentDescriptions[stem - 1][stackedPerspectiveIndex]
