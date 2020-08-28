@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("bzali'el", 1, true))
+    println(parseSentence("Hmwelye'ësìaçpùašveısstusxothünkımcecborjořňìamfeohmu'ámmž hokı pokı hü laıleıšu", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -15,12 +15,13 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
     }
     val words = s.toLowerCase().split("\\s+".toRegex())
     val state = SentenceParsingState()
+    var currentlyCarrier = false
     var modularIndex : Int? = null
     var modularForcedStress : Int? = null
     val result = arrayListOf<String>()
     for ((i, word) in words.withIndex()) {
         var toParse = word
-        if (!state.carrier) {
+        if (!currentlyCarrier || !state.carrier) {
             if (toParse.startsWith(LOW_TONE_MARKER)) { // Register end
                 if (state.register.isEmpty())
                     return errorList("*Syntax error*: low tone can't mark the end of non-default register, since no such register is active.")
@@ -43,7 +44,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         }
         try {
             val res = parseWord(toParse, precision, ignoreDefault, sentenceParsingState = state)
-            if (state.carrier) {
+            if (currentlyCarrier && state.carrier) {
                 result += "$word "
                 continue
             } else if (res == MODULAR_PLACEHOLDER) { // Modular adjunct
@@ -75,9 +76,14 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 modularIndex = null
                 modularForcedStress = null
             }
-            result += "$res "
+            currentlyCarrier = state.carrier
+            result += res + if (state.carrier) {
+                " $CARRIER_START"
+            } else {
+                " "
+            }
         } catch (e: Exception) {
-            if (state.carrier) {
+            if (currentlyCarrier) {
                 result += "$word "
                 continue
             }
@@ -98,7 +104,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
     if (modularIndex != null && modularForcedStress != null) {
         return errorList("A modular adjunct needs an adjacent formative. If you want to parse the adjunct by itself, use ??gloss, ??short or ??full.")
     }
-    if (state.carrier) {
+    if (currentlyCarrier && state.carrier) {
         result += "$CARRIER_END "
     }
     for (reg in state.register.asReversed()) {
@@ -144,36 +150,35 @@ fun parseWord(s: String,
         }
     } else if (s matches "h[aeëoöiuü][iu]?".toRegex()) { // Register adjunct
         val (reg, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
-        reg.toString(precision) + sentenceParsingState?.let {
-            if (initial) {
-                it.register.add(reg)
-                if (reg == Register.DISCURSIVE) {
-                    " $DISCURSIVE_START"
-                } else {
-                    " $REGISTER_START"
-                }
-            } else if (reg == Register.CARRIER_END) {
-                if (!it.carrier && it.register.lastOrNull() != Register.DISCURSIVE)
-                    return error("*Syntax error*: '$s' doesn't mark the end of any carrier root/adjunct.")
-                if (it.carrier) {
-                    it.carrier = false
-                    "$CARRIER_END "
-                } else {
-                    it.register.dropLast(1)
-                    "$DISCURSIVE_END "
-                }
+        val r = reg.toString(precision)
+        return if (initial) {
+            sentenceParsingState?.register?.add(reg)
+            if (reg == Register.DISCURSIVE) {
+                "$r $DISCURSIVE_START"
             } else {
-                if (it.register.isEmpty()) {
-                    return error("*Syntax error*: '$s' doesn't mark the end of any active register.")
-                } else if (it.register.last() != reg) {
-                    return error("*Syntax error*: '$s' doesn't conclude the content of its corresponding initial adjunct.")
+                "$r $REGISTER_START"
+            }
+        } else if (reg == Register.CARRIER_END) {
+            if (sentenceParsingState?.carrier == false && sentenceParsingState.register?.lastOrNull() != Register.DISCURSIVE)
+                return error("*Syntax error*: '$s' doesn't mark the end of any carrier root/adjunct.")
+            if (sentenceParsingState?.carrier == true) {
+                sentenceParsingState.carrier = false
+                "$CARRIER_END "
+            } else {
+                sentenceParsingState?.register?.dropLast(1)
+                "$DISCURSIVE_END "
+            }
+        } else {
+            if (sentenceParsingState?.register?.isEmpty() == true) {
+                return error("*Syntax error*: '$s' doesn't mark the end of any active register.")
+            } else if (sentenceParsingState != null && sentenceParsingState.register.last() != reg) {
+                return error("*Syntax error*: '$s' doesn't conclude the content of its corresponding initial adjunct.")
+            } else {
+                sentenceParsingState?.register?.dropLast(1)
+                if (reg == Register.DISCURSIVE) {
+                    "$DISCURSIVE_END "
                 } else {
-                    it.register.dropLast(1)
-                    if (reg == Register.DISCURSIVE) {
-                        "$DISCURSIVE_END "
-                    } else {
-                        "$REGISTER_END "
-                    }
+                    "$REGISTER_END "
                 }
             }
         }
@@ -271,11 +276,18 @@ fun parseFormative(groups: Array<String>,
         // Complex Vv and Vr have the exact same values
         val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
         var stem = ((complexVv[2] as Enum<*>).ordinal + 1) % 4
-        if (groups[i].isInvalidLexical() && !(groups[i].startsWith("'") && groups[i].length > 1)) // We don't want to error if it's just slot III marking
-            return error("'${groups[i]}' can't be a valid root consonant")
-        val ci = parseRoot(groups[i].trimGlottal(), precision, stem)
-        if (precision > 0 && stem != 0 && stackedPerspectiveIndex != null && (groups[i] == "n" || groups[i] == "d")) {
-            if (groups[i] == "n") {
+        val c = if (groups[i].startsWith("'") && groups[i].length > 1 && cdFlag and SLOT_THREE_PRESENT == SLOT_THREE_PRESENT) {
+            groups[i].trimGlottal()
+        } else {
+            groups[i]
+        }
+        if (c.isInvalidLexical()) // We don't want to error if it's just slot III marking
+            return error("'$c' can't be a valid root consonant")
+        val ci = parseRoot(c, precision, stem)
+        if (sentenceParsingState?.carrier == false && c == "s")
+            sentenceParsingState.carrier = true
+        if (precision > 0 && stem != 0 && stackedPerspectiveIndex != null && (c == "n" || c == "d")) {
+            if (c == "n") {
                 val desc = animateReferentDescriptions[stem - 1][stackedPerspectiveIndex]
                 // replaceFirst because there might be multiple stacked Ca
                 firstSegment = firstSegment.replaceFirst("\\b[MPNA]\\b".toRegex(), "__$0__")
@@ -293,6 +305,8 @@ fun parseFormative(groups: Array<String>,
         if (groups[i+2].isInvalidLexical())
             return error("'${groups[i+2]}' can't be a valid root consonant")
         val cr = parseRoot(groups[i+2], precision, stem)
+        if (sentenceParsingState?.carrier == false && groups[i+2] == "s")
+            sentenceParsingState.carrier = true
         firstSegment += complexVv.toString(precision, ignoreDefault, stemUsed = ci.second).plusSeparator()
         firstSegment += (if (precision > 0 && stem != 0 && groups[i+2] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
@@ -332,6 +346,8 @@ fun parseFormative(groups: Array<String>,
         if (groups[0].isInvalidLexical())
             return error("'${groups[0]}' can't be a valid root consonant")
         val cr = parseRoot(groups[0], precision, stem)
+        if (sentenceParsingState?.carrier == false && groups[0] == "s")
+            sentenceParsingState.carrier = true
         firstSegment += shortVv.plusSeparator()
         firstSegment += (if (precision > 0 && stem != 0 && groups[0] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
@@ -359,6 +375,8 @@ fun parseFormative(groups: Array<String>,
         if (groups[i+1].isInvalidLexical())
             return error("'${groups[i+1]}' can't be a valid root consonant")
         val cr = parseRoot(groups[i+1], precision, stem)
+        if (sentenceParsingState?.carrier == false && groups[i+1] == "s")
+            sentenceParsingState.carrier = true
         firstSegment += join(
                 vv.toString(precision, ignoreDefault),
                 if (shortcutIndex > 0) {
@@ -486,11 +504,13 @@ fun parseFormative(groups: Array<String>,
         if (c.isGlottalCa() && shortFormGlottalUse != 2)
             return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: $c")
         val ca = parseCa(if (c.isGlottalCa()) c.drop(1) else c)
-        val alternate = if (c != "h" && c.startsWith("h")) {
+        val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
-                Mood.byCn(c)?.toString(precision)
+                Mood.byCn(c.replace('x', 'h'))
+                        ?.toString(precision)
             } else {
-                CaseScope.byCn(c)?.toString(precision)
+                CaseScope.byCn(c.replace('x', 'h'))
+                        ?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
@@ -518,11 +538,13 @@ fun parseFormative(groups: Array<String>,
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
         val c = if (groups[i].isGlottalCa()) groups[j].drop(1) else groups[j]
         val ca = parseCa(c)
-        val alternate = if (c != "h" && c.startsWith("h")) {
+        val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
-                Mood.byCn(c)?.toString(precision)
+                Mood.byCn(c.replace('x', 'h'))
+                        ?.toString(precision)
             } else {
-                CaseScope.byCn(c)?.toString(precision)
+                CaseScope.byCn(c.replace('x', 'h'))
+                        ?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
@@ -595,12 +617,14 @@ fun parseFormative(groups: Array<String>,
             secondSegment = secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, a)
         }
         val c = if (groups[caIndex].isGlottalCa()) groups[caIndex].drop(1) else groups[caIndex]
-        val ca = parseCa(c.trimH())
-        val alternate = if (c != "h" && c.startsWith("h")) {
+        val ca = parseCa(c)
+        val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
-                Mood.byCn(c)?.toString(precision)
+                Mood.byCn(c.replace('x', 'h'))
+                        ?.toString(precision)
             } else {
-                CaseScope.byCn(c)?.toString(precision)
+                CaseScope.byCn(c.replace('x', 'h'))
+                        ?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
