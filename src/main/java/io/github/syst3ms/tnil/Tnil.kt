@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("hmwaçnëı'kšamžaıläçnuřt", 1, true))
+    println(parseWord("bzali'el", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -387,7 +387,9 @@ fun parseFormative(groups: Array<String>,
     var secondSegment = ""
     var j = groups.lastIndex
     // Start from the end to easily identify each slot
-    val noGlottalTail = j >= 6 && groups[j-1].isVowel() && groups[j-2] == "'"
+    val noGlottalTail = j >= 7
+            && groups[j-1].isVowel()
+            && (groups[j-2].isModular() || groups[j-2] == "'" && groups[j-4].isModular())
     val glottalTail = j >= 6 && groups[j].startsWith("'")
     if (noGlottalTail || glottalTail) { // Bias
         val c = groups[j].trimGlottal()
@@ -514,7 +516,7 @@ fun parseFormative(groups: Array<String>,
                     ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: ${groups[i]}")).plusSeparator(start = true) +
             secondSegment
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
-        val c = groups[j].drop(1)
+        val c = if (groups[i].isGlottalCa()) groups[j].drop(1) else groups[j]
         val ca = parseCa(c)
         val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
@@ -630,7 +632,7 @@ fun parseFormative(groups: Array<String>,
             return error("Unexpected glottal stop: $c")
         }
         var v: String
-        if (k + 3 <= j && groups[k+2] matches "'?y".toRegex()) { // Standalone end of slot VIII or Type 2 "delineation"
+        if (k + 3 <= j && groups[k+2] matches "'?y|'".toRegex()) { // Standalone end of slot VIII or Type 2 "delineation"
             v = when {
                 "y" in groups[k+2] -> groups[k+1] + "y" + groups[k+3]
                 groups[k+1] eq groups[k+3] -> groups[k+1]
