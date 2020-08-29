@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("rrc", 1, true))
+    println(parseWord("hletë'baicäl", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -23,10 +23,14 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         var toParse = word
         if (!currentlyCarrier || !state.carrier) {
             if (toParse.startsWith(LOW_TONE_MARKER)) { // Register end
-                if (state.register.isEmpty())
+                if (state.register.isEmpty() && !currentlyCarrier)
                     return errorList("*Syntax error*: low tone can't mark the end of non-default register, since no such register is active.")
                 toParse = toParse.drop(1)
-                state.register.dropLast(1)
+                if (currentlyCarrier) {
+                    state.carrier = false
+                } else {
+                    state.register.removeAt(state.register.lastIndex)
+                }
             } else if (toParse matches "'[aeoui]'".toRegex()) {
                 state.forcedStress = when (toParse[1]) {
                     'a' -> -1
@@ -45,7 +49,13 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         try {
             val res = parseWord(toParse, precision, ignoreDefault, sentenceParsingState = state)
             if (currentlyCarrier && state.carrier) {
-                result += "$word "
+                result += if (word.startsWith(LOW_TONE_MARKER)) {
+                    currentlyCarrier = false
+                    state.carrier = false
+                    "${word.drop(1)} $CARRIER_END "
+                } else {
+                    "$word "
+                }
                 continue
             } else if (res == MODULAR_PLACEHOLDER) { // Modular adjunct
                 modularIndex = i
@@ -54,7 +64,14 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
             } else if (res.startsWith("\u0000")) {
                 return errorList("**Parsing error**: ${res.drop(1)}")
             } else if (word.startsWith(LOW_TONE_MARKER)) {
-                result += "$res } "
+                if (state.register.isEmpty())
+                    return errorList("*Syntax error*: low tone can't mark the end of non-default register, since no such register is active.")
+                val reg = state.register.removeAt(state.register.lastIndex)
+                result += if (reg == Register.DISCURSIVE) {
+                    "$res $DISCURSIVE_END "
+                } else {
+                    "$res $REGISTER_END "
+                }
                 continue
             } else if ((state.isLastFormativeVerbal != null || state.quotativeAdjunct) && modularIndex != null) {
                 // Now we can know the stress of the formative and finally parse the adjunct properly
@@ -161,7 +178,7 @@ fun parseWord(s: String,
                 sentenceParsingState.carrier = false
                 "$CARRIER_END "
             } else {
-                sentenceParsingState?.register?.dropLast(1)
+                sentenceParsingState?.register?.removeAt(sentenceParsingState.register.lastIndex)
                 "$DISCURSIVE_END "
             }
         } else {
@@ -170,7 +187,7 @@ fun parseWord(s: String,
             } else if (sentenceParsingState != null && sentenceParsingState.register.last() != reg) {
                 return error("*Syntax error*: '$s' doesn't conclude the content of its corresponding initial adjunct.")
             } else {
-                sentenceParsingState?.register?.dropLast(1)
+                sentenceParsingState?.register?.removeAt(sentenceParsingState.register.lastIndex)
                 if (reg == Register.DISCURSIVE) {
                     "$DISCURSIVE_END "
                 } else {
@@ -299,7 +316,7 @@ fun parseFormative(groups: Array<String>,
             firstSegment += ci.first.plusSeparator()
         }
         val vr = parseVr(groups[i+3]) ?: return error("Unknown Vr value: ${groups[i+3]}")
-        stem = ((vr[1] as Enum<*>).ordinal + 1) % 4
+        stem = ((vr[2] as Enum<*>).ordinal + 1) % 4
         if (groups[i+2].isInvalidLexical())
             return error("'${groups[i+2]}' can't be a valid root consonant")
         val cr = parseRoot(groups[i+2], precision, stem)
@@ -498,10 +515,10 @@ fun parseFormative(groups: Array<String>,
     }
     // j is now either at Ca, or at the end of Slot X
     if (i == j) { // We're at Ca, slots VIII and X are empty
-        val c = groups[i]
-        if (c.isGlottalCa() && shortFormGlottalUse != 2)
-            return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: $c")
-        val ca = parseCa(c.trimGlottal())
+        if (groups[i].isGlottalCa() && shortFormGlottalUse != 2)
+            return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: ${groups[i]}")
+        val c = groups[i].trimGlottal()
+        val ca = parseCa(c)
         val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
                 Mood.byCn(c.replace('x', 'h'))
