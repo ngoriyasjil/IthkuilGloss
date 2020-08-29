@@ -24,7 +24,7 @@ fun String.hasStress() = this.isVowel() && this.defaultForm() != this
 
 fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
 
-fun String.trimGlottal() = this.replace("'", "")
+fun String.trimGlottal() = if (isGlottalCa()) this.drop(1) else this
 
 fun String.trimH() = this.replace("^('?)h".toRegex(), "$1")
 

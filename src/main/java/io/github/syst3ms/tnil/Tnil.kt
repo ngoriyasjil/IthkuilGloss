@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("bzali'el", 1, true))
+    println(parseWord("ormiša'gue", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -77,16 +77,12 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 modularForcedStress = null
             }
             currentlyCarrier = state.carrier
-            result += res + if (state.carrier) {
+            result += res + if (state.carrier && !res.endsWith(CARRIER_START)) {
                 " $CARRIER_START"
             } else {
                 " "
             }
         } catch (e: Exception) {
-            if (currentlyCarrier) {
-                result += "$word "
-                continue
-            }
             return if (precision < 3) {
                 errorList("A severe exception occurred during sentence parsing. We are unable to give more information. " +
                         "For a more thorough (but technical) description of the error, please use debug mode.")
@@ -182,6 +178,8 @@ fun parseWord(s: String,
                 }
             }
         }
+    } else if (sentenceParsingState?.carrier == true) {
+        ""
     } else if (groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular() ||
             groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && (groups.size == 4 || groups[4] matches "[wy]".toRegex()))) { // PRA
         parsePRA(groups, precision, ignoreDefault, sentenceParsingState)
@@ -503,7 +501,7 @@ fun parseFormative(groups: Array<String>,
         val c = groups[i]
         if (c.isGlottalCa() && shortFormGlottalUse != 2)
             return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: $c")
-        val ca = parseCa(if (c.isGlottalCa()) c.drop(1) else c)
+        val ca = parseCa(c.trimGlottal())
         val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
                 Mood.byCn(c.replace('x', 'h'))
@@ -536,7 +534,7 @@ fun parseFormative(groups: Array<String>,
                     ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: ${groups[i]}")).plusSeparator(start = true) +
             secondSegment
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
-        val c = if (groups[i].isGlottalCa()) groups[j].drop(1) else groups[j]
+        val c = groups[j].trimGlottal()
         val ca = parseCa(c)
         val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
@@ -621,7 +619,7 @@ fun parseFormative(groups: Array<String>,
                     ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
             secondSegment = shortcut.plusSeparator(start = true) + secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
         }
-        val c = if (groups[caIndex].isGlottalCa()) groups[caIndex].drop(1) else groups[caIndex]
+        val c = groups[caIndex].trimGlottal()
         val ca = parseCa(c)
         val alternate = if (c != "x" && c.startsWith("x")) {
             if (stress == 0) {
