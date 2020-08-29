@@ -53,6 +53,9 @@ class MessageListener : ListenerAdapter() {
         when (first) {
             "help" -> {
                 val newMessage = MessageBuilder()
+                        .append(MarkdownUtil.bold("Help"))
+                        .append("\n")
+                        .append("\n")
                         .append("Prefixes: \n")
                         .append("  - `?`: commands used with this prefix won't write the default values of some grammatical categories.\n")
                         .append("  - `??`: commands used with this prefix will write the values of all morphological categories even when default.\n")
