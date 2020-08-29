@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package io.github.syst3ms.tnil
 
 import java.lang.AssertionError
@@ -548,18 +550,18 @@ enum class Validation(private val short: String) : Precision {
 enum class Bias(private val short: String, val cb: String) : Precision {
     DOLOROUS("DOL", "řřx"),
     SKEPTICAL("SKP", "rnž"),
-    IMPATIENT("IPT", "zzv"),
+    IMPATIENT("IPT", "žžv"),
     REVELATIVE("RVL", "mmļ"),
     TREPIDATIVE("TRP", "llč"),
     REPULSIVE("RPU", "šštļ"),
     DESPERATIVE("DES", "mřř"),
     DISAPPROBATIVE("DPB", "ffx"),
-    PROSAIC("PSC", "zzt"),
+    PROSAIC("PSC", "žžt"),
     COMEDIC("CMD", "pļļ"),
     PROPOSITIVE("PPV", "sl"),
     SUGGESTIVE("SGS", "ltç"),
     DIFFIDENT("DFD", "cč"),
-    SELECTIVE("SEL", "rrm"),
+    REFLECTIVE("RFL", "llm"),
     EUPHEMISTIC("EUP", "vvt"),
     CORRECTIVE("CRR", "ňţ"),
     CONTEMPTIVE("CTP", "kšš"),
@@ -572,9 +574,11 @@ enum class Bias(private val short: String, val cb: String) : Precision {
     INVIDIOUS("IVD", "řřn"),
     DISCONCERTIVE("DCC", "gzj"),
     STUPEFACTIVE("STU", "ļļč"),
-    FASCINATIVE("FSC", "zzj"),
+    FASCINATIVE("FSC", "žžj"),
     INFATUATIVE("IFT", "vvr"),
     EUPHORIC("EUH", "gzz"),
+    DELECTATIVE("DLC", "ẓmm"),
+    ATTENTIVE("ATE", "ňj"),
     APPROBATIVE("APB", "řs"),
     IRONIC("IRO", "mmž"),
     PRESUMPTIVE("PSM", "nnţ"),
@@ -588,23 +592,21 @@ enum class Bias(private val short: String, val cb: String) : Precision {
     COINCIDENTAL("COI", "ššč"),
     FORTUITOUS("FOR", "lzp"),
     ANNUNCIATIVE("ANN", "drr"),
-    DELECTATIVE("DLC", "žž"),
-    ATTENTIVE("ATE", "ňj"),
+    OPTIMAL("OPT", "ççk"),
+    CONTENSIVE("CNV", "rrj"),
     RENUNCIATIVE("RNC", "mzt"),
     MANDATORY("MND", "msk"),
     EXIGENT("EXG", "rrs"),
     INSIPID("ISP", "lçp"),
     ADMISSIVE("ADM", "lļ"),
     APPREHENSIVE("APH", "vvz"),
-    OPTIMAL("OPT", "ççk"),
-    ASSERTIVE("ASV", "rrj"),
     IMPLICATIVE("IPL", "vll"),
     ACCIDENTAL("ACC", "lf"),
     ANTICIPATIVE("ANP", "lst"),
     ARCHETYPAL("ACH", "mçt"),
     VEXATIVE("VEX", "ksk"),
     CORRUPTIVE("CRP", "gžž"),
-    DEJECTIVE("DEJ", "zzg");
+    DEJECTIVE("DEJ", "žžg");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
