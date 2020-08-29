@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("hletë'baicäl", 1, true))
+    println(parseWord("laxla", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -519,13 +519,11 @@ fun parseFormative(groups: Array<String>,
             return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: ${groups[i]}")
         val c = groups[i].trimGlottal()
         val ca = parseCa(c)
-        val alternate = if (c != "x" && c.startsWith("x")) {
+        val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
-                Mood.byCn(c.replace('x', 'h'))
-                        ?.toString(precision)
+                Mood.byCn(c)?.toString(precision)
             } else {
-                CaseScope.byCn(c.replace('x', 'h'))
-                        ?.toString(precision)
+                CaseScope.byCn(c)?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
@@ -553,13 +551,11 @@ fun parseFormative(groups: Array<String>,
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
         val c = groups[j].trimGlottal()
         val ca = parseCa(c)
-        val alternate = if (c != "x" && c.startsWith("x")) {
+        val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
-                Mood.byCn(c.replace('x', 'h'))
-                        ?.toString(precision)
+                Mood.byCn(c)?.toString(precision)
             } else {
-                CaseScope.byCn(c.replace('x', 'h'))
-                        ?.toString(precision)
+                CaseScope.byCn(c)?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
@@ -638,13 +634,11 @@ fun parseFormative(groups: Array<String>,
         }
         val c = groups[caIndex].trimGlottal()
         val ca = parseCa(c)
-        val alternate = if (c != "x" && c.startsWith("x")) {
+        val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
-                Mood.byCn(c.replace('x', 'h'))
-                        ?.toString(precision)
+                Mood.byCn(c)?.toString(precision)
             } else {
-                CaseScope.byCn(c.replace('x', 'h'))
-                        ?.toString(precision)
+                CaseScope.byCn(c)?.toString(precision)
             }
         } else null
         var caString = ca?.toString(precision, ignoreDefault)
