@@ -6,7 +6,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun main() {
-    println(parseWord("laxla", 1, true))
+    println(parseWord("lada'lad", 1, true))
 }
 
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
@@ -513,6 +513,7 @@ fun parseFormative(groups: Array<String>,
     if (secondSegment.isEmpty() && stress == 0) { // Ensure that ASR/COG/OBS be always marked
         secondSegment = "ASR/COG/OBS".plusSeparator(start = true)
     }
+    var specialAffixJoin = false
     // j is now either at Ca, or at the end of Slot X
     if (i == j) { // We're at Ca, slots VIII and X are empty
         if (groups[i].isGlottalCa() && shortFormGlottalUse != 2)
@@ -655,6 +656,7 @@ fun parseFormative(groups: Array<String>,
         }
         secondSegment = (caString ?: (alternate
                 ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: $c"))) + secondSegment
+        specialAffixJoin = isAlone != null && caString.isNullOrEmpty()
         j = caIndex - 1
     }
     // j is now at the vowel before Ca
@@ -719,12 +721,21 @@ fun parseFormative(groups: Array<String>,
     if (firstSegment.contains(TPP_SHORTCUT_PLACEHOLDER) && tppDegree != null) {
         firstSegment = firstSegment.replace(TPP_SHORTCUT_PLACEHOLDER, tppAffixString(tppDegree, rtiScope, precision))
     }
+    specialAffixJoin = specialAffixJoin && isAlone != null
     sentenceParsingState?.rtiAffixScope = null
     sentenceParsingState?.isLastFormativeVerbal = stress == 0
     return if (secondSegment.isEmpty() || secondSegment.startsWith(SLOT_SEPARATOR)) {
-        firstSegment.dropLast(SLOT_SEPARATOR.length) + secondSegment
+        firstSegment.dropLast(SLOT_SEPARATOR.length) + if (specialAffixJoin) {
+            SPECIAL_AFFIX_SLOT_SEPARATOR + secondSegment.drop(SLOT_SEPARATOR.length)
+        } else {
+            secondSegment
+        }
     } else {
-        firstSegment + secondSegment
+        if (specialAffixJoin) {
+            firstSegment.dropLast(SLOT_SEPARATOR.length) + SPECIAL_AFFIX_SLOT_SEPARATOR
+        } else {
+            firstSegment
+        } + secondSegment
     }
 }
 

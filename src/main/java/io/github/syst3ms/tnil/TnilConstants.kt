@@ -35,6 +35,7 @@ const val TPP_AFFIX_CONSONANT = "kt"
 const val RTI_AFFIX_CONSONANT = "lt"
 const val VK_AFFIX_CONSONANT = "rl"
 const val PRA_SHORTCUT_AFFIX_MARKER = "%%"
+const val SPECIAL_AFFIX_SLOT_SEPARATOR = "—"
 
 val VOWEL_FORM = listOf(
     "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
