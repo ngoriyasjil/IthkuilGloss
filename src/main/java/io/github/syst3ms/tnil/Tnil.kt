@@ -23,14 +23,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         var toParse = word
         if (!currentlyCarrier || !state.carrier) {
             if (toParse.startsWith(LOW_TONE_MARKER)) { // Register end
-                if (state.register.isEmpty() && !currentlyCarrier)
-                    return errorList("*Syntax error*: low tone can't mark the end of non-default register, since no such register is active.")
                 toParse = toParse.drop(1)
-                if (currentlyCarrier) {
-                    state.carrier = false
-                } else {
-                    state.register.removeAt(state.register.lastIndex)
-                }
             } else if (toParse matches "'[aeoui]'".toRegex()) {
                 state.forcedStress = when (toParse[1]) {
                     'a' -> -1
@@ -56,7 +49,6 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 } else {
                     "$word "
                 }
-                continue
             } else if (res == MODULAR_PLACEHOLDER) { // Modular adjunct
                 modularIndex = i
                 modularForcedStress = state.forcedStress
@@ -94,6 +86,8 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 modularForcedStress = null
             }
             currentlyCarrier = state.carrier
+            if (res.isEmpty())
+                continue
             result += res + if (state.carrier && !res.endsWith(CARRIER_START)) {
                 " $CARRIER_START"
             } else {
@@ -721,7 +715,6 @@ fun parseFormative(groups: Array<String>,
     if (firstSegment.contains(TPP_SHORTCUT_PLACEHOLDER) && tppDegree != null) {
         firstSegment = firstSegment.replace(TPP_SHORTCUT_PLACEHOLDER, tppAffixString(tppDegree, rtiScope, precision))
     }
-    specialAffixJoin = specialAffixJoin && isAlone != null
     sentenceParsingState?.rtiAffixScope = null
     sentenceParsingState?.isLastFormativeVerbal = stress == 0
     return if (secondSegment.isEmpty() || secondSegment.startsWith(SLOT_SEPARATOR)) {
