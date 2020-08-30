@@ -49,6 +49,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 } else {
                     "$word "
                 }
+                continue
             } else if (res == MODULAR_PLACEHOLDER) { // Modular adjunct
                 modularIndex = i
                 modularForcedStress = state.forcedStress
@@ -86,8 +87,6 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 modularForcedStress = null
             }
             currentlyCarrier = state.carrier
-            if (res.isEmpty())
-                continue
             result += res + if (state.carrier && !res.endsWith(CARRIER_START)) {
                 " $CARRIER_START"
             } else {
