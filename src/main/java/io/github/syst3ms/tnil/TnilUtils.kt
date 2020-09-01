@@ -7,12 +7,8 @@ import kotlin.streams.toList
 const val AFFIX_PATH = "./affixes.txt"
 const val ROOTS_PATH = "./roots.txt"
 
-val affixData: List<AffixData> by lazy {
-    loadAffixes()
-}
-val rootData: List<RootData> by lazy {
-    loadRoots()
-}
+var affixData: List<AffixData> = loadAffixes()
+var rootData: List<RootData> = loadRoots()
 
 fun String.isVowel() = this.defaultForm() in flatVowelForm
 

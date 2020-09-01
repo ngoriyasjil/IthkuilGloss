@@ -203,9 +203,17 @@ class MessageListener : ListenerAdapter() {
                 chan.sendMessage(newMessage)
                         .queue()
             }
-            "stop" -> {
+            "!stop" -> {
                 if (event.author.id in authorizedUsers) {
                     exitProcess(0)
+                }
+            }
+            "!reloadexternal" -> {
+                if (event.author.id in authorizedUsers) {
+                    affixData = loadAffixes()
+                    rootData = loadRoots()
+                    event.textChannel.sendMessage("External resources successfully reloaded !")
+                                     .queue()
                 }
             }
         }
