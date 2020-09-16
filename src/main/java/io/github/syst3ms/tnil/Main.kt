@@ -158,7 +158,7 @@ class MessageListener : ListenerAdapter() {
                         s
                     }
                 }.joinToString("\n", MarkdownUtil.underline("Gloss: ") + "\n")
-                chan.sendMessage(newMessage)
+                chan.sendMessage(newMessage.withZWS())
                     .queue()
             }
             "s", "sgloss", "sshort", "sfull", "!sdebug" -> { // Full sentence
@@ -200,7 +200,7 @@ class MessageListener : ListenerAdapter() {
                 } else {
                     sentences
                 }
-                chan.sendMessage(newMessage)
+                chan.sendMessage(newMessage.withZWS())
                         .queue()
             }
             "!stop" -> {
