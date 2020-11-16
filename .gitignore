@@ -4,3 +4,4 @@
 /affixes.tsv
 build/
 .gradle/
+src/main/java/io/github/syst3ms/tnil/token.txt
