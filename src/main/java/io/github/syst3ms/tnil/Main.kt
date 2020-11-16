@@ -15,7 +15,7 @@ import kotlin.system.exitProcess
 val authorizedUsers = arrayListOf<String>()
 
 fun main() {
-    val tokenFile = File("./token")
+    val tokenFile = File("./token.txt")
     require((tokenFile.exists() && tokenFile.isFile)) { "Can't find token file !" }
     val lines = arrayListOf<String>()
     tokenFile.bufferedReader()
