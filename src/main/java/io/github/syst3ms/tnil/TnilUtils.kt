@@ -30,7 +30,7 @@ fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) =
     else -> "$this$sep"
 }
 
-fun String.withZWS() = this.replace("([/-—])".toRegex(), "​$1")
+fun String.withZWS() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
 fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed: Boolean = false) = join(
         *this.map {
