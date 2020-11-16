@@ -15,7 +15,7 @@ import kotlin.system.exitProcess
 val authorizedUsers = arrayListOf<String>()
 
 fun main() {
-    val tokenFile = File("./token.txt")
+    val tokenFile = File("./src/main/java/io/github/syst3ms/tnil/token.txt")
     require((tokenFile.exists() && tokenFile.isFile)) { "Can't find token file !" }
     val lines = arrayListOf<String>()
     tokenFile.bufferedReader()
@@ -52,38 +52,11 @@ class MessageListener : ListenerAdapter() {
         }
         when (first) {
             "help" -> {
+                val helpMessage = File("./src/main/java/io/github/syst3ms/tnil/help.md").readText().split("splitmessagehere")
                 val newMessage = MessageBuilder()
-                        .append(MarkdownUtil.bold("Help"))
-                        .append("\n")
-                        .append("\n")
-                        .append("Prefixes: \n")
-                        .append("  - `?`: commands used with this prefix won't write the default values of some grammatical categories.\n")
-                        .append("  - `??`: commands used with this prefix will write the values of all morphological categories even when default.\n")
-                        .append("\n")
-                        .append("General commands (must be preceded by the proper prefix):\n")
-                        .append("  - `gloss`: gives a morphological analysis of each subsequent word, with default precision\n")
-                        .append("  - `full`: gives a morphological analysis of each subsequent word, with strong precision\n")
-                        .append("  - `short`: gives a morphological analysis of each subsequent word, with weak precision\n")
-                        .append("  - `s` or `sgloss`: gives a morphological analysis of the whole following sentence, with default precision\n")
-                        .append("  - `sfull`: gives a morphological analysis of the whole following sentence, with strong precision\n")
-                        .append("  - `sshort`: gives a morphological analysis of the whole following sentence, with weak precision\n")
-                        .append("\n")
-                        .append("Precision:\n")
-                        .append("  - Default precision: all morphological components except affixes are abbreviated, roots may change depending on the stem\n")
-                        .append("  - Strong precision: all morphological components are completely written out, roots may change depending on the stem\n")
-                        .append("  - Weak precision: all morphological components are abbreviated, roots will only display their generic title\n")
-                        .append("\n")
+                        .append(helpMessage[0])
                 val second = MessageBuilder()
-                        .append("Formatting details:\n")
-                        .append("  - **Bold text** in place of a root/affix means that it's just not in the current database\n")
-                        .append("  - __Underlined text__ means that the corresponding category was taken into account when looking for a description of the root.\n")
-                        .append("   For example, \" 'description'/S2 \" indicates that S2 contributed nothing to the final result of 'description' ;\n")
-                        .append("   However, \" 'description'/__S2__ \" indicates that 'description' was specifically picked because S2 was specified.\n")
-                        .append("   NOTE: this only applies to Stem, and in the special case of -N- and -D-, Perspective\n")
-                        .append("\n")
-                        .append("The parsing logic is far from perfect (and also difficult to improve substantially), so if an error message looks like nonsense to you,\n")
-                        .append("it's probably actual nonsense caused by the algorithm not interpreting the structure of your input properly. If however the error pertains to\n")
-                        .append("the actual type of word you are trying to parse, there may be an actual bug, to which case make sure to let me (Syst3ms#9959) know.")
+                        .append(helpMessage[1])
                 val auth = event.author
                 if (event.channelType == ChannelType.TEXT) {
                     auth.openPrivateChannel()
