@@ -14,7 +14,7 @@ import kotlin.system.exitProcess
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-val logger = LoggerFactory.getLogger("tnilgloss")
+val logger = LoggerFactory.getLogger("tnilgloss")!!
 
 val authorizedUsers = arrayListOf<String>()
 

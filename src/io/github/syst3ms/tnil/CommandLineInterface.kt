@@ -1,7 +1,14 @@
 package io.github.syst3ms.tnil
 
-//import java.io.File
 
 fun main() {
-    println("Hello World!")
+    do {
+        print(">>> ")
+        val word = readLine() ?: ""
+        try {
+            println(parseWord(word,1, true ))
+        } catch (ex: Exception){
+            println(ex.message ?: "No error message")
+        }
+    } while (word.isNotEmpty())
     }
