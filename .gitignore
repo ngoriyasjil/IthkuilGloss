@@ -1,10 +1,5 @@
 /token
-/.attach_pid*
-*.txt
-*.iml
-*.ipr
-*.iws
+/roots.tsv
+/affixes.tsv
 build/
-out/
-lib/
-.*/
+.gradle/

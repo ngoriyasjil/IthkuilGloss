@@ -4,8 +4,8 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import java.io.File
 import kotlin.streams.toList
 
-const val AFFIX_PATH = "./affixes.txt"
-const val ROOTS_PATH = "./roots.txt"
+const val AFFIX_PATH = "./affixes.tsv"
+const val ROOTS_PATH = "./roots.tsv"
 
 var affixData: List<AffixData> = loadAffixes()
 var rootData: List<RootData> = loadRoots()
@@ -167,7 +167,7 @@ fun File.bufferedReaderOrNull() = if (this.exists()) bufferedReader() else null
 fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
         ?.lines()
         ?.filter { it.isNotBlank() }
-        ?.map { it.split("|") }
+        ?.map { it.split("\t") }
         ?.map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
         ?.toList() ?: emptyList()
 
@@ -271,7 +271,7 @@ fun tppAffixString(degree: Int, rtiAffixScope: String?, precision: Int): String 
 
 fun loadRoots() = File(ROOTS_PATH).bufferedReaderOrNull()
         ?.lines()
-        ?.map { it.split("|") }
+        ?.map { it.split("\t") }
         ?.map { RootData(it[0], it.subList(1, it.size)) }
         ?.toList() ?: emptyList()
 

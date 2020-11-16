@@ -165,7 +165,7 @@ fun parseWord(s: String,
                 "$r $REGISTER_START"
             }
         } else if (reg == Register.CARRIER_END) {
-            if (sentenceParsingState?.carrier == false && sentenceParsingState.register?.lastOrNull() != Register.DISCURSIVE)
+            if (sentenceParsingState?.carrier == false && sentenceParsingState.register.lastOrNull() != Register.DISCURSIVE)
                 return error("*Syntax error*: '$s' doesn't mark the end of any carrier root/adjunct.")
             if (sentenceParsingState?.carrier == true) {
                 sentenceParsingState.carrier = false
