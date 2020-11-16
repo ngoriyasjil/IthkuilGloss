@@ -4,6 +4,8 @@ package io.github.syst3ms.tnil
 
 import java.io.PrintWriter
 import java.io.StringWriter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 fun main() {
     println(parseWord("lada'lad", 1, true))
@@ -93,6 +95,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                 " "
             }
         } catch (e: Exception) {
+            logger.error("{}", e)
             return if (precision < 3) {
                 errorList("A severe exception occurred during sentence parsing. We are unable to give more information. " +
                         "For a more thorough (but technical) description of the error, please use debug mode.")

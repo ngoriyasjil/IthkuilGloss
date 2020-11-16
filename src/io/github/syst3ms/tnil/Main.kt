@@ -11,12 +11,16 @@ import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.system.exitProcess
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+val logger = LoggerFactory.getLogger("tnilgloss")
 
 val authorizedUsers = arrayListOf<String>()
 
 fun main() {
-    val tokenFile = File("./src/main/java/io/github/syst3ms/tnil/token.txt")
-    require((tokenFile.exists() && tokenFile.isFile)) { "Can't find token file !" }
+    val tokenFile = File("./token.txt")
+    require((tokenFile.exists() && tokenFile.isFile)) { "Can't find token file!" }
     val lines = arrayListOf<String>()
     tokenFile.bufferedReader()
         .useLines { it.forEach { e -> lines.add(e) } }
@@ -109,6 +113,7 @@ class MessageListener : ListenerAdapter() {
                     val res = try {
                         parseWord(w, prec, ignoreDefault)
                     } catch (ex: Exception) {
+                        logger.error("{}", ex)
                         if (prec < 3) {
                             error("A severe exception occurred during sentence parsing. We are unable to give more information. " +
                                     "For a more thorough (but technical) description of the error, please use debug mode.")
