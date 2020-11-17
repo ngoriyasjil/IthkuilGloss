@@ -1,4 +1,4 @@
-/token.txt
-/roots.tsv
-/affixes.tsv
+/resources/token.txt
+/resources/roots.tsv
+/resources/affixes.tsv
 target/

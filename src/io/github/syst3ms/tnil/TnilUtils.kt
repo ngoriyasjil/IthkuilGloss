@@ -4,8 +4,8 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import java.io.File
 import kotlin.streams.toList
 
-const val AFFIX_PATH = "./affixes.tsv"
-const val ROOTS_PATH = "./roots.tsv"
+const val AFFIX_PATH = "resources/affixes.tsv"
+const val ROOTS_PATH = "resources/roots.tsv"
 
 var affixData: List<AffixData> = loadAffixes()
 var rootData: List<RootData> = loadRoots()
