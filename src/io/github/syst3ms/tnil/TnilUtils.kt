@@ -77,7 +77,7 @@ fun Array<String>.findStress(): Int {
     val i = this.filter(String::isVowel)
             .map { it.replace("[ìı]".toRegex(), "i").replace("ù", "u") }
             .flatMap {
-                if (it.length == 2 && flatVowelForm.indexOf(it.defaultForm()) !in 9 until 17) {
+                if (it.length == 2 && flatVowelForm.indexOf(it.defaultForm()) !in 9 until 18 && it.defaultForm() != "ëu") {
                     it.toCharArray().map(Char::toString)
                 } else {
                     listOf(it)

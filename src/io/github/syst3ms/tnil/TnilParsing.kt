@@ -87,7 +87,6 @@ fun parseVk(s: String) : List<Precision>? {
         else -> null
     }
     val validation = Validation.values().getOrNull(form - 1)
-
     val values = listOfNotNull(illocution, expectation, validation)
 
     return if (values.size > 1) values else null
