@@ -277,7 +277,7 @@ fun loadRoots() = File(ROOTS_PATH).bufferedReaderOrNull()
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
     val root = rootData.find { it.cr == c } ?: return MarkdownUtil.bold(c.defaultForm()) to false
-    if (precision > 0) {
+    return if (precision > 0) {
         var stemUsed = false
         val stemDsc = root.dsc[stem]
         val d = (when (stemDsc) {
@@ -288,9 +288,9 @@ fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
             }
         }).toLowerCase()
 
-        return "'$d'" to stemUsed
+        "'$d'" to stemUsed
     } else {
-        return "'${root.dsc[0].toLowerCase()}'" to false
+        "'${root.dsc[0].toLowerCase()}'" to false
     }
 }
 
