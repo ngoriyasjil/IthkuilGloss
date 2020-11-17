@@ -16,7 +16,7 @@ val inanimateReferentDescriptions = listOf(
 val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
 fun seriesAndForm(v: String) : Pair<Int, Int>? {
-    return when (val index = VOWEL_FORM.indexOfFirst { it matches "^$v|..\\/$v|$v\\/..".toRegex() }) {
+    return when (val index = VOWEL_FORM.indexOfFirst { it eq v }) {
         -1 -> null
         else -> Pair((index / 9) + 1, (index % 9) + 1)
     }
