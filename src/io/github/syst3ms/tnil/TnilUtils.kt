@@ -30,7 +30,7 @@ fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) =
     else -> "$this$sep"
 }
 
-fun String.withZWS() = this.replace("([/—-])".toRegex(), "\u200b$1")
+fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
 fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed: Boolean = false) = join(
         *this.map {
@@ -279,21 +279,15 @@ fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
     val root = rootData.find { it.cr == c } ?: return MarkdownUtil.bold(c.defaultForm()) to false
     if (precision > 0) {
         var stemUsed = false
-        val d = (when (root.dsc.size) {
-            1 -> root.dsc[0] // Only basic description, no precise stem description
-            4, 7 -> {
-                stemUsed = true
-                root.dsc[stem] // basic description + IFL Stems 1,2,3
-            }
-            9 -> { // basic description + IFL Stems 0,1,2,3 ; only used for the carrier root
-                stemUsed = true
-                root.dsc[stem + 1]
-            }
+        val stemDsc = root.dsc[stem]
+        val d = (when (stemDsc) {
+            "" -> root.dsc[0]
             else -> {
-                // basic description + IFL & FML Stems 0,1,2,3 ; only used for the carrier root
-                throw IllegalArgumentException("Root format is invalid: found ${root.dsc.size} arguments in the description of root -${root.cr}-")
+                stemUsed = true
+                stemDsc
             }
         }).toLowerCase()
+
         return "'$d'" to stemUsed
     } else {
         return "'${root.dsc[0].toLowerCase()}'" to false

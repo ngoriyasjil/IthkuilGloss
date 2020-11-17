@@ -31,21 +31,21 @@ fun main() {
     jda.awaitReady()
 }
 
-fun parsePrecision(cmd: String, authorized: Boolean) =
+fun parsePrecision(request: String, authorized: Boolean) =
         when {
-            cmd.contains("short", ignoreCase = true) -> 0
-            cmd.contains("full")                     -> 2
-            authorized && cmd.contains("debug")      -> 3
+            request.contains("short", ignoreCase = true) -> 0
+            request.contains("full")                     -> 2
+            authorized && request.contains("debug")      -> 3
             else                                          -> 1
         }
 
 fun respond(content: String, authorized: Boolean) : String? {
-    var cmd = content.split("\\s+".toRegex())[0]
-    val ignoreDefault = !cmd.startsWith("??")
-    cmd = cmd.drop(if (ignoreDefault) 1 else 2)
-    val prec = parsePrecision(cmd, authorized)
+    var request = content.split("\\s+".toRegex())[0]
+    val ignoreDefault = !request.startsWith("??")
+    request = request.removePrefix("??").removePrefix("?")
+    val prec = parsePrecision(request, authorized)
 
-    when(cmd) {
+    when(request) {
         "gloss", "short", "full", "!debug" -> { // Word by word
             val parts = content.split("[\\s.;,:]+".toRegex()).filter(kotlin.String::isNotBlank).drop(1)
             val glosses = arrayListOf<String>()
@@ -90,7 +90,7 @@ fun respond(content: String, authorized: Boolean) : String? {
                 }
             }.joinToString("\n", MarkdownUtil.underline("Gloss: ") + "\n")
 
-            return newMessage.withZWS()
+            return newMessage.withZeroWidthSpaces()
         }
         "s", "sgloss", "sshort", "sfull", "!sdebug" -> { // Full sentence
             val sentences = content.split("\\s*\\.\\s*".toRegex())
@@ -98,7 +98,7 @@ fun respond(content: String, authorized: Boolean) : String? {
                     .filter(kotlin.String::isNotBlank)
                     .mapIndexed { i, s ->
                         if (i == 0) {
-                            s.drop(cmd.length + 2)
+                            s.drop(request.length + 2)
                         } else {
                             s
                         }
@@ -122,7 +122,7 @@ fun respond(content: String, authorized: Boolean) : String? {
             } else {
                 sentences
             }
-            return newMessage.withZWS()
+            return newMessage.withZeroWidthSpaces()
         }
         "!stop" -> {
             if (authorized) {
