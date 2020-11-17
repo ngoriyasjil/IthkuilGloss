@@ -17,7 +17,7 @@ Precision:
   - Strong precision: all morphological components are completely written out, roots may change depending on the stem
   - Weak precision: all morphological components are abbreviated, roots will only display their generic title
 
-splitmessagehere
+SPLITMESSAGEHERE
 
 Formatting details:
   - Bold text in place of a root/affix means that it's just not in the current database

@@ -56,7 +56,7 @@ class MessageListener : ListenerAdapter() {
         }
         when (first) {
             "help" -> {
-                val helpMessage = File("./src/main/java/io/github/syst3ms/tnil/help.md").readText().split("splitmessagehere")
+                val helpMessage = File("./resources/help.md").readText().split("SPLITMESSAGEHERE")
                 val newMessage = MessageBuilder()
                         .append(helpMessage[0])
                 val second = MessageBuilder()
