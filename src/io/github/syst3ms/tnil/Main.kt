@@ -136,6 +136,7 @@ fun respond(content: String, authorized: Boolean) : String? {
                 return "External resources successfully reloaded!"
             }
         }
+        "!whosagoodbot" -> return "(=^ェ^=✿)"
         else -> return null
     }
     return null
