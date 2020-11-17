@@ -20,8 +20,8 @@ val authorizedUsers = arrayListOf<String>()
 const val MORPHOPHONOLOGY_VERSION = "0.14.3"
 
 fun main() {
-    val tokenFile = File("./token.txt")
-    require((tokenFile.exists() && tokenFile.isFile)) { "Can't find token file!" }
+    val tokenFile = File("./resources/token.txt")
+    require(tokenFile.exists() && tokenFile.isFile) { "Can't find token file!" }
     val lines = arrayListOf<String>()
     tokenFile.bufferedReader()
         .useLines { it.forEach { e -> lines.add(e) } }
