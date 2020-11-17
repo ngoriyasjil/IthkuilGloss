@@ -76,36 +76,23 @@ fun effectString(precision: Int, effectIndex: Int): String? {
     }
 }
 
-fun parseVk(s: String) : List<Precision>? = when {
-    "a" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.OBSERVATIONAL)
-    "ä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.RECOLLECTIVE)
-    "e" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.PURPORTIVE)
-    "ë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.REPORTIVE)
-    "i" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.CONVENTIONAL)
-    "ö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INFERENTIAL)
-    "o" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.INTUITIVE)
-    "ü" eq s -> listOf(Illocution.ASSERTIVE, Expectation.COGNITIVE, Validation.IMAGINARY)
-    "u" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.COGNITIVE)
-    "ai" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.OBSERVATIONAL)
-    "au" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.RECOLLECTIVE)
-    "ei" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.PURPORTIVE)
-    "eu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.REPORTIVE)
-    "ëi" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.CONVENTIONAL)
-    "ou" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INFERENTIAL)
-    "oi" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.INTUITIVE)
-    "iu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.RESPONSIVE, Validation.IMAGINARY)
-    "ui" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.RESPONSIVE)
-    "ia/oä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.OBSERVATIONAL)
-    "iä/uä" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.RECOLLECTIVE)
-    "ie/oë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.PURPORTIVE)
-    "ië/uë" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.REPORTIVE)
-    "ëu" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.CONVENTIONAL)
-    "uö/iö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INFERENTIAL)
-    "uo/io" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.INTUITIVE)
-    "ue/eö" eq s -> listOf(Illocution.ASSERTIVE, Expectation.EXECUTIVE, Validation.IMAGINARY)
-    "ua/aö" eq s -> listOf(Illocution.PERFORMATIVE, Expectation.EXECUTIVE)
-    else -> null
+fun parseVk(s: String) : List<Precision>? {
+    val (series, form) = seriesAndForm(s) ?: Pair(-1,-1)
+
+    val illocution = if (form == 9) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
+    val expectation = when (series) {
+        1 -> Expectation.COGNITIVE
+        2 -> Expectation.RESPONSIVE
+        3 -> Expectation.EXECUTIVE
+        else -> null
+    }
+    val validation = Validation.values().getOrNull(form - 1)
+
+    val values = listOfNotNull(illocution, expectation, validation)
+
+    return if (values.size > 1) values else null
 }
+
 
 fun parseVvSimple(s: String) : Pair<List<Precision>, Int>? {
     val i = SIMPLE_VV_FORMS.indexOf(s.defaultForm())
