@@ -1,4 +1,4 @@
 resources/token.txt
-resources/roots.csv
-resources/affixes.csv
+resources/roots.tsv
+resources/affixes.tsv
 target/
