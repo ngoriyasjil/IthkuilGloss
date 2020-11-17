@@ -17,6 +17,8 @@ val logger = LoggerFactory.getLogger("tnilgloss")!!
 
 val authorizedUsers = arrayListOf<String>()
 
+const val MORPHOPHONOLOGY_VERSION = "0.14.3"
+
 fun main() {
     val tokenFile = File("./token.txt")
     require((tokenFile.exists() && tokenFile.isFile)) { "Can't find token file!" }
@@ -136,6 +138,11 @@ fun respond(content: String, authorized: Boolean) : String? {
                 return "External resources successfully reloaded!"
             }
         }
+        "!status" -> return "**Status report**\n\n" +
+                "__Ithkuil Version:__ $MORPHOPHONOLOGY_VERSION\n" +
+                "__Roots:__ ${rootData.size}\n" +
+                "__Affixes:__ ${affixData.size}\n"
+
         "!whosagoodbot" -> return "(=^ェ^=✿)"
         else -> return null
     }
