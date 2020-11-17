@@ -17,7 +17,7 @@ val logger = LoggerFactory.getLogger("tnilgloss")!!
 
 val authorizedUsers = arrayListOf<String>()
 
-const val MORPHOPHONOLOGY_VERSION = "0.14.3"
+const val MORPHOPHONOLOGY_VERSION = "0.16.0 (unfinished)"
 
 fun main() {
     val tokenFile = File("./resources/token.txt")

@@ -79,14 +79,25 @@ fun effectString(precision: Int, effectIndex: Int): String? {
 fun parseVk(s: String) : List<Precision>? {
     val (series, form) = seriesAndForm(s) ?: Pair(-1,-1)
 
-    val illocution = if (form == 9) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
+    val illocution = if (form == 5) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
     val expectation = when (series) {
         1 -> Expectation.COGNITIVE
         2 -> Expectation.RESPONSIVE
         3 -> Expectation.EXECUTIVE
         else -> null
     }
-    val validation = Validation.values().getOrNull(form - 1)
+    val validation = when(form) {
+        1 -> Validation.OBSERVATIONAL
+        2 -> Validation.RECOLLECTIVE
+        3 -> Validation.REPORTIVE
+        4 -> Validation.PURPORTIVE
+        5 -> null
+        6 -> Validation.IMAGINARY
+        7 -> Validation.CONVENTIONAL
+        8 -> Validation.INTUITIVE
+        9 -> Validation.INFERENTIAL
+        else -> null
+    }
     val values = listOfNotNull(illocution, expectation, validation)
 
     return if (values.size > 1) values else null
