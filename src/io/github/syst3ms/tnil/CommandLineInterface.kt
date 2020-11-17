@@ -4,11 +4,10 @@ package io.github.syst3ms.tnil
 fun main() {
     do {
         print(">>> ")
-        val word = readLine() ?: ""
-        try {
-            println(parseWord(word,1, true ))
-        } catch (ex: Exception){
-            println(ex.message ?: "No error message")
+        val msg = readLine() ?: ""
+        val response = respond(msg,true)
+        if (response != null) {
+            println(response)
         }
-    } while (word.isNotEmpty())
+    } while (msg.isNotEmpty())
     }
