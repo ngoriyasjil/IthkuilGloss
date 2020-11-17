@@ -138,10 +138,10 @@ fun respond(content: String, authorized: Boolean) : String? {
                 return "External resources successfully reloaded!"
             }
         }
-        "!status" -> return "**Status report**\n\n" +
-                "__Ithkuil Version:__ $MORPHOPHONOLOGY_VERSION\n" +
-                "__Roots:__ ${rootData.size}\n" +
-                "__Affixes:__ ${affixData.size}\n"
+        "!status" -> return "__Status report:__\n" +
+                "**Ithkuil Version:** $MORPHOPHONOLOGY_VERSION\n" +
+                "**Roots:** ${rootData.size}\n" +
+                "**Affixes:** ${affixData.size}\n"
 
         "!whosagoodbot" -> return "(=^ェ^=✿)"
         else -> return null
