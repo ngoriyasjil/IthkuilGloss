@@ -15,6 +15,13 @@ val inanimateReferentDescriptions = listOf(
 )
 val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
+fun seriesAndForm(v: String) : Pair<Int, Int>? {
+    return when (val index = VOWEL_FORM.indexOfFirst { it matches "^$v|..\\/$v|$v\\/..".toRegex() }) {
+        -1 -> null
+        else -> Pair((index / 9) + 1, (index % 9) + 1)
+    }
+}
+
 fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
     val i = VOWEL_FORM.indexOfFirst { it eq v }
     if (i == -1 || secondHalf && i % 9 == 7) // one of the unused values

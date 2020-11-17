@@ -136,9 +136,7 @@ fun respond(content: String, authorized: Boolean) : String? {
                 return "External resources successfully reloaded!"
             }
         }
-        else -> {
-            return null
-        }
+        else -> return null
     }
     return null
 }

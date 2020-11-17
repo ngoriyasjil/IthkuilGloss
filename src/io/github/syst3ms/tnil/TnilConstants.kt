@@ -40,7 +40,7 @@ const val SPECIAL_AFFIX_SLOT_SEPARATOR = "—"
 val VOWEL_FORM = listOf(
     "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "ia/öa", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
+    "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
     "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
     "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
     "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
