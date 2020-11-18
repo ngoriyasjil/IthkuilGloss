@@ -379,14 +379,15 @@ fun parseFormative(groups: Array<String>,
         }
         val (vv, negShortcut) = parseVvSimple(vvParse) ?: return error("Unknown Vv value: $vvParse")
         val vr = parseVr(groups[i+2]) ?: return error("Unknown Vr value: ${groups[i+2]}")
-        val stem = ((vr[2] as Enum<*>).ordinal + 1) % 4
+        val stem = (vv[0] as Stem).ordinal
         if (groups[i+1].isInvalidLexical())
             return error("'${groups[i+1]}' can't be a valid root consonant")
-        val cr = parseRoot(groups[i+1], precision, stem)
-        if (sentenceParsingState?.carrier == false && groups[i+1] == "s")
+        val (cr, stemUsed) = parseRoot(groups[i+1], precision, stem)
+        if (sentenceParsingState?.carrier == false && groups[i+1] == "s") {
             sentenceParsingState.carrier = true
+        }
         firstSegment += join(
-                vv.toString(precision, ignoreDefault),
+                vv.toString(precision, ignoreDefault, stemUsed = stemUsed),
                 if (negShortcut) parseAffix("r", "ë", precision, ignoreDefault) else "")
                 .plusSeparator()
         firstSegment += (if (precision > 0 && stem != 0 && groups[i+1] == "n") {
@@ -396,9 +397,9 @@ fun parseFormative(groups: Array<String>,
             referentParsingData = PersonalReferentParsingData(true, stem)
             REFERENT_ROOT_PLACEHOLDER
         } else {
-            cr.first
+            cr
         }).plusSeparator()
-        firstSegment += vr.toString(precision, ignoreDefault, stemUsed = cr.second).plusSeparator()
+        firstSegment += vr.toString(precision, ignoreDefault).plusSeparator()
         i += 3
     }
     // i is now either at Ca or the beginning of Slot VIII
