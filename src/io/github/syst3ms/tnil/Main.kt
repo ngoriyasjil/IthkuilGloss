@@ -141,7 +141,8 @@ fun respond(content: String, authorized: Boolean) : String? {
         "!status" -> return "__Status report:__\n" +
                 "**Ithkuil Version:** $MORPHOPHONOLOGY_VERSION\n" +
                 "**Roots:** ${rootData.size}\n" +
-                "**Affixes:** ${affixData.size}\n"
+                "**Affixes:** ${affixData.size}\n" +
+                "**Help file exists:** ${File("./resources/help.md").exists()}"
 
         "!whosagoodbot" -> return "(=^ェ^=✿)"
         else -> return null
