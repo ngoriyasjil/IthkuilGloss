@@ -2,7 +2,7 @@
 
 A Discord parser bot for the new Ithkuil language
 
-Currently outdated and works for morphophonology v0.14.3.
+Currently being updated to morphophonology v0.16.0. **DO NOT USE**
 
 ## How to run
 
@@ -11,4 +11,8 @@ Currently outdated and works for morphophonology v0.14.3.
    provide `resources/roots.tsv` and `resources/affixes.tsv`.
 2. Compile with Docker or Maven.
 
-[TODO: How to get the CLI working?]
+## How to run Command Line Interface
+
+1. Provide `resources/roots.tsv` and `resources/affixes.tsv`
+2. Set `<main.class>` to `io.github.syst3ms.tnil.CommandLineInterfaceKt`
+3. Compile with Maven and run
