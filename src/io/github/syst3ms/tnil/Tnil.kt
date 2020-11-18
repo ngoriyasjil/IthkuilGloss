@@ -4,8 +4,6 @@ package io.github.syst3ms.tnil
 
 import java.io.PrintWriter
 import java.io.StringWriter
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 fun main() {
     println(parseWord("lada'lad", 1, true))

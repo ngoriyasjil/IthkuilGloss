@@ -50,6 +50,8 @@ fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, ste
 fun join(vararg strings: String, sep: String = CATEGORY_SEPARATOR) = strings.filter { it.isNotEmpty() }
         .joinToString(sep)
 
+
+//Deals with series three vowels and non-default consonant forms
 infix fun String.eq(s: String): Boolean = if ("/" in this) {
     this.split("/").any { it eq s }
 } else {
