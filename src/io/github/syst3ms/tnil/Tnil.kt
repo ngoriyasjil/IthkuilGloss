@@ -225,7 +225,6 @@ fun parseFormative(groups: Array<String>,
     val stress = (sentenceParsingState?.forcedStress ?: groups.findStress()).coerceAtLeast(0)
     var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
     var i = 0
-    var tppDegree: Int? = null
     var rtiScope = sentenceParsingState?.rtiAffixScope
     /*
      * 0 = no glottal stop is used for short-form FML
@@ -378,7 +377,7 @@ fun parseFormative(groups: Array<String>,
         } else {
             groups[0]
         }
-        val (vv, shortcutIndex) = parseVvSimple(vvParse) ?: return error("Unknown Vv value: $vvParse")
+        val (vv, negShortcut) = parseVvSimple(vvParse) ?: return error("Unknown Vv value: $vvParse")
         val vr = parseVr(groups[i+2]) ?: return error("Unknown Vr value: ${groups[i+2]}")
         val stem = ((vr[2] as Enum<*>).ordinal + 1) % 4
         if (groups[i+1].isInvalidLexical())
@@ -388,16 +387,8 @@ fun parseFormative(groups: Array<String>,
             sentenceParsingState.carrier = true
         firstSegment += join(
                 vv.toString(precision, ignoreDefault),
-                if (shortcutIndex > 0) {
-                    tppDegree = when (shortcutIndex) {
-                        in 1..4 -> 5 - shortcutIndex
-                        else -> shortcutIndex
-                    }
-                    TPP_SHORTCUT_PLACEHOLDER
-                } else {
-                    ""
-                }
-        ).plusSeparator()
+                if (negShortcut) parseAffix("r", "ë", precision, ignoreDefault) else "")
+                .plusSeparator()
         firstSegment += (if (precision > 0 && stem != 0 && groups[i+1] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
             REFERENT_ROOT_PLACEHOLDER
@@ -532,9 +523,6 @@ fun parseFormative(groups: Array<String>,
                 firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
                 caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
             }
-        }
-        if (firstSegment.contains(TPP_SHORTCUT_PLACEHOLDER) && tppDegree != null) {
-            firstSegment = firstSegment.replace(TPP_SHORTCUT_PLACEHOLDER, tppAffixString(tppDegree, rtiScope, precision))
         }
         sentenceParsingState?.rtiAffixScope = null
         sentenceParsingState?.isLastFormativeVerbal = stress == 0
@@ -711,9 +699,6 @@ fun parseFormative(groups: Array<String>,
         val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
                 ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
         firstSegment += shortcut.plusSeparator()
-    }
-    if (firstSegment.contains(TPP_SHORTCUT_PLACEHOLDER) && tppDegree != null) {
-        firstSegment = firstSegment.replace(TPP_SHORTCUT_PLACEHOLDER, tppAffixString(tppDegree, rtiScope, precision))
     }
     sentenceParsingState?.rtiAffixScope = null
     sentenceParsingState?.isLastFormativeVerbal = stress == 0
