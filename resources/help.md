@@ -23,7 +23,7 @@ Formatting details:
   - Bold text in place of a root/affix means that it was not found in the current database
   - Underlined text means that the corresponding category was taken into account when looking for a description of the root.
    For example, " 'description'/S2 " indicates that S2 contributed nothing to the final result of 'description' ;
-   However, " 'description'/<ins>S2</ins> " indicates that 'description' was specifically picked because S2 was specified.
+   However, " 'description'/__S2__ " indicates that 'description' was specifically picked because S2 was specified.
    NOTE: this only applies to Stem, and in the special case of -N- and -D-, Perspective
 
 The parsing logic is far from perfect (and also difficult to improve substantially), so if an error message looks like nonsense to you,
