@@ -135,13 +135,13 @@ enum class Relation(private val short: String) : Precision {
 }
 
 enum class Stem(private val short: String) : Precision {
+    STEM_ZERO("S0"),
     STEM_ONE("S1"),
     STEM_TWO("S2"),
-    STEM_THREE("S3"),
-    STEM_ZERO("S0");
+    STEM_THREE("S3");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
+        ignoreDefault && this.ordinal == 1 -> ""
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }

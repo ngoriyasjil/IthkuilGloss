@@ -15,9 +15,9 @@ val inanimateReferentDescriptions = listOf(
 )
 val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
-fun seriesAndForm(v: String) : Pair<Int, Int>? {
+fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORM.indexOfFirst { it eq v }) {
-        -1 -> null
+        -1 -> Pair(-1, -1)
         else -> Pair((index / 9) + 1, (index % 9) + 1)
     }
 }
@@ -77,7 +77,7 @@ fun effectString(precision: Int, effectIndex: Int): String? {
 }
 
 fun parseVk(s: String) : List<Precision>? {
-    val (series, form) = seriesAndForm(s) ?: Pair(-1,-1)
+    val (series, form) = seriesAndForm(s)
 
     val illocution = if (form == 5) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
     val expectation = when (series) {
@@ -104,11 +104,40 @@ fun parseVk(s: String) : List<Precision>? {
 }
 
 
-fun parseVvSimple(s: String) : Pair<List<Precision>, Int>? {
-    val i = SIMPLE_VV_FORMS.indexOf(s.defaultForm())
-    if (i == -1)
-        return null
-    return listOf<Precision>(Context.values()[i % 8 / 2], Version.values()[i % 2]) to i / 8
+fun parseVvSimple(s: String): Pair<List<Precision>, Boolean>? {
+    val (series, form) = seriesAndForm(s.replace("[wy]".toRegex(), "'"))
+    val stem = when(form) {
+        1, 2 -> Stem.STEM_ONE
+        3, 4 -> Stem.STEM_TWO
+        9, 8 -> Stem.STEM_THREE
+        7, 6 -> Stem.STEM_ZERO
+        else -> null
+    }
+    val version = when(form) {
+        1, 3, 9, 7 -> Version.PROCESSUAL
+        2, 4, 8, 6 -> Version.COMPLETIVE
+        else -> null
+    }
+    val context = when(series) {
+        1, 5 -> Context.EXISTENTIAL
+        2, 6 -> Context.FUNCTIONAL
+        3, 7 -> Context.REPRESENTATIONAL
+        4, 8 -> Context.AMALGAMATIVE
+        else -> null
+    }
+    val negShortcut = when(series) {
+        5, 6, 7, 8 -> true
+        else -> false
+    }
+
+    val values = listOfNotNull(stem, version, context)
+
+    return if (values.size < 3){
+        null
+    } else {
+        Pair(values, negShortcut)
+    }
+
 }
 
 fun parseVr(s: String): List<Precision>? {
