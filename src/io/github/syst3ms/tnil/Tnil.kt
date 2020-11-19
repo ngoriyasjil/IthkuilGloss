@@ -226,26 +226,28 @@ fun parseFormative(groups: Array<String>,
     var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
     var i = 0
     var rtiScope = sentenceParsingState?.rtiAffixScope
+
+    var shortFormGlottalUse = 0 //to be deleted
     /*
-     * 0 = no glottal stop is used for short-form FML
-     * 1 = a normal glottal stop (at the beginning of a cluster) is used for short-form FML
-     * 2 = a supposed glottal Ca is used for short-form FML
+     * 0 = no glottal stop is used for complex DYN
+     * 1 = a normal glottal stop (at the beginning of a cluster) is used for complex DYN
+     * 2 = a supposed glottal Ca is used for short-form DYN
      */
-    var shortFormGlottalUse = 0
+    var complexGlottalUse = 0
     var referentParsingData: PersonalReferentParsingData? = null
     // First we need to determine if the formative is short, simple or complex
     if (groups[0] in CD_CONSONANTS) { // Complex formative
         if (groups.size < 7) { // Minimum possible for a complex formative
             return error("Complex formative ended unexpectedly: ${groups.joinToString("")}")
         }
-        var stackedPerspectiveIndex: Int? = null
-        val (cd, cdFlag) = parseCd(groups[0])
-        val vf = Case.byVowel(groups[1], cdFlag and ALT_VF_FORM == ALT_VF_FORM)
+        var stackedPerspectiveIndex: Int? = null //Slot III Ca-stacking
+        val (cd, cdCol) = parseCd(groups[0]) ?: return error("Unknown Cd value: ${groups[0]}")
+        val vf = Case.byVowel(groups[1], vfShort = (cdCol == 2 || cdCol == 4))
                 ?: return error("Unknown case value: ${groups[1]}")
         firstSegment += cd.toString(precision, ignoreDefault).plusSeparator()
         firstSegment += vf.toString(precision).plusSeparator()
         i = 2 // Slot III begins at index 2
-        if (cdFlag and SLOT_THREE_PRESENT == SLOT_THREE_PRESENT) {
+        if (cdCol == 3 || cdCol == 4) {
             val limit = groups.size - 5 // Conservative upper bound
             var stop = false
             while (i < limit && !stop) {

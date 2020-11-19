@@ -36,14 +36,31 @@ fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
     }
 }
 
-fun parseCd(c: String) : Pair<List<Precision>, Int> {
+fun parseCd(c: String) : Pair<List<Precision>, Int>? {
     val i = CD_CONSONANTS.indexOf(c.defaultForm())
-    var flag = 0
-    if ((i / 4) % 2 == 1)
-        flag = flag or ALT_VF_FORM
-    if ((i / 4) >= 2)
-        flag = flag or SLOT_THREE_PRESENT
-    return listOf<Precision>(Incorporation.values()[(i % 4) / 2], Version.values()[i % 2]) to flag
+    if  (i == -1) return null
+
+    val (row, column) = (i%4) + 1 to (i/4) + 1
+    val type = when (row) {
+        1, 2 -> Incorporation.TYPE_ONE
+        3, 4 -> Incorporation.TYPE_TWO
+        else -> return null
+    }
+    val version = when (row) {
+        1, 3 -> Version.PROCESSUAL
+        2, 4 -> Version.COMPLETIVE
+        else -> return null
+    }
+
+    /* columnIndex values:
+    0 -> default
+    1 -> alt. Vf
+    2 -> Slot III affixes present
+    3 -> Slot III affixes present and alt. Vf
+     */
+    if (column !in 1 until 4) return null
+
+    return listOf<Precision>(type, version) to column
 }
 
 fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
