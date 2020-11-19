@@ -286,7 +286,7 @@ fun parseFormative(groups: Array<String>,
         // Complex Vv and Vr have the exact same values
         val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
         var stem = ((complexVv[2] as Enum<*>).ordinal + 1) % 4
-        val c = if (groups[i].startsWith("'") && groups[i].length > 1 && cdFlag and SLOT_THREE_PRESENT == SLOT_THREE_PRESENT) {
+        val c = if (groups[i].startsWith("'") && groups[i].length > 1 && (cdCol == 3 || cdCol == 4)) {
             groups[i].trimGlottal()
         } else {
             groups[i]
