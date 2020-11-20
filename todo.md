@@ -36,4 +36,6 @@
  - Applicability of a Modular adjunct to a concatenated vs. parent formative is now marked by Vh
  - Carrier, naming, quotative and phrasal adjunct consonant values changed
  - Nomic and abstract PRA affix consonants added
- - 
+ - "Provisional" PR value added
+ - PRAs changed
+ - New ç(ë)- prefix for starting a new sentence
