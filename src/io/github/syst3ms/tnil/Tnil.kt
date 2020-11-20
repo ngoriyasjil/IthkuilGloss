@@ -226,8 +226,6 @@ fun parseFormative(groups: Array<String>,
     var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
     var i = 0
     var rtiScope = sentenceParsingState?.rtiAffixScope
-
-    var shortFormGlottalUse = 0 //to be deleted
     var referentParsingData: PersonalReferentParsingData? = null
     // First we need to determine if the formative is short, simple or complex
     if (groups[0] in CD_CONSONANTS) { // Complex formative
@@ -410,52 +408,56 @@ fun parseFormative(groups: Array<String>,
         j--
     }
     if (j - i >= 2 && groups[j] matches "('?[hw].*|'y)".toRegex()) { // Cn
-        if (groups[j].startsWith("h")) {
-            val cn = if (stress == 0) {
-                Mood.byCn(groups[j])
-            } else {
-                CaseScope.byCn(groups[j])
-            } ?: return error("Unknown case-scope/mood: ${groups[j]}")
-            val vn = when {
-                groups[j-2] == "y" -> {
-                    j -= 2
-                    groups[j-1] + "y" + groups[j+1]
+        when {
+            groups[j].startsWith("h") -> {
+                val cn = if (stress == 0) {
+                    Mood.byCn(groups[j])
+                } else {
+                    CaseScope.byCn(groups[j])
+                } ?: return error("Unknown case-scope/mood: ${groups[j]}")
+                val vn = when {
+                    groups[j-2] == "y" -> {
+                        j -= 2
+                        groups[j-1] + "y" + groups[j+1]
+                    }
+                    else -> groups[j-1]
                 }
-                else -> groups[j-1]
+                val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
+                        ?: return error("Unknown valence/phase/level/effect: $vn")
+                secondSegment = join(patternOne, cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
             }
-            val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown valence/phase/level/effect: $vn")
-            secondSegment = join(patternOne, cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
-        } else if (groups[j].startsWith("'h")) {
-            val cnString = groups[j].trimGlottal()
-            val cn = if (stress == 0) {
-                Mood.byCn(cnString)
-            } else {
-                CaseScope.byCn(cnString)
-            } ?: return error("Unknown case-scope/mood: $cnString")
-            val vt = Aspect.byVowel(groups[j-1]) ?: return error("Unknown aspect: ${groups[j-1]}")
-            secondSegment = join(vt.toString(precision, ignoreDefault), cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
-        } else {
-            assert(groups[j] matches "'?[wy]".toRegex())
-            val fncCn = if (groups[j-1].defaultForm().endsWith("u")) {
-                "y"
-            } else {
-                "w"
+            groups[j].startsWith("'h") -> {
+                val cnString = groups[j].trimGlottal()
+                val cn = if (stress == 0) {
+                    Mood.byCn(cnString)
+                } else {
+                    CaseScope.byCn(cnString)
+                } ?: return error("Unknown case-scope/mood: $cnString")
+                val vt = Aspect.byVowel(groups[j-1]) ?: return error("Unknown aspect: ${groups[j-1]}")
+                secondSegment = join(vt.toString(precision, ignoreDefault), cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
             }
-            val contextIndex = listOf(fncCn, "'w", "'y").indexOf(groups[j])
-            if (contextIndex == -1)
-                return error("Expected the Cn value to be $fncCn, but found '${groups[j]}'")
-            val context = Context.values()[contextIndex + 1]
-            val vn = when {
-                groups[j-2] == "y" -> {
-                    j -= 2
-                    groups[j-1] + "y" + groups[j+1]
+            else -> {
+                assert(groups[j] matches "'?[wy]".toRegex())
+                val fncCn = if (groups[j-1].defaultForm().endsWith("u")) {
+                    "y"
+                } else {
+                    "w"
                 }
-                else -> groups[j-1]
+                val contextIndex = listOf(fncCn, "'w", "'y").indexOf(groups[j])
+                if (contextIndex == -1)
+                    return error("Expected the Cn value to be $fncCn, but found '${groups[j]}'")
+                val context = Context.values()[contextIndex + 1]
+                val vn = when {
+                    groups[j-2] == "y" -> {
+                        j -= 2
+                        groups[j-1] + "y" + groups[j+1]
+                    }
+                    else -> groups[j-1]
+                }
+                val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
+                        ?: return error("Unknown phase/context: $vn")
+                secondSegment = join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
             }
-            val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown phase/context: $vn")
-            secondSegment = join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
         }
         j -= 2
     }
@@ -465,8 +467,6 @@ fun parseFormative(groups: Array<String>,
     var specialAffixJoin = false
     // j is now either at Ca, or at the end of Slot X
     if (i == j) { // We're at Ca, slots VIII and X are empty
-        if (groups[i].isGlottalCa() && shortFormGlottalUse != 2)
-            return error("This Ca group marks the end of Slot VIII, but Slot VIII is empty: ${groups[i]}")
         val c = groups[i].trimGlottal()
         val ca = parseCa(c)
         val alternate = if (c != "h" && c.startsWith("h")) {
@@ -623,10 +623,8 @@ fun parseFormative(groups: Array<String>,
             firstSegment += a.plusSeparator()
         }
         var c = groups[k]
-        if (c.startsWith("'") && k == i && shortFormGlottalUse == 1) {
+        if (c.startsWith("'") && k == i) {
             c = c.drop(1)
-        } else if (c.startsWith("'")) {
-            return error("Unexpected glottal stop: $c")
         }
         var v: String
         if (k + 3 <= j && groups[k+2] matches "'?y|'".toRegex()) { // Standalone end of slot VIII or Type 2 "delineation"

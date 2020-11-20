@@ -1,8 +1,6 @@
 package io.github.syst3ms.tnil
 
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import java.io.File
-import kotlin.streams.toList
 
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
@@ -18,8 +16,6 @@ fun String.hasStress() = this.isVowel() && this.defaultForm() != this
 fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
 
 fun String.trimGlottal() = if (isGlottalCa()) this.drop(1) else this
-
-fun String.trimH() = this.replace("^('?)h".toRegex(), "$1")
 
 fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) = when {
     this.isEmpty() -> this
@@ -161,10 +157,9 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: 
     return null
 }
 
-fun File.bufferedReaderOrNull() = if (this.exists()) bufferedReader() else null
-
 fun parseAffixes(data: String): List<AffixData> = data
         .lines()
+        .asSequence()
         .drop(1)
         .map    { it.split("\t") }
         .filter { it.size >= 11 }
@@ -195,82 +190,80 @@ fun parseAffix(c: String,
         vi / 10 - 2
     }
     val aff = affixData.find { it.cs == c }
-    if (c in CASE_STACKING_AFFIXES) { // case-stacking affix
-        val secondHalf = CASE_STACKING_AFFIXES.indexOf(c) % 2 == 1
-        val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
-            secondHalf && v.length == 1 -> "$v'$v"
-            secondHalf -> v[0] + "'" + v[1]
-            else -> v
+    when {
+        c in CASE_STACKING_AFFIXES -> { // case-stacking affix
+            val secondHalf = CASE_STACKING_AFFIXES.indexOf(c) % 2 == 1
+            val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
+                secondHalf && v.length == 1 -> "$v'$v"
+                secondHalf -> v[0] + "'" + v[1]
+                else -> v
+            }
+            return "($case$specialFormMessage)"
         }
-        return "($case$specialFormMessage)"
-    } else if (c in CASE_ACCESSOR_AFFIXES) { // case-accessor affix
-        val typeOne = CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
-        val secondHalf = CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
-        val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
-            secondHalf && v.length == 1 -> "$v'$v"
-            secondHalf -> v[0] + "'" + v[1]
-            else -> v
+        c in CASE_ACCESSOR_AFFIXES -> { // case-accessor affix
+            val typeOne = CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
+            val secondHalf = CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
+            val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
+                secondHalf && v.length == 1 -> "$v'$v"
+                secondHalf -> v[0] + "'" + v[1]
+                else -> v
+            }
+            return if (precision > 0) {
+                "($case\\accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
+            } else {
+                "(${case}a-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+            }
         }
-        return if (precision > 0) {
-            "($case\\accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-        } else {
-            "(${case}a-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+        c in INVERSE_CASE_ACCESSOR_AFFIXES -> { // inverse case-accessor affix
+            val typeOne = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
+            val secondHalf = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
+            val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
+                secondHalf && v.length == 1 -> "$v'$v"
+                secondHalf -> v[0] + "'" + v[1]
+                else -> v
+            }
+            return if (precision > 0) {
+                "($case\\inverse accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
+            } else {
+                "(${case}ia-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+            }
         }
-    } else if (c in INVERSE_CASE_ACCESSOR_AFFIXES) { // inverse case-accessor affix
-        val typeOne = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
-        val secondHalf = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
-        val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
-            secondHalf && v.length == 1 -> "$v'$v"
-            secondHalf -> v[0] + "'" + v[1]
-            else -> v
+        c == VK_AFFIX_CONSONANT -> {
+            val vk = parseVk(v) ?: return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
+            return "(" + vk.toString(precision, ignoreDefault) + ")"
         }
-        return if (precision > 0) {
-            "($case\\inverse accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-        } else {
-            "(${case}ia-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
+        v eq CA_STACKING_VOWEL -> {
+            val ca = parseCa(c) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$c"
+            return if (slotThree) {
+                perspectiveIndexFromCa(ca).toString() + AFFIX_STACKED_CA_MARKER
+            } else {
+                ""
+            } + "(" + ca.toString(precision, ignoreDefault) + ")"
         }
-    } else if (c == VK_AFFIX_CONSONANT) {
-        val vk = parseVk(v) ?: return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
-        return "(" + vk.toString(precision, ignoreDefault) + ")"
-    } else if (v eq CA_STACKING_VOWEL) {
-        val ca = parseCa(c) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$c"
-        return if (slotThree) {
-            perspectiveIndexFromCa(ca).toString() + AFFIX_STACKED_CA_MARKER
-        } else {
-            ""
-        } + "(" + ca.toString(precision, ignoreDefault) + ")"
-    }
-    // Special cases
-    return if (type == 3 && canBePraShortcut) {
-        PRA_SHORTCUT_AFFIX_MARKER
-    } else if (aff != null) {
-        if (precision > 0 || deg == 0) {
-            aff.desc.getOrNull(deg - 1)
-                    ?.let { "'$it'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) }
-                    ?: "'" + aff.desc[0] + "'" +
+// Special cases
+        else -> return if (type == 3 && canBePraShortcut) {
+            PRA_SHORTCUT_AFFIX_MARKER
+        } else if (aff != null) {
+            if (precision > 0 || deg == 0) {
+                aff.desc.getOrNull(deg - 1)
+                        ?.let { "'$it'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) }
+                        ?: "'" + aff.desc[0] + "'" +
                         (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) +
                         CATEGORY_SEPARATOR + deg
+            } else {
+                aff.abbr + (0x2080 + type).toChar() +
+                        specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) + CATEGORY_SEPARATOR + deg
+            }
         } else {
-            aff.abbr + (0x2080 + type).toChar() +
+            MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() +
                     specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) + CATEGORY_SEPARATOR + deg
         }
-    } else {
-        MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() +
-                specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) + CATEGORY_SEPARATOR + deg
     }
-}
-
-fun tppAffixString(degree: Int, rtiAffixScope: String?, precision: Int): String {
-    val aff = affixData.find { it.cs == TPP_AFFIX_CONSONANT }
-    val scope = rtiAffixScope ?: "{Form}"
-    return when (aff) {
-        null -> "TPP₁$CATEGORY_SEPARATOR$degree"
-        else -> parseAffix(TPP_AFFIX_CONSONANT, AFFIX_VOWELS[degree - 1], precision, ignoreDefault = false)
-    }.plusSeparator(sep = CATEGORY_SEPARATOR) + scope
 }
 
 fun parseRoots(data: String): List<RootData> = data
         .lines()
+        .asSequence()
         .drop(1)
         .map    { it.split("\t") }
         .filter { it.size >= 5 }

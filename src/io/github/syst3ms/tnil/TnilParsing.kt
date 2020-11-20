@@ -229,13 +229,6 @@ fun parseComplexVr(v: String, glottalStopInCa: Boolean) : List<Precision>? {
     return listOf(stem, specification, version, function)
 }
 
-fun parseVr(s: String): List<Precision>? {
-    val i = VR_FORMS.indexOfFirst { it eq s }
-    if (i == -1)
-        return null
-    return listOf(Function.values()[i % 8 / 4], Specification.values()[i % 4], Stem.values()[i / 8])
-}
-
 fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? = when (val r = s.defaultForm()) {
     "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)
     "r" -> listOf(Referent.MONADIC_SPEAKER, Effect.BENEFICIAL)
