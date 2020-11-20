@@ -197,7 +197,7 @@ class MessageListener : ListenerAdapter() {
 
         val response = respond(content, authorized)
         if (response != null) {
-            chan.sendMessage(MessageBuilder(response).build()).queue()
+            chan.sendMessage(MessageBuilder("**WORK IN PROGRESS**\n $response").build()).queue()
         }
     }
 }
