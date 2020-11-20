@@ -2,7 +2,7 @@
 
 A Discord parser bot for the new Ithkuil language
 
-Currently being updated to morphophonology v0.16.0. **DO NOT USE**
+Currently being updated to morphophonology v0.17.0. **DO NOT USE**
 
 ## How to run
 
