@@ -36,14 +36,27 @@ fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
     }
 }
 
-fun parseCd(c: String) : Pair<List<Precision>, Int> {
+fun parseCd(c: String) : Triple<List<Precision>, Boolean, Boolean>? {
     val i = CD_CONSONANTS.indexOf(c.defaultForm())
-    var flag = 0
-    if ((i / 4) % 2 == 1)
-        flag = flag or ALT_VF_FORM
-    if ((i / 4) >= 2)
-        flag = flag or SLOT_THREE_PRESENT
-    return listOf<Precision>(Incorporation.values()[(i % 4) / 2], Version.values()[i % 2]) to flag
+    if  (i == -1) return null
+
+    val (row, column) = (i%4) + 1 to (i/4) + 1
+    val type = when (row) {
+        1, 2 -> Incorporation.TYPE_ONE
+        3, 4 -> Incorporation.TYPE_TWO
+        else -> return null
+    }
+    val version = when (row) {
+        1, 3 -> Version.PROCESSUAL
+        2, 4 -> Version.COMPLETIVE
+        else -> return null
+    }
+
+    if (column !in 1 until 4) return null
+    val altVf            = column == 2 || column == 4
+    val slotThreePresent = column == 3 || column == 4
+
+    return Triple(listOf<Precision>(type, version), altVf, slotThreePresent)
 }
 
 fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
@@ -104,7 +117,7 @@ fun parseVk(s: String) : List<Precision>? {
 }
 
 
-fun parseVvSimple(s: String): Pair<List<Precision>, Boolean>? {
+fun parseSimpleVv(s: String): Pair<List<Precision>, Boolean>? {
     val (series, form) = seriesAndForm(s.replace("[wy]".toRegex(), "'"))
     val stem = when(form) {
         1, 2 -> Stem.STEM_ONE
@@ -154,6 +167,66 @@ fun parseSimpleVr(v: String): List<Precision>? {
 
     return listOf(function, specification)
 
+}
+
+fun parseComplexVv(v: String): List<Precision>? {
+    val (series, form) = seriesAndForm(v.replace("[wy]".toRegex(), "'"))
+    val stem = when(form) {
+        1, 2 -> Stem.STEM_ONE
+        3, 5 -> Stem.STEM_TWO
+        9, 8 -> Stem.STEM_THREE
+        7, 6 -> Stem.STEM_ZERO
+        else -> return null
+    }
+    val version = when(form) {
+        1, 3, 9, 7 -> Version.PROCESSUAL
+        2, 5, 8, 6 -> Version.COMPLETIVE
+        else -> return null
+    }
+    val specification = when(series) {
+        1, 5 -> Specification.BASIC
+        2, 6 -> Specification.CONTENTIAL
+        3, 7 -> Specification.CONSTITUTIVE
+        4, 8 -> Specification.OBJECTIVE
+        else -> return null
+    }
+    val function = when(series) {
+        1, 2, 3, 4 -> Function.STATIVE
+        5, 6, 7, 8 -> Function.DYNAMIC
+        else -> return null
+    }
+
+    return listOf(stem, specification, version, function)
+}
+
+fun parseComplexVr(v: String, glottalStopInCa: Boolean) : List<Precision>? {
+    val (series, form) = seriesAndForm(v)
+    val stem = when(form) {
+        1, 2 -> Stem.STEM_ONE
+        3, 5 -> Stem.STEM_TWO
+        9, 8 -> Stem.STEM_THREE
+        7, 6 -> Stem.STEM_ZERO
+        else -> return null
+    }
+    val version = when(form) {
+        1, 3, 9, 7 -> Version.PROCESSUAL
+        2, 5, 8, 6 -> Version.COMPLETIVE
+        else -> return null
+    }
+    val specification = when(series) {
+        1, 5 -> Specification.BASIC
+        2, 6 -> Specification.CONTENTIAL
+        3, 7 -> Specification.CONSTITUTIVE
+        4, 8 -> Specification.OBJECTIVE
+        else -> return null
+    }
+    val function = when(series) {
+        1, 2, 3, 4 -> if (!glottalStopInCa) Function.STATIVE else Function.DYNAMIC
+        5, 6, 7, 8 -> Function.DYNAMIC
+        else -> return null
+    }
+
+    return listOf(stem, specification, version, function)
 }
 
 fun parseVr(s: String): List<Precision>? {

@@ -226,26 +226,22 @@ fun parseFormative(groups: Array<String>,
     var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
     var i = 0
     var rtiScope = sentenceParsingState?.rtiAffixScope
-    /*
-     * 0 = no glottal stop is used for short-form FML
-     * 1 = a normal glottal stop (at the beginning of a cluster) is used for short-form FML
-     * 2 = a supposed glottal Ca is used for short-form FML
-     */
-    var shortFormGlottalUse = 0
+
+    var shortFormGlottalUse = 0 //to be deleted
     var referentParsingData: PersonalReferentParsingData? = null
     // First we need to determine if the formative is short, simple or complex
     if (groups[0] in CD_CONSONANTS) { // Complex formative
         if (groups.size < 7) { // Minimum possible for a complex formative
             return error("Complex formative ended unexpectedly: ${groups.joinToString("")}")
         }
-        var stackedPerspectiveIndex: Int? = null
-        val (cd, cdFlag) = parseCd(groups[0])
-        val vf = Case.byVowel(groups[1], cdFlag and ALT_VF_FORM == ALT_VF_FORM)
+        var stackedPerspectiveIndex: Int? = null //Slot III Ca-stacking for use with the personal reference roots
+        val (cd, altVf, slotThreePresent) = parseCd(groups[0]) ?: return error("Unknown Cd value: ${groups[0]}")
+        val vf = Case.byVowel(groups[1], vfShort = altVf)
                 ?: return error("Unknown case value: ${groups[1]}")
         firstSegment += cd.toString(precision, ignoreDefault).plusSeparator()
         firstSegment += vf.toString(precision).plusSeparator()
         i = 2 // Slot III begins at index 2
-        if (cdFlag and SLOT_THREE_PRESENT == SLOT_THREE_PRESENT) {
+        if (slotThreePresent) {
             val limit = groups.size - 5 // Conservative upper bound
             var stop = false
             while (i < limit && !stop) {
@@ -261,7 +257,7 @@ fun parseFormative(groups: Array<String>,
                     i += 4
                 } else {
                     v = groups[i+1]
-                    stop = groups[i+2].startsWith("'") || groups[i+1] == CA_STACKING_VOWEL && groups[i+2].isGlottalCa()
+                    stop = groups[i+2].startsWith("'") || groups[i+1] == CA_STACKING_VOWEL && groups[i+2].isGlottalCa() //the latter part is almost certainly illegal
                     i += 2
                 }
                 if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
@@ -282,16 +278,16 @@ fun parseFormative(groups: Array<String>,
             }
         }
         // Complex Vv and Vr have the exact same values
-        val complexVv = parseVr(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
-        var stem = ((complexVv[2] as Enum<*>).ordinal + 1) % 4
-        val c = if (groups[i].startsWith("'") && groups[i].length > 1 && cdFlag and SLOT_THREE_PRESENT == SLOT_THREE_PRESENT) {
+        val complexVv = parseComplexVv(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
+        var stem = (complexVv.first { it is Stem } as Enum<*>).ordinal
+        val c = if (groups[i].startsWith("'") && groups[i].length > 1 && slotThreePresent) {
             groups[i].trimGlottal()
         } else {
             groups[i]
         }
         if (c.isInvalidLexical()) // We don't want to error if it's just slot III marking
             return error("'$c' can't be a valid root consonant")
-        val ci = parseRoot(c, precision, stem)
+        val (ci, ciStemUsed) = parseRoot(c, precision, stem)
         if (sentenceParsingState?.carrier == false && c == "s")
             sentenceParsingState.carrier = true
         if (precision > 0 && stem != 0 && stackedPerspectiveIndex != null && (c == "n" || c == "d")) {
@@ -306,16 +302,16 @@ fun parseFormative(groups: Array<String>,
                 firstSegment += "'$desc'".plusSeparator()
             }
         } else {
-            firstSegment += ci.first.plusSeparator()
+            firstSegment += ci.plusSeparator()
         }
-        val vr = parseVr(groups[i+3]) ?: return error("Unknown Vr value: ${groups[i+3]}")
-        stem = ((vr[2] as Enum<*>).ordinal + 1) % 4
+        val complexVr = parseComplexVr(groups[i+3], groups[i+4].isGlottalCa()) ?: return error("Unknown complex Vr value: ${groups[i+3]}")
+        stem = (complexVr.first { it is Stem } as Enum<*>).ordinal
         if (groups[i+2].isInvalidLexical())
             return error("'${groups[i+2]}' can't be a valid root consonant")
-        val cr = parseRoot(groups[i+2], precision, stem)
+        val (cr, crStemUsed) = parseRoot(groups[i+2], precision, stem)
         if (sentenceParsingState?.carrier == false && groups[i+2] == "s")
             sentenceParsingState.carrier = true
-        firstSegment += complexVv.toString(precision, ignoreDefault, stemUsed = ci.second).plusSeparator()
+        firstSegment += complexVv.toString(precision, ignoreDefault, stemUsed = ciStemUsed).plusSeparator()
         firstSegment += (if (precision > 0 && stem != 0 && groups[i+2] == "n") {
             referentParsingData = PersonalReferentParsingData(false, stem)
             REFERENT_ROOT_PLACEHOLDER
@@ -323,9 +319,9 @@ fun parseFormative(groups: Array<String>,
             referentParsingData = PersonalReferentParsingData(true, stem)
             REFERENT_ROOT_PLACEHOLDER
         } else {
-            cr.first
+            cr
         }).plusSeparator()
-        firstSegment += vr.toString(precision, ignoreDefault, stemUsed = cr.second).plusSeparator()
+        firstSegment += complexVr.toString(precision, ignoreDefault, stemUsed = crStemUsed).plusSeparator()
         i += 4
     } else { // Simple formative
         val newGroups = if (groups[0].isConsonant()) {
@@ -341,7 +337,7 @@ fun parseFormative(groups: Array<String>,
         } else {
             newGroups[0]
         }
-        val (vv, negShortcut) = parseVvSimple(vvParse) ?: return error("Unknown Vv value: $vvParse")
+        val (vv, negShortcut) = parseSimpleVv(vvParse) ?: return error("Unknown Vv value: $vvParse")
         val vr = parseSimpleVr(newGroups[i+2]) ?: return error("Unknown Vr value: ${newGroups[i+2]}")
         val stem = (vv[0] as Stem).ordinal
         if (newGroups[i+1].isInvalidLexical())
@@ -831,7 +827,7 @@ fun parseCombinationPRA(groups: Array<String>,
     var result = ""
     var i = 0
     if (groups[0].isVowel()) {
-        val (vv, _) = parseVvSimple(groups[0]) ?: return error("Unknown Vv value: ${groups[0]}")
+        val (vv, _) = parseSimpleVv(groups[0]) ?: return error("Unknown Vv value: ${groups[0]}")
         result += vv.toString(precision, ignoreDefault).plusSeparator()
         i++
     }
