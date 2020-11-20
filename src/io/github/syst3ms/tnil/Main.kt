@@ -12,6 +12,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.system.exitProcess
 import org.slf4j.LoggerFactory
+import java.net.URL
 
 val logger = LoggerFactory.getLogger("tnilgloss")!!
 
@@ -26,6 +27,7 @@ fun main() {
     tokenFile.bufferedReader()
         .useLines { it.forEach { e -> lines.add(e) } }
     authorizedUsers += lines.drop(1)
+    loadResources()
     val jda = JDABuilder.createDefault(lines[0])
         .setActivity(Activity.of(Activity.ActivityType.DEFAULT, "?help for info"))
         .addEventListeners(MessageListener())
@@ -38,8 +40,13 @@ fun parsePrecision(request: String, authorized: Boolean) =
             request.contains("short", ignoreCase = true) -> 0
             request.contains("full")                     -> 2
             authorized && request.contains("debug")      -> 3
-            else                                          -> 1
+            else                                         -> 1
         }
+
+fun loadResources() {
+  affixData = parseAffixes(URL("https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516").readText())
+  rootData = parseRoots(URL("https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303").readText())
+}
 
 fun respond(content: String, authorized: Boolean) : String? {
     var request = content.split("\\s+".toRegex())[0]
@@ -131,11 +138,15 @@ fun respond(content: String, authorized: Boolean) : String? {
                 exitProcess(0)
             }
         }
-        "!reloadexternal" -> {
+        "!reload" -> {
             if (authorized) {
-                affixData = loadAffixes()
-                rootData = loadRoots()
-                return "External resources successfully reloaded!"
+                try {
+                    loadResources()
+                    return "External resources successfully reloaded!"
+                } catch(e: Exception) {
+                    logger.error("{}", e)
+                    return "Error while reloading external resources…"
+                }
             }
         }
         "!status" -> return "__Status report:__\n" +

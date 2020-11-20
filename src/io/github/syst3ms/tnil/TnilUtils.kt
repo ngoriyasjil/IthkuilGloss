@@ -4,11 +4,8 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import java.io.File
 import kotlin.streams.toList
 
-const val AFFIX_PATH = "./resources/affixes.tsv"
-const val ROOTS_PATH = "./resources/roots.tsv"
-
-var affixData: List<AffixData> = loadAffixes()
-var rootData: List<RootData> = loadRoots()
+var affixData: List<AffixData> = emptyList()
+var rootData: List<RootData> = emptyList()
 
 fun String.isVowel() = this.defaultForm() in flatVowelForm
 
@@ -166,12 +163,13 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: 
 
 fun File.bufferedReaderOrNull() = if (this.exists()) bufferedReader() else null
 
-fun loadAffixes() = File(AFFIX_PATH).bufferedReaderOrNull()
-        ?.lines()
-        ?.filter { it.isNotBlank() }
-        ?.map { it.split("\t") }
-        ?.map { AffixData(it[0], it[1], it.drop(2).toTypedArray()) }
-        ?.toList() ?: emptyList()
+fun parseAffixes(data: String): List<AffixData> = data
+        .lines()
+        .drop(1)
+        .map    { it.split("\t") }
+        .filter { it.size >= 11 }
+        .map    { AffixData(it[0], it[1], it.subList(2, 11).toTypedArray()) }
+        .toList()
 
 fun parseAffix(c: String,
                v: String,
@@ -271,11 +269,13 @@ fun tppAffixString(degree: Int, rtiAffixScope: String?, precision: Int): String 
     }.plusSeparator(sep = CATEGORY_SEPARATOR) + scope
 }
 
-fun loadRoots() = File(ROOTS_PATH).bufferedReaderOrNull()
-        ?.lines()
-        ?.map { it.split("\t") }
-        ?.map { RootData(it[0], it.subList(1, it.size)) }
-        ?.toList() ?: emptyList()
+fun parseRoots(data: String): List<RootData> = data
+        .lines()
+        .drop(1)
+        .map    { it.split("\t") }
+        .filter { it.size >= 5 }
+        .map    { RootData(it[0], it.subList(1, 5)) }
+        .toList()
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
     val root = rootData.find { it.cr == c } ?: return MarkdownUtil.bold(c.defaultForm()) to false
