@@ -56,9 +56,9 @@ val CD_CONSONANTS = listOf(
         "hlw", "hly", "hmw", "hmy"
 )
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
-val CASE_ACCESSOR_AFFIXES = listOf("ll", "rr", "tt", "dd")
-val INVERSE_CASE_ACCESSOR_AFFIXES = listOf("kk", "gg", "pp", "bb")
-val CASE_STACKING_AFFIXES = listOf("lw", "ly")
+val CASE_ACCESSOR_AFFIXES = listOf("ll", "rr", "lw", "ly")
+val INVERSE_CASE_ACCESSOR_AFFIXES = listOf("sw", "sy", "zw", "zy")
+val CASE_STACKING_AFFIXES = listOf("šw", "šy")
 val AFFIX_VOWELS = listOf(
     "üa", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
     "üe", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
@@ -328,7 +328,7 @@ enum class Aspect(private val short: String, val vt: String) : Precision {
     IMMINENT("IMM", "i"),
     PRECESSIVE("PCS", "ö"),
     REGULATIVE("REG", "o"),
-    ANTECENDENT("ATC", "ü"),
+    SUMMATIVE("SMM", "ü"),
     ANTICIPATORY("ATP", "u"),
     RESUMPTIVE("RSM", "ai"),
     CESSATIVE("CSS", "au"),
@@ -337,14 +337,14 @@ enum class Aspect(private val short: String, val vt: String) : Precision {
     PRECLUSIVE("PCL", "ëi"),
     CONTINUATIVE("CNT", "ou"),
     INCESSATIVE("ICS", "oi"),
-    SUMMATIVE("SMM", "iu"),
+    ANTECENDENT("ATC", "iu"),
     INTERRUPTIVE("IRP", "ui"),
     PREEMPTIVE("PMP", "ia/oä"),
     CLIMACTIC("CLM", "iä/uä"),
     DILATORY("DLT", "ie/oë"),
     TEMPORARY("TMP", "ië/uë"),
-    MOTIVE("MTV", "ëu"),
-    SEQUENTIAL("SQN", "uö/iö"),
+    EXPENDITIVE("XPD", "ëu"),
+    LIMITATIVE("LIM", "uö/iö"),
     EXPEDITIVE("EPD", "uo/io"),
     PROTRACTIVE("PTC", "ue/eö"),
     PREPARATORY("PPR", "ua/aö"),
@@ -355,8 +355,8 @@ enum class Aspect(private val short: String, val vt: String) : Precision {
     TARDATIVE("TRD", "eë"),
     TRANSITIONAL("TNS", "öe"),
     INTERCOMMUTATIVE("ITC", "oe"),
-    EXPENDITIVE("XPD", "öa"),
-    LIMITATIVE("LIM", "oa");
+    MOTIVE("MTV", "öa"),
+    SEQUENTIAL("SQN", "oa");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")

@@ -6,19 +6,19 @@
 - ~~UPX removed~~
 - Ca allomorphism additions
 - ~~Effect SLF added~~
-- Case affix Cs:s changed
+- ~~Case affix Cs:s changed~~
 - ~~PRAs can carry Vv info when verbal~~ (overridden)
 - ~~PRA pseudo-Ca changed to x/xx/lx/rx~~
-- ~~Illocution/Validation reordered~~ (done)
-- Register adjunct vowel forms changed
+- ~~Illocution/Validation reordered~~
+- ~~Register adjunct vowel forms moved~~
 
 **Updates from v0.15.0 -> v0.16.0**
 
-- ~~Vv and Vr restructured~~ (done) (overridden) (*:sob:*)
+- ~~Vv and Vr restructured~~ (done, then overridden :( )
 - Minor Ca allomorphism change
 - ~~Effect labels changed~~
 - ~~Aspect Cn glottal stop is inserted into disyllabic Vn~~ (overridden)
-- Aspects slightly reshuffled
+- ~~Aspects slightly reshuffled~~
 - Vz default value (-ë) added
 - Naming Adjunct added
 - Vh scoping added to Modular Adjunct
