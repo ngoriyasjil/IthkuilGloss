@@ -3,12 +3,12 @@
 **Updates from v0.14.3 -> v0.15.0**
 
 - ~~EXN added to Vv~~ (overridden)
-- UPX removed
+- ~~UPX removed~~
 - Ca allomorphism additions
-- Effect SLF added
+- ~~Effect SLF added~~
 - Case affix Cs:s changed
 - ~~PRAs can carry Vv info when verbal~~ (overridden)
-- PRA pseudo-Ca changed to x/xx/lx/rx
+- ~~PRA pseudo-Ca changed to x/xx/lx/rx~~
 - ~~Illocution/Validation reordered~~ (done)
 - Register adjunct vowel forms changed
 
@@ -16,7 +16,7 @@
 
 - ~~Vv and Vr restructured~~ (done) (overridden) (*:sob:*)
 - Minor Ca allomorphism change
-- Effect labels changed
+- ~~Effect labels changed~~
 - ~~Aspect Cn glottal stop is inserted into disyllabic Vn~~ (overridden)
 - Aspects slightly reshuffled
 - Vz default value (-ë) added

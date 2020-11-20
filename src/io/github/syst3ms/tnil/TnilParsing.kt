@@ -76,15 +76,15 @@ fun effectString(precision: Int, effectIndex: Int): String? {
     val det = Effect.DETRIMENTAL.toString(precision)
     val unk = Effect.UNKNOWN.toString(precision)
     return when (effectIndex) {
-        0 -> "1/$ben"
-        1 -> "2/$ben"
-        2 -> "3/$ben"
-        3 -> "all/$ben"
+        0 -> "1:$ben"
+        1 -> "2:$ben"
+        2 -> "3:$ben"
+        3 -> "SLF:$ben"
         4 -> unk
-        5 -> "all/$det"
-        6 -> "3/$det"
-        7 -> "2/$det"
-        8 -> "1/$det"
+        5 -> "SLF:$det"
+        6 -> "3:$det"
+        7 -> "2:$det"
+        8 -> "1:$det"
         else -> throw IllegalStateException()
     }
 }
@@ -298,18 +298,17 @@ fun parseCa(s: String) : List<Precision>? {
     if (original.isEmpty())
         return null
     when (original) {
-        "l" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
-        "ř" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.REPRESENTATIVE)
-        "r" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.NORMAL)
-        "tļ" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.REPRESENTATIVE)
-        "v" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.NORMAL)
-        "lm" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.REPRESENTATIVE)
-        "ẓ" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.NORMAL)
-        "ln" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.REPRESENTATIVE)
-        "d" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.ASSOCIATIVE, Perspective.MONADIC, Essence.NORMAL)
-        "g" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.COALESCENT, Perspective.MONADIC, Essence.NORMAL)
-        "b" -> return listOf(Uniplex.SPECIFIC, Extension.DELIMITIVE, Affiliation.VARIATIVE, Perspective.MONADIC, Essence.NORMAL)
-        "lţ" -> return listOf(Uniplex.POTENTIAL, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "l" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "ř" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.REPRESENTATIVE)
+        "r" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.NORMAL)
+        "tļ" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.REPRESENTATIVE)
+        "v" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.NORMAL)
+        "lm" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.REPRESENTATIVE)
+        "ẓ" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.NORMAL)
+        "ln" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.REPRESENTATIVE)
+        "d" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.ASSOCIATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "g" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.COALESCENT, Perspective.MONADIC, Essence.NORMAL)
+        "b" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.VARIATIVE, Perspective.MONADIC, Essence.NORMAL)
     }
     original = original.replace("mz", "mm")
         .replace("nd", "nn")
@@ -457,7 +456,6 @@ fun parseCa(s: String) : List<Precision>? {
     if (c == Unit)
         original = original.dropLast(1)
     when (original) {
-        "ţ" -> elements.add(0, Uniplex.POTENTIAL)
         "rt" -> {
             elements.add(0, Connectedness.SEPARATE)
             elements.add(0, Similarity.DUPLEX_SIMILAR)
@@ -530,7 +528,7 @@ fun parseCa(s: String) : List<Precision>? {
             elements.add(0, Connectedness.FUSED)
             elements.add(0, Similarity.MULTIPLEX_FUZZY)
         }
-        "" -> elements.add(0, Uniplex.SPECIFIC)
+        "" -> elements.add(0, Similarity.UNIPLEX)
         else -> return null
     }
     return elements

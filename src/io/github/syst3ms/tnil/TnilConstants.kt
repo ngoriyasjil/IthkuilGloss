@@ -4,9 +4,6 @@ package io.github.syst3ms.tnil
 
 import java.lang.AssertionError
 
-const val ALT_VF_FORM = 1
-const val SLOT_THREE_PRESENT = 2
-
 const val SLOT_SEPARATOR = "-"
 const val CATEGORY_SEPARATOR = "/"
 const val REFERENT_SEPARATOR = "+"
@@ -22,16 +19,12 @@ const val DISCURSIVE_START = "«"
 const val DISCURSIVE_END = "»"
 const val MODULAR_PLACEHOLDER = "@@"
 const val REFERENT_ROOT_PLACEHOLDER = "@@"
-const val TPP_SHORTCUT_PLACEHOLDER = "$$"
 const val CONCATENATIVE_START = "{{"
 const val CONCATENATIVE_END = "}}"
 const val AFFIX_UNKNOWN_VOWEL_MARKER = "@"
 const val AFFIX_UNKNOWN_CASE_MARKER = "&&"
 const val AFFIX_UNKNOWN_CA_MARKER = "^"
 const val AFFIX_STACKED_CA_MARKER = "##"
-const val NOMINAL_FORMATIVE_IDENTIFIER = ":"
-const val VERBAL_FORMATIVE_IDENTIFIER = "!"
-const val TPP_AFFIX_CONSONANT = "kt"
 const val RTI_AFFIX_CONSONANT = "lt"
 const val VK_AFFIX_CONSONANT = "rl"
 const val PRA_SHORTCUT_AFFIX_MARKER = "%%"
@@ -91,7 +84,7 @@ val VR_FORMS = listOf(
         "ia/öa", "iä/uä", "ie/oë", "ië/uë", "ua/aö", "ue/eö", "uo/io", "uö/iö",
         "ao", "ae", "ea", "eo", "oa", "öa", "oe", "öe"
 )
-val COMBINATION_PRA_SPECIFICATION = listOf("bz", "gz", "bž", "gž")
+val COMBINATION_PRA_SPECIFICATION = listOf("x", "xx", "lx", "rx")
 val SCOPING_VALUES = listOf(
         "a", "u", "e", "i", "o", "ö",
         "h", "'h", "'w", "'y", "'hl", "'hr"
@@ -141,7 +134,6 @@ enum class Stem(private val short: String) : Precision {
     STEM_THREE("S3");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 1 -> ""
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
@@ -170,18 +162,8 @@ enum class Function(private val short: String) : Precision {
     }
 }
 
-enum class Uniplex(private val short: String) : Precision {
-    SPECIFIC("UXS"),
-    POTENTIAL("UPX");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-}
-
 enum class Similarity(private val short: String) : Precision {
+    UNIPLEX("UXS"),
     DUPLEX_SIMILAR("DPS"),
     DUPLEX_DISSIMILAR("DPD"),
     DUPLEX_FUZZY("DPF"),
@@ -190,6 +172,7 @@ enum class Similarity(private val short: String) : Precision {
     MULTIPLEX_FUZZY("MPF");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
