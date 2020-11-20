@@ -16,31 +16,26 @@ import java.net.URL
 
 val logger = LoggerFactory.getLogger("tnilgloss")!!
 
-val authorizedUsers = arrayListOf<String>()
-
-const val MORPHOPHONOLOGY_VERSION = "0.16.0 (unfinished)"
+const val MORPHOPHONOLOGY_VERSION = "0.17.0 (unfinished)"
 
 fun main() {
     val tokenFile = File("./resources/token.txt")
     require(tokenFile.exists() && tokenFile.isFile) { "Can't find token file!" }
-    val lines = arrayListOf<String>()
-    tokenFile.bufferedReader()
-        .useLines { it.forEach { e -> lines.add(e) } }
-    authorizedUsers += lines.drop(1)
+    val token = tokenFile.readLines()[0]
     loadResources()
-    val jda = JDABuilder.createDefault(lines[0])
+    val jda = JDABuilder.createDefault(token)
         .setActivity(Activity.of(Activity.ActivityType.DEFAULT, "?help for info"))
         .addEventListeners(MessageListener())
         .build()
     jda.awaitReady()
 }
 
-fun parsePrecision(request: String, authorized: Boolean) =
+fun parsePrecision(request: String) =
         when {
-            request.contains("short", ignoreCase = true) -> 0
-            request.contains("full")                     -> 2
-            authorized && request.contains("debug")      -> 3
-            else                                         -> 1
+            request.contains("short") -> 0
+            request.contains("full")  -> 2
+            request.contains("debug") -> 3
+            else                            -> 1
         }
 
 fun loadResources() {
@@ -48,11 +43,11 @@ fun loadResources() {
   rootData = parseRoots(URL("https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303").readText())
 }
 
-fun respond(content: String, authorized: Boolean) : String? {
+fun respond(content: String) : String? {
     var request = content.split("\\s+".toRegex())[0]
     val ignoreDefault = !request.startsWith("??")
     request = request.removePrefix("??").removePrefix("?")
-    val prec = parsePrecision(request, authorized)
+    val prec = parsePrecision(request)
 
     when(request) {
         "gloss", "short", "full", "!debug" -> { // Word by word
@@ -133,18 +128,14 @@ fun respond(content: String, authorized: Boolean) : String? {
             }
             return newMessage.withZeroWidthSpaces()
         }
-        "!stop" -> {
-            if (authorized) {
-                exitProcess(0)
-            }
-        }
+        "!stop" -> exitProcess(0)
         "!reload" -> {
-            try {
+            return try {
                 loadResources()
-                return "External resources successfully reloaded!"
+                "External resources successfully reloaded!"
             } catch(e: Exception) {
                 logger.error("{}", e)
-                return "Error while reloading external resources…"
+                "Error while reloading external resources…"
             }
         }
         "!status" -> return "__Status report:__\n" +
@@ -156,7 +147,6 @@ fun respond(content: String, authorized: Boolean) : String? {
         "!whosagoodbot" -> return "(=^ェ^=✿)"
         else -> return null
     }
-    return null
 }
 
 class MessageListener : ListenerAdapter() {
@@ -166,7 +156,6 @@ class MessageListener : ListenerAdapter() {
         val chan = event.channel
         val msg = event.message
         val content = msg.contentRaw
-        val authorized = event.author.id in authorizedUsers
         if (!content.startsWith("?")) {
             return
         }
@@ -204,7 +193,7 @@ class MessageListener : ListenerAdapter() {
             }
         }
 
-        val response = respond(content, authorized)
+        val response = respond(content)
         if (response != null) {
             chan.sendMessage(MessageBuilder("**WORK IN PROGRESS**\n $response").build()).queue()
         }

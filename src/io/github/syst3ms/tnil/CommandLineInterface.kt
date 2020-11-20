@@ -5,7 +5,7 @@ fun main() {
     do {
         print(">>> ")
         val msg = readLine() ?: ""
-        val response = respond(msg, true)
+        val response = respond(msg)
         if (response != null) {
             println(response)
         }
