@@ -139,14 +139,12 @@ fun respond(content: String, authorized: Boolean) : String? {
             }
         }
         "!reload" -> {
-            if (authorized) {
-                try {
-                    loadResources()
-                    return "External resources successfully reloaded!"
-                } catch(e: Exception) {
-                    logger.error("{}", e)
-                    return "Error while reloading external resources…"
-                }
+            try {
+                loadResources()
+                return "External resources successfully reloaded!"
+            } catch(e: Exception) {
+                logger.error("{}", e)
+                return "Error while reloading external resources…"
             }
         }
         "!status" -> return "__Status report:__\n" +
