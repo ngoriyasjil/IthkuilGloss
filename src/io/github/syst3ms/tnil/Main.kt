@@ -63,7 +63,8 @@ fun respond(content: String) : String? {
                                 VOWEL_FORM.none { v -> v eq it.toString() } }
                     if(nonIthkuil.isNotEmpty()) {
                         glosses += error("Non-ithkuil characters detected: " +
-                                nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString())
+                                nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
+                                if (nonIthkuil.contains("[qˇ^]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else "")
                         continue
                     }
                 }
