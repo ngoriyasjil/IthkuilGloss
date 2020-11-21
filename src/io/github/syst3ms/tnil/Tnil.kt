@@ -413,7 +413,7 @@ fun parseFormative(groups: Array<String>,
     var specialAffixJoin = false
     // j is now either at Ca, or at the end of Slot X
     if (i == j) { // We're at Ca, slots VIII and X are empty
-        val c = groups[i].trimGlottal()
+        val c = groups[i].unGlottalCa()
         val ca = parseCa(c)
         val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
@@ -442,7 +442,7 @@ fun parseFormative(groups: Array<String>,
                     ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: ${groups[i]}")).plusSeparator(start = true) +
             secondSegment
     } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
-        val c = groups[j].trimGlottal()
+        val c = groups[j].unGlottalCa()
         val ca = parseCa(c)
         val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
@@ -525,7 +525,7 @@ fun parseFormative(groups: Array<String>,
                     ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
             secondSegment = shortcut.plusSeparator(start = true) + secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
         }
-        val c = groups[caIndex].trimGlottal()
+        val c = groups[caIndex].unGlottalCa()
         val ca = parseCa(c)
         val alternate = if (c != "h" && c.startsWith("h")) {
             if (stress == 0) {
@@ -931,7 +931,7 @@ fun parseAffixual(groups: Array<String>,
     if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
         return error("'$c' can't be a valid affix consonant")
     val aff = parseAffix(c, v, precision, ignoreDefault)
-    val scope = affixAdjunctScope((groups.getOrNull(i)?.defaultForm()), ignoreDefault)
+    val scope = affixAdjunctScope((groups.getOrNull(i+2)?.defaultForm()), ignoreDefault)
     return when {
         aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
         aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")

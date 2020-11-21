@@ -45,10 +45,10 @@ val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
     "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř"
 )
-val FRICATIVES = listOf("f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "ř", "h", "ļ")
-val AFFRICATES = listOf("c", "ẓ", "č", "j")
-val NASALS = listOf("m", "n", "ň")
-val STOPS = listOf("p", "b", "t", "d", "k", "g")
+val FRICATIVES = setOf('f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', 'ř', 'h', 'ļ')
+val AFFRICATES = setOf('c', 'ẓ', 'č', 'j')
+val NASALS = setOf('m', 'n', 'ň')
+val STOPS = setOf('p', 'b', 't', 'd', 'k', 'g')
 val CD_CONSONANTS = listOf(
         "h", "ç", "w", "y",
         "hw", "hh", "çw", "çç",
@@ -78,17 +78,29 @@ val SIMPLE_VV_FORMS = listOf(
         "owä", "uwä", "owë", "uwë", "awö", "ewö", "iwo", "iwö",
         "awo", "awe", "ewa", "ewo", "owa", "öwa", "owe", "öwe"
 )
-val VR_FORMS = listOf(
-        "a", "ä", "e", "i", "u", "ü", "o", "ö",
-        "ai", "au", "ei", "eu", "ui", "iu", "oi", "ou",
-        "ia/öa", "iä/uä", "ie/oë", "ië/uë", "ua/aö", "ue/eö", "uo/io", "uö/iö",
-        "ao", "ae", "ea", "eo", "oa", "öa", "oe", "öe"
-)
+
 val COMBINATION_PRA_SPECIFICATION = listOf("x", "xx", "lx", "rx")
-val SCOPING_VALUES = listOf(
-        "a", "u", "e", "i", "o", "ö",
-        "h", "'h", "'w", "'y", "'hl", "'hr"
-)
+
+val UNGLOTTAL_MAP = mapOf(
+        "rrç" to "pk" , "llç" to "tk" , "řřţ" to "kt",
+        "rrt" to "pt" , "řřf" to "kp" , "llf" to "tp",
+        "llz" to "lpk", "lls" to "ltk", "llḑ" to "lkt",
+        "rrz" to "rpk", "rrs" to "rtk", "rrḑ" to "rkt",
+        "řřz" to "řpk", "řřs" to "řtk", "řřḑ" to "řkt",
+        "llž" to "lpt", "llš" to "lkp", "llv" to "ltp",
+        "rrž" to "rpt", "rrš" to "rkp", "rrv" to "rtp",
+        "řřž" to "řpt", "řřš" to "řkp", "řřv" to "řtp",
+        "vvm" to "bm" , "ḑḑm" to "dm" , "žžm" to "gm",
+        "vvn" to "bn" , "ḑḑn" to "dn" , "žžn" to "gn")
+
+val CA_SUBSTITUTIONS = listOf(
+        "řd" to "řtt", "řg" to "řkk", "řb" to "řpp",
+        "rd" to "rtt", "rg" to "rkk", "rb" to "rpp", "ňv" to "rňm", "nḑ" to "rňn",
+        "ld" to "ltt", "lg" to "lkk", "lb" to "lpp", "ňž" to "rnm", "mž" to "rmn",
+        "^nd" to "tt", "^ng" to "kk", "^mb" to "pp", "nz" to "nn", "mz" to "mm",
+        "ňž" to "ňy", "ž" to "çy", "ẓ" to "cy", "j" to "čy",
+        "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
+        "c" to "ts", "tš" to "č", "ḑ" to "tţ")
 
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String

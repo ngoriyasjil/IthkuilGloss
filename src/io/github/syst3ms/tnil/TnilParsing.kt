@@ -271,273 +271,136 @@ fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? 
     else -> null
 }
 
-fun String.isGlottalCa(): Boolean {
-    if (startsWith("'")) {
-        return true
-    } else if (length >= 3) {
-        val pre = take(2)
-        if (pre[0] == pre[1]) {
-            if (pre[0] == 'r' ||
-                    pre[0] == 'l' ||
-                    pre[0].toString() in NASALS ||
-                    pre[0].toString() in FRICATIVES ||
-                    pre[0].toString() in AFFRICATES) {
-                return true
-            } else if (pre[0].toString() in STOPS && this[2].toString() in listOf("l", "r", "ř", "w", "y")) {
-                return true
-            }
-        }
-    }
-    return false
+
+fun String.isGlottalCa(): Boolean = when {
+    startsWith("'") -> true
+    length == 2 && this[0] == this[1] && (this[0] in STOPS || this[0] in AFFRICATES)  -> true
+    length > 2 && this[1] == this[2] && this[0] in setOf('p', 't', 'k') && this[1] in FRICATIVES -> true
+    length > 2 && this[0] == this[1] && this[0] in setOf('r','l') union NASALS union FRICATIVES union AFFRICATES -> true
+    else -> false
 }
 
+
+
+fun String.unGlottalCa(): String = when {
+    startsWith("'") -> this.drop(1)
+    length == 2 && this[0] == this[1] && (this[0] in STOPS || this[0] in AFFRICATES)  -> this.drop(1)
+    length > 2 && this[1] == this[2] && this[0] in setOf('p', 't', 'k') && this[1] in FRICATIVES -> this[0] + this.drop(2)
+    this in UNGLOTTAL_MAP.keys -> UNGLOTTAL_MAP[this] ?: this
+    length > 2 && this[0] == this[1] && this[0] in setOf('r','l') union NASALS union FRICATIVES union AFFRICATES -> this.drop(1)
+    else -> this
+}
+
+
 fun parseCa(s: String) : List<Precision>? {
-    val elements = arrayListOf<Precision>()
     var original = s.defaultForm()
     if (original.isEmpty())
         return null
+
+    var similarity = Similarity.UNIPLEX
+    var separability: Connectedness? = null
+    var extension = Extension.DELIMITIVE
+    var affiliation = Affiliation.CONSOLIDATIVE
+    var perspective = Perspective.MONADIC
+    var essence = Essence.NORMAL
+
+    var standaloneForm = true
+
     when (original) {
-        "l" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.NORMAL)
-        "ř" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.MONADIC, Essence.REPRESENTATIVE)
-        "r" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.NORMAL)
-        "tļ" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.POLYADIC, Essence.REPRESENTATIVE)
-        "v" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.NORMAL)
-        "lm" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.NOMIC, Essence.REPRESENTATIVE)
-        "ẓ" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.NORMAL)
-        "ln" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.CONSOLIDATIVE, Perspective.ABSTRACT, Essence.REPRESENTATIVE)
-        "d" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.ASSOCIATIVE, Perspective.MONADIC, Essence.NORMAL)
-        "g" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.COALESCENT, Perspective.MONADIC, Essence.NORMAL)
-        "b" -> return listOf(Similarity.UNIPLEX, Extension.DELIMITIVE, Affiliation.VARIATIVE, Perspective.MONADIC, Essence.NORMAL)
+        "d" -> affiliation = Affiliation.ASSOCIATIVE
+        "g" -> affiliation = Affiliation.COALESCENT
+        "b" -> affiliation = Affiliation.VARIATIVE
+        "l", "ř" -> Unit
+        "r", "tļ" -> perspective = Perspective.POLYADIC
+        "v", "lm" -> perspective = Perspective.NOMIC
+        "z", "ln" -> perspective = Perspective.ABSTRACT
+        else -> standaloneForm = false
     }
-    original = original.replace("mz", "mm")
-        .replace("nd", "nn")
-        .replace("sf", "pp")
-        .replace("šf", "kk")
-        .replace("sţ", "tt")
-        .replace("j", "čy")
-        .replace("nž", "çy")
-        .replace("nz", "ňy")
-        .replace("v(?=.)".toRegex(), "nf")
-        .replace("fš(?=.)".toRegex(), "kf")
-        .replace("fs(?=.)".toRegex(), "tf")
-        .replace("ng", "ňk")
-        .replace("mb", "np")
-        .replace("ḑ", "tţ")
-        .replace("č", "tš")
-        .replace("c", "ts")
-        .replace("rç", "ţç")
-        .replace("rţ", "ţţ")
-        .replace("rf", "ţf")
-        .replace("ž", "ţš")
-        .replace("z", "ţs")
-    val a = when {
-        original.endsWith("ř") -> {
-            elements.add(Perspective.MONADIC)
-            elements.add(Essence.REPRESENTATIVE)
-            1
+
+    if (standaloneForm) {
+        if (original in setOf("ř","tļ", "lm", "ln")) {
+            essence = Essence.REPRESENTATIVE
         }
-        original.endsWith("r") || original.endsWith("v") -> {
-            if (original.endsWith("v") && !(original.startsWith("ř") || original.getOrNull(original.length - 2) in listOf('b', 'd', 'g')))
-                return null
-            elements.add(Perspective.POLYADIC)
-            elements.add(Essence.NORMAL)
-            1
+        return listOf(similarity, extension, affiliation, perspective, essence)
+    }
+
+    CA_SUBSTITUTIONS.forEach{ (substitution, normal) -> original.replace(substitution, normal) }
+
+    when {
+        original[0] == 'l' -> {
+            similarity = Similarity.MULTIPLEX_FUZZY
+            original = original.drop(1)
         }
-        original.endsWith("ļ") -> {
-            if (original.length == 1)
-                return null
-            elements.add(Perspective.POLYADIC)
-            elements.add(Essence.REPRESENTATIVE)
-            1
+        original[0] in setOf('r', 'ř') -> {
+            similarity = when (original.take(2)) {
+                "rt", "rk", "rp" -> Similarity.DUPLEX_SIMILAR
+                "rn", "rň", "rm" -> Similarity.DUPLEX_DISSIMILAR
+                "řt", "řk", "řp" -> Similarity.DUPLEX_FUZZY
+                else -> return null
+            }
+            original = original.drop(1)
         }
-        original.endsWith("w") -> {
-            elements.add(Perspective.NOMIC)
-            elements.add(Essence.NORMAL)
-            1
-        }
-        original.endsWith("m") || original.endsWith("h") -> {
-            if (original.endsWith("h") &&
-                    (original.length < 3
-                            || original[original.lastIndex - 1].toString() !in STOPS
-                            || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
-                return null
-            } else if (original.length == 1) {
-                elements.add(Perspective.MONADIC)
-                elements.add(Essence.NORMAL)
-                0
-            } else {
-                elements.add(Perspective.NOMIC)
-                elements.add(Essence.REPRESENTATIVE)
-                1
+        else -> {
+            similarity = when (original[0]) {
+                't', 'k', 'p' -> Similarity.MULTIPLEX_SIMILAR
+                'n', 'ň', 'm' -> Similarity.MULTIPLEX_DISSIMILAR
+                else -> Similarity.UNIPLEX
             }
         }
-        original.endsWith("y") -> {
-            if (original.length == 1)
-                return null
-            elements.add(Perspective.ABSTRACT)
-            elements.add(Essence.NORMAL)
-            1
-        }
-        original.endsWith("n") || original.endsWith("ç") -> {
-            if (original.endsWith("ç") &&
-                    (original.length < 3
-                            || original[original.lastIndex - 1].toString() !in STOPS
-                            || original[original.lastIndex - 2].toString() !in FRICATIVES)) {
-                return null
-            } else if (original.length == 1) {
-                elements.add(Perspective.MONADIC)
-                elements.add(Essence.NORMAL)
-                0
-            } else {
-                elements.add(Perspective.ABSTRACT)
-                elements.add(Essence.REPRESENTATIVE)
-                1
-            }
-        }
-        else -> {
-            elements.add(Perspective.MONADIC)
-            elements.add(Essence.NORMAL)
-            0
-        }
     }
-    original = original.dropLast(a)
-    when (original) {
-        "d" -> {
-            elements.add(0, Affiliation.ASSOCIATIVE)
-            return elements
-        }
-        "g" -> {
-            elements.add(0, Affiliation.COALESCENT)
-            return elements
-        }
-        "b" -> {
-            elements.add(0, Affiliation.VARIATIVE)
-            return elements
-        }
+
+    separability = when (original[0]) {
+        't', 'n' -> Connectedness.SEPARATE
+        'k', 'ň' -> Connectedness.CONNECTED
+        'p', 'm' -> Connectedness.FUSED
+        else -> null
     }
-    val b = when (original.lastOrNull()) { // Dirty hack exploiting the fact that in Kotlin, 'void' functions return a singleton object called Unit
-        't' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            null
-        } else {
-            elements.add(0, Affiliation.ASSOCIATIVE)
+
+    if (original.getOrNull(0) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
+        extension = when (original[0]) {
+            's' -> Extension.PROXIMAL
+            'š' -> Extension.INCIPIENT
+            'f' -> Extension.ATTENUATIVE
+            'ţ' -> Extension.GRADUATIVE
+            'ç' -> Extension.DEPLETIVE
+            else -> return null
         }
-        'k' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            null
-        } else {
-            elements.add(0, Affiliation.COALESCENT)
-        }
-        'p' -> if (original.length == 1 || original matches "[rř][ptk]".toRegex()) {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            null
-        } else {
-            elements.add(0, Affiliation.VARIATIVE)
-        }
-        else -> {
-            elements.add(0, Affiliation.CONSOLIDATIVE)
-            null
-        }
+        original = original.drop(1)
     }
-    if (b == Unit)
-        original = original.dropLast(1)
-    val c = when (original.lastOrNull()) {
-        's' -> elements.add(0, Extension.PROXIMAL)
-        'š' -> elements.add(0, Extension.INCIPIENT)
-        'f' -> elements.add(0, Extension.ATTENUATIVE)
-        'ţ' -> elements.add(0, Extension.GRADUATIVE)
-        'ç' -> elements.add(0, Extension.DEPLETIVE)
-        else -> {
-            elements.add(0, Extension.DELIMITIVE)
-            null
+
+    if (original.getOrNull(0) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
+        affiliation = when (original[0]) {
+            't', 'd' -> Affiliation.ASSOCIATIVE
+            'k', 'g' -> Affiliation.COALESCENT
+            'p', 'b' -> Affiliation.VARIATIVE
+            else -> return null
         }
+        original = original.drop(1)
     }
-    if (c == Unit)
-        original = original.dropLast(1)
-    when (original) {
-        "rt" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.DUPLEX_SIMILAR)
+
+    if (original.isNotEmpty()) {
+        perspective = when(original[0]) {
+            'r', 'v', 'l' -> Perspective.POLYADIC
+            'w', 'm', 'h' -> Perspective.NOMIC
+            'y', 'n', 'ç' -> Perspective.ABSTRACT
+            else -> return null
         }
-        "rk" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.DUPLEX_SIMILAR)
+        essence = when(original[0]) {
+            'ř', 'l', 'm', 'h', 'n', 'ç' -> Essence.REPRESENTATIVE
+            else -> Essence.NORMAL
         }
-        "rp" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.DUPLEX_SIMILAR)
-        }
-        "rn" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
-        }
-        "rň" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
-        }
-        "rm" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.DUPLEX_DISSIMILAR)
-        }
-        "řt" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.DUPLEX_FUZZY)
-        }
-        "řk" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.DUPLEX_FUZZY)
-        }
-        "řp" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.DUPLEX_FUZZY)
-        }
-        "t" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.MULTIPLEX_SIMILAR)
-        }
-        "k" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.MULTIPLEX_SIMILAR)
-        }
-        "p" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.MULTIPLEX_SIMILAR)
-        }
-        "n" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
-        }
-        "ň" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
-        }
-        "m" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.MULTIPLEX_DISSIMILAR)
-        }
-        "lt" -> {
-            elements.add(0, Connectedness.SEPARATE)
-            elements.add(0, Similarity.MULTIPLEX_FUZZY)
-        }
-        "lk" -> {
-            elements.add(0, Connectedness.CONNECTED)
-            elements.add(0, Similarity.MULTIPLEX_FUZZY)
-        }
-        "lp" -> {
-            elements.add(0, Connectedness.FUSED)
-            elements.add(0, Similarity.MULTIPLEX_FUZZY)
-        }
-        "" -> elements.add(0, Similarity.UNIPLEX)
-        else -> return null
+        original = original.drop(1)
     }
-    return elements
+    return if (original.isNotEmpty()) null else {
+        listOfNotNull(similarity, separability, extension, affiliation, perspective, essence)
+    }
 }
 
 internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
 
 fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: Boolean = false): String? {
     val scope = when (s?.defaultForm()) {
-        "", null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
+        null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
         "h", "a" -> "{VDom}"
         "'h", "u" -> "{VSub}"
         "'w", "e" -> "{VIIDom}"
