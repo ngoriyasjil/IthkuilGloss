@@ -919,7 +919,7 @@ fun parseAffixualScoping(groups: Array<String>,
         aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
     }
     result += aff.plusSeparator()
-    val scope = scopeToString(groups[i], ignoreDefault) ?: return error("Invalid scope: ${groups[i]}")
+    val scope = affixAdjunctScope(groups[i], ignoreDefault) ?: return error("Invalid scope: ${groups[i]}")
     if (c == RTI_AFFIX_CONSONANT)
         rtiScope = rtiScope ?: scope
     result += scope.plusSeparator()
@@ -950,7 +950,7 @@ fun parseAffixualScoping(groups: Array<String>,
         result += aff
         i += 2
     }
-    val sc = if (i < groups.size) scopeToString(groups[i], ignoreDefault) else ""
+    val sc = affixAdjunctScope(groups.getOrNull(i), ignoreDefault, scopingAdjunctVowel = true)
     if (sc != "" && rtiScope == "")
         rtiScope = sc
     result += (sc ?: return error("Invalid scope: ${groups[i]}")).plusSeparator(start = true)
@@ -984,7 +984,7 @@ fun parseAffixual(groups: Array<String>,
     if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
         return error("'$c' can't be a valid affix consonant")
     val aff = parseAffix(c, v, precision, ignoreDefault)
-    val scope = if (groups.size == i+3) scopeToString(groups[i+2].defaultForm(), ignoreDefault) else ""
+    val scope = affixAdjunctScope((groups.getOrNull(i)?.defaultForm()), ignoreDefault)
     return when {
         aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
         aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")

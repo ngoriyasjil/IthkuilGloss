@@ -544,3 +544,20 @@ fun scopeToString(letter: String, ignoreDefault: Boolean): String? {
         else -> scopes[i % 6]
     }
 }
+
+fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: Boolean = false): String? {
+    val scope = when (s?.defaultForm()) {
+        "", null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
+        "h", "a" -> "{VDom}"
+        "'h", "u" -> "{VSub}"
+        "'w", "e" -> "{VIIDom}"
+        "'y", "i" -> "{VIISub}"
+        "'hl", "o" -> "{formative}"
+        "'hr", "ö" -> "{adjacent}"
+        "ë" -> if (scopingAdjunctVowel) "{same}" else null
+        else -> null
+    }
+    val default = (scope == "{VDom}" && !scopingAdjunctVowel) || (scope == "{same}" && scopingAdjunctVowel)
+
+    return if (default && ignoreDefault) "" else scope
+}
