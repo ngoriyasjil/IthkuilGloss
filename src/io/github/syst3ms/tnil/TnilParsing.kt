@@ -552,6 +552,15 @@ fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: B
     return if (default && ignoreDefault) "" else scope
 }
 
+fun parseModularScope(vh: String, precision: Int, ignoreDefault: Boolean) : String? =
+        when (vh.defaultForm()) {
+            "a" -> if (!ignoreDefault) "{normal}" else ""
+            "e" -> "{successive}"
+            "i", "u" -> "{formative}"
+            "o" -> "{adjacent}"
+            else -> null
+}
+
 fun parseCarrierAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
 
     val type = when(typeC.defaultForm()) {

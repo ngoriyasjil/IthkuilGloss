@@ -21,7 +21,7 @@
 - ~~Aspects slightly reshuffled~~
 - ~~Vz default value (-ë) added~~
 - ~~Naming Adjunct added~~
-- Vh scoping added to Modular Adjunct
+- ~~Vh scoping added to Modular Adjunct~~
 - ~~Simple PRA must be used over complex PRA~~ (overridden)
 
  **Updates from v0.16.0 -> 0.17.0** 

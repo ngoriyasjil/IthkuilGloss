@@ -698,6 +698,7 @@ fun parseModular(groups: Array<String>,
     result += when {
         valence -> parseVnPatternOne(groups[i], precision, ignoreDefault)
                 ?: return error("Unknown valence/context: ${groups[i]}")
+        i > 1 && stress == 0 -> parseModularScope(groups[i], precision, ignoreDefault)
         else -> Aspect.byVowel(groups[i])?.toString(precision, ignoreDefault)
                 ?: return error("Unknown aspect: ${groups[i]}")
     }
