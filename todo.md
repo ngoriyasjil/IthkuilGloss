@@ -20,7 +20,7 @@
 - ~~Aspect Cn glottal stop is inserted into disyllabic Vn~~ (overridden)
 - ~~Aspects slightly reshuffled~~
 - ~~Vz default value (-ë) added~~
-- Naming Adjunct added
+- ~~Naming Adjunct added~~
 - Vh scoping added to Modular Adjunct
 - ~~Simple PRA must be used over complex PRA~~ (overridden)
 

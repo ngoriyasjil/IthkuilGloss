@@ -19,6 +19,10 @@ Precision:
 
 SPLITMESSAGEHERE
 
+Other commands:
+  - *?!reload*: updates the root and affix documents from the spreadsheet
+  - *?!whosacutebot*: tells the bot that it is such a cute bot
+
 Formatting details:
   - Bold text in place of a root/affix means that it was not found in the current database
   - Underlined text means that the corresponding category was taken into account when looking for a description of the root.

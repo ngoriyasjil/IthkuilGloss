@@ -116,7 +116,6 @@ fun parseVk(s: String) : List<Precision>? {
     return if (values.size > 1) values else null
 }
 
-
 fun parseSimpleVv(s: String): Pair<List<Precision>, Boolean>? {
     val (series, form) = seriesAndForm(s.replace("[wy]".toRegex(), "'"))
     val stem = when(form) {
@@ -536,15 +535,6 @@ fun parseCa(s: String) : List<Precision>? {
 
 internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
 
-fun scopeToString(letter: String, ignoreDefault: Boolean): String? {
-    val i = SCOPING_VALUES.indexOf(letter.defaultForm())
-    return when {
-        i == -1 -> null
-        i % 6 == 0 && ignoreDefault -> ""
-        else -> scopes[i % 6]
-    }
-}
-
 fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: Boolean = false): String? {
     val scope = when (s?.defaultForm()) {
         "", null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
@@ -560,4 +550,21 @@ fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: B
     val default = (scope == "{VDom}" && !scopingAdjunctVowel) || (scope == "{same}" && scopingAdjunctVowel)
 
     return if (default && ignoreDefault) "" else scope
+}
+
+fun parseCarrierAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
+
+    val type = when(typeC.defaultForm()) {
+        "ç" ->  "[carrier]"
+        "hl" -> "[quotative]"
+        "hr" -> "[naming]"
+        "hm" -> "[phrasal]"
+        else -> null
+    }
+
+    val case = Case.byVowel(caseV.defaultForm())?.toString(precision, ignoreDefault)
+
+    return if (type != null && case != null) {
+        type + (if (!case.isEmpty()) "$SLOT_SEPARATOR$case" else "")
+    } else null
 }

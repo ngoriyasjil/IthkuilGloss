@@ -40,7 +40,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
             return errorList("**Parsing error**: '$word' contains non-Ithkuil characters")
         }
         try {
-            val res = parseWord(toParse, precision, ignoreDefault, sentenceParsingState = state)
+            val res = parseWord(toParse, precision, ignoreDefault)
             if (currentlyCarrier && state.carrier) {
                 result += if (word.startsWith(LOW_TONE_MARKER)) {
                     currentlyCarrier = false
@@ -127,94 +127,40 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
     return result
 }
 
-fun parseWord(s: String,
-              precision: Int,
-              ignoreDefault: Boolean,
-              sentenceParsingState: SentenceParsingState? = null): String {
+fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     val groups = s.splitGroups()
-    // Easily-identifiable adjuncts
     if (groups.isEmpty())
         return error("Empty word")
-    return if (groups.size == 1 && groups[0].isConsonant()) { // Bias adjunct
-        Bias.byGroup(groups[0])?.toString(precision) ?: return error("Unknown bias: ${groups[0]}")
-    } else if ((groups[0] == "ç" || groups[0] == "hr" || groups[0] == "hl") && (groups.size == 2 || groups.size == 4 && groups[2] == "'")) { // Carrier & concatenative adjuncts
-        val v = if (groups.size == 2) groups[1] else groups[1] + "'" + groups[3]
-        (Case.byVowel(v)?.toString(precision) ?: return error("Unknown case value: $v")) + when {
-            sentenceParsingState == null -> ""
-            groups[0] == "ç" -> {
-                sentenceParsingState.carrier = true
-                " $CARRIER_START"
-            }
-            groups[0] == "hl" -> {
-                sentenceParsingState.quotativeAdjunct = true
-                sentenceParsingState.register.add(Register.DISCURSIVE)
-                " $DISCURSIVE_START"
-            }
-            else -> {
-                sentenceParsingState.concatenative = true
-                " $CONCATENATIVE_START"
-            }
+    return when {
+        groups.size == 1 && groups[0].isConsonant() ->  {
+            Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
         }
-    } else if (s matches "h[aeëoöiuü][iu]?".toRegex()) { // Register adjunct
-        val (reg, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
-        val r = reg.toString(precision)
-        return if (initial) {
-            sentenceParsingState?.register?.add(reg)
-            if (reg == Register.DISCURSIVE) {
-                "$r $DISCURSIVE_START"
-            } else {
-                "$r $REGISTER_START"
-            }
-        } else if (reg == Register.CARRIER_END) {
-            if (sentenceParsingState?.carrier == false && sentenceParsingState.register.lastOrNull() != Register.DISCURSIVE)
-                return error("*Syntax error*: '$s' doesn't mark the end of any carrier root/adjunct.")
-            if (sentenceParsingState?.carrier == true) {
-                sentenceParsingState.carrier = false
-                "$CARRIER_END "
-            } else {
-                sentenceParsingState?.register?.removeAt(sentenceParsingState.register.lastIndex)
-                "$DISCURSIVE_END "
-            }
-        } else {
-            if (sentenceParsingState?.register?.isEmpty() == true) {
-                return error("*Syntax error*: '$s' doesn't mark the end of any active register.")
-            } else if (sentenceParsingState != null && sentenceParsingState.register.last() != reg) {
-                return error("*Syntax error*: '$s' doesn't conclude the content of its corresponding initial adjunct.")
-            } else {
-                sentenceParsingState?.register?.removeAt(sentenceParsingState.register.lastIndex)
-                if (reg == Register.DISCURSIVE) {
-                    "$DISCURSIVE_END "
-                } else {
-                    "$REGISTER_END "
-                }
-            }
+        groups[0] in setOf("ç", "hl", "hr", "hm") && (groups.size == 2 || groups.size == 4 && groups[2] == "'") -> {
+            val v = if (groups.size == 4) groups[1] + groups[2] + groups[3] else groups[1]
+            parseCarrierAdjuncts(groups[0], v, precision, ignoreDefault) ?: error("Unknown carrier adjunct: $s")
         }
-    } else if (sentenceParsingState?.carrier == true) {
-        ""
-    } else if (groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular() ||
-            groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && (groups.size == 4 || groups[4] matches "[wy]".toRegex()))) { // PRA
-        parsePRA(groups, precision, ignoreDefault, sentenceParsingState)
-    } else if (groups.size >= 4 && groups[0].isVowel() && groups[3] in COMBINATION_PRA_SPECIFICATION
-            || groups.size >= 3 && groups[0] !in CD_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
-            || groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in COMBINATION_PRA_SPECIFICATION
-            || groups.size >= 5 && groups[0] !in CD_CONSONANTS && groups[2] == "'" && groups[4] in COMBINATION_PRA_SPECIFICATION) { // Combination PRA
-        parseCombinationPRA(groups, precision, ignoreDefault, sentenceParsingState)
-    } else if (groups.size >= 5 && groups[0].isConsonant() && groups[2] in SCOPING_VALUES
-            || groups.size >= 7 && groups[0].isConsonant() && groups[2] == "y" && groups[4] in SCOPING_VALUES
-            || groups.size >= 6 && groups[0] == "ë" && groups[3] in SCOPING_VALUES
-            || groups.size >= 8 && groups[0] == "ë" && groups[3] == "y" && groups[5] in SCOPING_VALUES) { // Affixual scoping adjunct
-        parseAffixualScoping(groups, precision, ignoreDefault, sentenceParsingState)
-    } else if (groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
-            || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular()) { // Single affixual adjunct
-        parseAffixual(groups, precision, ignoreDefault, sentenceParsingState)
-    } else if (groups.all { it.isVowel() || it.isModular() }) { // Modular adjunct
-        if (sentenceParsingState == null) {
-            parseModular(groups, precision, ignoreDefault, verbalFormative = null)
-        } else {
-            MODULAR_PLACEHOLDER
+        groups[0] == "h" && groups.size == 2 -> {
+            val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
+            return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
         }
-    } else {
-        parseFormative(groups, precision, ignoreDefault, sentenceParsingState)
+        groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular()
+                || groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && (groups.size == 4 || groups[4] matches "[wy]".toRegex())) -> {
+            parsePRA(groups, precision, ignoreDefault)
+        }
+        groups.size >= 4 && groups[0].isVowel() && groups[3] in COMBINATION_PRA_SPECIFICATION
+                || groups.size >= 3 && groups[0] !in CD_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
+                || groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in COMBINATION_PRA_SPECIFICATION
+                || groups.size >= 5 && groups[0] !in CD_CONSONANTS && groups[2] == "'" && groups[4] in COMBINATION_PRA_SPECIFICATION -> {
+            parseCombinationPRA(groups, precision, ignoreDefault)
+        }
+        groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
+                || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
+            parseAffixual(groups, precision, ignoreDefault)
+        }
+        groups.all { it.isVowel() || it.isModular() } -> {
+            parseModular(groups, precision, ignoreDefault)
+        }
+        else -> parseFormative(groups, precision, ignoreDefault)
     }
 }
 
