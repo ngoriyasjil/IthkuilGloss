@@ -39,3 +39,11 @@
  - "Provisional" PR value added
  - PRAs changed
  - New ç(ë)- prefix for starting a new sentence
+ 
+ **Updates from v0.17.0 -> v0.17.1**
+ 
+ - Plexity-Similarity-Separability merged into one abbreviation
+ - Antecedent aspect -> Experiential (EXP)
+ - Deficient Level DFC -> DFT, Descriptive Case DSC -> DSP
+ - Case-scope names and abbreviations
+ - Vh simplification, new "w-" prefix
