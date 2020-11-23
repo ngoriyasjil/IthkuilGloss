@@ -36,28 +36,86 @@ fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
     }
 }
 
-fun parseCd(c: String) : Triple<List<Precision>, Boolean, Boolean>? {
-    val i = CD_CONSONANTS.indexOf(c.defaultForm())
-    if  (i == -1) return null
-
-    val (row, column) = (i%4) + 1 to (i/4) + 1
-    val type = when (row) {
-        1, 2 -> Incorporation.TYPE_ONE
-        3, 4 -> Incorporation.TYPE_TWO
-        else -> return null
-    }
-    val version = when (row) {
-        1, 3 -> Version.PROCESSUAL
-        2, 4 -> Version.COMPLETIVE
-        else -> return null
-    }
-
-    if (column !in 1 until 4) return null
-    val altVf            = column == 2 || column == 4
-    val slotThreePresent = column == 3 || column == 4
-
-    return Triple(listOf<Precision>(type, version), altVf, slotThreePresent)
+enum class Shortcut{
+    Y_SHORTCUT,
+    W_SHORTCUT;
 }
+
+fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
+    val concatenation = when (c) {
+        "h", "hl", "hm" -> Concatenation.TYPE_ONE
+        "hw", "hr", "hn" -> Concatenation.TYPE_TWO
+        else -> null
+    }
+
+    val shortcut = when (c) {
+        "w", "hl", "hr" -> Shortcut.W_SHORTCUT
+        "y", "hm", "hn" -> Shortcut.Y_SHORTCUT
+        else -> null
+    }
+
+    return Pair(concatenation, shortcut)
+}
+
+fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
+    val (series, form) = seriesAndForm(v)
+
+    val stem = when(form) {
+        1, 2 -> Stem.STEM_ONE
+        3, 5 -> Stem.STEM_TWO
+        9, 8 -> Stem.STEM_THREE
+        7, 6 -> Stem.STEM_ZERO
+        else -> return null
+    }
+    val version = when(form) {
+        1, 3, 9, 7 -> Version.PROCESSUAL
+        2, 5, 8, 6 -> Version.COMPLETIVE
+        else -> return null
+    }
+
+    var additional : List<Precision> = listOf()
+
+    when (shortcut) {
+        null -> {
+            additional = when (series) {
+                1 -> emptyList()
+                2 -> listOf(Affix("ë", "r"))
+                3 -> listOf(Affix("ë", "t"))
+                4 -> listOf(Affix("i", "t"))
+                else -> return null
+            }
+        }
+        Shortcut.W_SHORTCUT -> {
+            additional = when (series) {
+                1 -> parseCa("l")!!
+                2 -> parseCa("r")!!
+                3 -> parseCa("v")!!
+                4 -> parseCa("tļ")!!
+                else -> return null
+            }
+        }
+        Shortcut.Y_SHORTCUT -> {
+            additional = when (series) {
+                1 -> parseCa("s")!!
+                2 -> parseCa("ř")!!
+                3 -> parseCa("z")!!
+                4 -> parseCa("sř")!!
+                else -> return null
+            }
+        }
+    }
+
+    return listOf(stem, version) + additional
+
+}
+
+class Affix(val vx: String, val cs : String) : Precision { //Definitely not final
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String
+            = parseAffix(this.cs, this.vx, precision, ignoreDefault)
+
+}
+
 
 fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
     val i = VOWEL_FORM.indexOfFirst { it eq v }
@@ -146,11 +204,9 @@ fun parseSimpleVv(s: String): Pair<List<Precision>, Boolean>? {
 
 }
 
-fun parseSimpleVr(v: String): List<Precision>? {
+fun parseVr(v: String): List<Precision>? {
     val (series, form) = seriesAndForm(v)
-    if (series != 1) {
-        return null
-    }
+
     val specification = when (form) {
         1, 9 -> Specification.BASIC
         2, 8 -> Specification.CONTENTIAL
@@ -164,7 +220,91 @@ fun parseSimpleVr(v: String): List<Precision>? {
         else -> return null
     }
 
-    return listOf(function, specification)
+    val context = when(series) {
+        1 -> Context.EXISTENTIAL
+        2 -> Context.FUNCTIONAL
+        3 -> Context.REPRESENTATIONAL
+        4 -> Context.AMALGAMATIVE
+        else -> return null
+    }
+
+    return listOf(function, specification, context)
+
+}
+
+fun parseVnCn(vn: String, cn: String, marksMood: Boolean): List<Precision>? {
+    val pattern = when (cn) {
+        "h", "hl", "hr", "hm", "hn", "hň" -> 1
+        "w", "y", "hw", "hlw", "hly", "hnw", "hny" -> 2
+        else -> return null
+    }
+
+    val (series, form) = seriesAndForm(vn)
+
+    val vnValue: Precision = if (pattern == 1) {
+        when (series) {
+            1 -> Valence.byForm(form)
+            2 -> Phase.byForm(form)
+            3 -> EffectAndPerson.byForm(form)
+            4 -> Level.byForm(form)
+            else -> return null
+        }
+    } else {
+        Aspect.byVowel(vn) ?: return null
+    }
+
+    val cnValue: Precision = if (marksMood) {
+        when (cn) {
+            "h", "w", "y" -> Mood.FACTUAL
+            "hl", "hw" -> Mood.SUBJUNCTIVE
+            "hr", "hlw" -> Mood.ASSUMPTIVE
+            "hm", "hly" -> Mood.SPECULATIVE
+            "hn", "hnw" -> Mood.COUNTERFACTIVE
+            "hň", "hny" -> Mood.HYPOTHETICAL
+            else -> return null
+        }
+    } else {
+        when (cn) {
+            "h", "w", "y" -> CaseScope.NATURAL
+            "hl", "hw" -> CaseScope.ANTECEDENT
+            "hr", "hlw" -> CaseScope.SUBALTERN
+            "hm", "hly" -> CaseScope.QUALIFIER
+            "hn", "hnw" -> CaseScope.PRECEDENT
+            "hň", "hny" -> CaseScope.SUCCESSIVE
+            else -> return null
+        }
+    }
+
+    return listOf(vnValue, cnValue)
+
+}
+
+fun parseCbCy(s: String, marksMood: Boolean): Precision? {
+    val c = s.removePrefix("'")
+    val bias = Bias.byGroup(c)
+    val cyValue = if (bias == null) {
+        if (marksMood) {
+            when (c) {
+                "x" -> Mood.SUBJUNCTIVE
+                "rs" -> Mood.ASSUMPTIVE
+                "rš" -> Mood.SPECULATIVE
+                "rz" -> Mood.COUNTERFACTIVE
+                "rž" -> Mood.HYPOTHETICAL
+                else -> return null
+            }
+        } else {
+            when (c) {
+                "x" -> CaseScope.ANTECEDENT
+                "rs" -> CaseScope.SUBALTERN
+                "rš" -> CaseScope.QUALIFIER
+                "rz" -> CaseScope.PRECEDENT
+                "rž" -> CaseScope.SUCCESSIVE
+                else -> return null
+            }
+        }
+    } else null
+
+    return bias ?: cyValue
 
 }
 

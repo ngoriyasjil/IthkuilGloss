@@ -49,12 +49,11 @@ val FRICATIVES = setOf('f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', '
 val AFFRICATES = setOf('c', 'ẓ', 'č', 'j')
 val NASALS = setOf('m', 'n', 'ň')
 val STOPS = setOf('p', 'b', 't', 'd', 'k', 'g')
-val CD_CONSONANTS = listOf(
-        "h", "ç", "w", "y",
-        "hw", "hh", "çw", "çç",
-        "hl", "hr", "hm", "hn",
-        "hlw", "hly", "hmw", "hmy"
-)
+val CC_CONSONANTS = setOf(
+        "w", "y",
+        "h" , "hl", "hm",
+        "hw", "hr", "hn")
+
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
 val CASE_ACCESSOR_AFFIXES = listOf("ll", "rr", "lw", "ly")
 val INVERSE_CASE_ACCESSOR_AFFIXES = listOf("sw", "sy", "zw", "zy")
@@ -102,11 +101,27 @@ val CA_SUBSTITUTIONS = listOf(
         "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
         "c" to "ts", "tš" to "č", "ḑ" to "tţ")
 
+
+val CN_CONSONANTS = setOf(
+        "h", "hl", "hr", "hm", "hn", "hň",
+        "w", "y", "hw", "hlw", "hly", "hnw", "hny")
+
+
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
 }
 
-enum class Incorporation(private val short: String) : Precision {
+class PrecisionString(private val full: String, private val short: String = full, private val ignorable: Boolean = false) : Precision {
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return when {
+            ignorable && ignoreDefault -> ""
+            precision < 2 -> short
+            else -> full
+        }
+    }
+}
+
+enum class Concatenation(private val short: String) : Precision {
     TYPE_ONE("T1"),
     TYPE_TWO("T2");
 
@@ -282,6 +297,10 @@ enum class Valence(private val short: String) : Precision {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
+
+    companion object {
+        fun byForm(form: Int) = values()[form-1]
+    }
 }
 
 enum class Phase(private val short: String) : Precision {
@@ -300,6 +319,37 @@ enum class Phase(private val short: String) : Precision {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
+
+    companion object {
+        fun byForm(form: Int) = Valence.values()[form-1]
+    }
+
+}
+
+
+class EffectAndPerson(private val person: String?, private val effect: Effect) : Precision {
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return if (person != null) {
+            "$person:${effect.toString(precision, ignoreDefault = false)}"
+        } else effect.toString(precision, ignoreDefault = false)
+    }
+
+    companion object {
+        fun byForm(form: Int) = when (form) {
+            1 -> EffectAndPerson("1", Effect.BENEFICIAL)
+            2 -> EffectAndPerson("2", Effect.BENEFICIAL)
+            3 -> EffectAndPerson("3", Effect.BENEFICIAL)
+            4 -> EffectAndPerson("SLF", Effect.BENEFICIAL)
+            5 -> EffectAndPerson(null, Effect.UNKNOWN)
+            6 -> EffectAndPerson("SLF", Effect.DETRIMENTAL)
+            7 -> EffectAndPerson("3", Effect.DETRIMENTAL)
+            8 -> EffectAndPerson("2", Effect.DETRIMENTAL)
+            9 -> EffectAndPerson("1", Effect.DETRIMENTAL)
+            else -> throw(IndexOutOfBoundsException("Invalid vowelform: $form"))
+        }
+    }
+
 }
 
 enum class Effect(private val short: String) : Precision {
@@ -329,6 +379,10 @@ enum class Level(private val short: String) : Precision {
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
+    }
+
+    companion object {
+        fun byForm(form: Int) = Valence.values()[form-1]
     }
 }
 
@@ -402,12 +456,12 @@ enum class Mood(private val short: String, val cn: String, val cy: String) : Pre
 }
 
 enum class CaseScope(private val short: String, val cn: String, val cy: String) : Precision {
-    CCH("CCh", "h/ç", ""),
-    CCL("CCl", "hl", "x"),
-    CCR("CCr", "hr", "rs"),
-    CCW("CCw", "hw", "rš"),
-    CCM("CCm", "hm", "rz"),
-    CCn("CCn", "hn", "rž");
+    NATURAL("CCN", "h/ç", ""),
+    ANTECEDENT("CCA", "hl", "x"),
+    SUBALTERN("CCS", "hr", "rs"),
+    QUALIFIER("CCQ", "hw", "rš"),
+    PRECEDENT("CCP", "hm", "rz"),
+    SUCCESSIVE("CCV", "hn", "rž");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""

@@ -128,9 +128,14 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 }
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
+
+    //sentence-start prefix logic here
+
     val groups = s.splitGroups()
-    if (groups.isEmpty())
+    if (groups.isEmpty()) {
         return error("Empty word")
+    }
+
     return when {
         groups.size == 1 && groups[0].isConsonant() ->  {
             Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
@@ -148,15 +153,20 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
             parsePRA(groups, precision, ignoreDefault)
         }
         groups.size >= 4 && groups[0].isVowel() && groups[3] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 3 && groups[0] !in CD_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
+                || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
                 || groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 5 && groups[0] !in CD_CONSONANTS && groups[2] == "'" && groups[4] in COMBINATION_PRA_SPECIFICATION -> {
+                || groups.size >= 5 && groups[0] !in CC_CONSONANTS && groups[2] == "'" && groups[4] in COMBINATION_PRA_SPECIFICATION -> {
             parseCombinationPRA(groups, precision, ignoreDefault)
         }
         groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
                 || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
             parseAffixual(groups, precision, ignoreDefault)
         }
+        groups.size >= 5 && groups[0].isConsonant() && groups[2].removePrefix("'") in CC_CONSONANTS
+                || (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
+            parseAffixualScoping(groups, precision, ignoreDefault)
+        }
+
         groups.all { it.isVowel() || it.isModular() } -> {
             parseModular(groups, precision, ignoreDefault)
         }
@@ -164,465 +174,162 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     }
 }
 
-fun parseFormative(groups: Array<String>,
-                   precision: Int,
-                   ignoreDefault: Boolean,
-                   sentenceParsingState: SentenceParsingState? = null): String {
-    val stress = (sentenceParsingState?.forcedStress ?: groups.findStress()).coerceAtLeast(0)
-    var firstSegment = Relation.values()[stress / 2].toString(precision, ignoreDefault).plusSeparator()
-    var i = 0
-    var rtiScope = sentenceParsingState?.rtiAffixScope
-    var referentParsingData: PersonalReferentParsingData? = null
-    // First we need to determine if the formative is short, simple or complex
-    if (groups[0] in CD_CONSONANTS) { // Complex formative
-        if (groups.size < 7) { // Minimum possible for a complex formative
-            return error("Complex formative ended unexpectedly: ${groups.joinToString("")}")
-        }
-        var stackedPerspectiveIndex: Int? = null //Slot III Ca-stacking for use with the personal reference roots
-        val (cd, altVf, slotThreePresent) = parseCd(groups[0]) ?: return error("Unknown Cd value: ${groups[0]}")
-        val vf = Case.byVowel(groups[1], vfShort = altVf)
-                ?: return error("Unknown case value: ${groups[1]}")
-        firstSegment += cd.toString(precision, ignoreDefault).plusSeparator()
-        firstSegment += vf.toString(precision).plusSeparator()
-        i = 2 // Slot III begins at index 2
-        if (slotThreePresent) {
-            val limit = groups.size - 5 // Conservative upper bound
-            var stop = false
-            while (i < limit && !stop) {
-                val c = groups[i]
-                var v: String
-                if (i + 3 < limit && groups[i+2] == "'") {
-                    v = if (groups[i+1] eq groups[i+3]) {
-                        groups[i+1]
-                    } else {
-                        groups[i+1] + groups[i+3]
-                    }
-                    stop = true
-                    i += 4
-                } else {
-                    v = groups[i+1]
-                    stop = groups[i+2].startsWith("'") || groups[i+1] == CA_STACKING_VOWEL && groups[i+2].isGlottalCa() //the latter part is almost certainly illegal
-                    i += 2
-                }
-                if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
-                     return error("'$c' can't be a valid affix consonant")
-                val aff = parseAffix(c, v, precision, ignoreDefault, slotThree = true)
-                when {
-                    aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                    aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                    aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-                    aff.contains(AFFIX_STACKED_CA_MARKER) -> { // We handle the case of personal referents if the affix is Ca-stacking
-                        if (stackedPerspectiveIndex == null) {
-                            stackedPerspectiveIndex = aff.substringBefore(AFFIX_STACKED_CA_MARKER).toInt()
-                        }
-                        firstSegment += aff.substringAfter(AFFIX_STACKED_CA_MARKER).plusSeparator()
-                    }
-                    else -> firstSegment += aff.plusSeparator()
-                }
-            }
-        }
-        // Complex Vv and Vr have the exact same values
-        val complexVv = parseComplexVv(groups[i+1]) ?: return error("Unknown complex Vv value: ${groups[i+1]}")
-        var stem = (complexVv.first { it is Stem } as Enum<*>).ordinal
-        val c = if (groups[i].startsWith("'") && groups[i].length > 1 && slotThreePresent) {
-            groups[i].trimGlottal()
-        } else {
-            groups[i]
-        }
-        if (c.isInvalidLexical()) // We don't want to error if it's just slot III marking
-            return error("'$c' can't be a valid root consonant")
-        val (ci, ciStemUsed) = parseRoot(c, precision, stem)
-        if (sentenceParsingState?.carrier == false && c == "s")
-            sentenceParsingState.carrier = true
-        if (precision > 0 && stem != 0 && stackedPerspectiveIndex != null && (c == "n" || c == "d")) {
-            if (c == "n") {
-                val desc = animateReferentDescriptions[stem - 1][stackedPerspectiveIndex]
-                // replaceFirst because there might be multiple stacked Ca
-                firstSegment = firstSegment.replaceFirst("\\b[MPNA]\\b".toRegex(), "__$0__")
-                firstSegment += "'$desc'".plusSeparator()
-            } else {
-                val desc = inanimateReferentDescriptions[stem - 1][stackedPerspectiveIndex]
-                firstSegment = firstSegment.replaceFirst("\\b[MPNA]\\b".toRegex(), "__$0__")
-                firstSegment += "'$desc'".plusSeparator()
-            }
-        } else {
-            firstSegment += ci.plusSeparator()
-        }
-        val complexVr = parseComplexVr(groups[i+3], groups[i+4].isGlottalCa()) ?: return error("Unknown complex Vr value: ${groups[i+3]}")
-        stem = (complexVr.first { it is Stem } as Enum<*>).ordinal
-        if (groups[i+2].isInvalidLexical())
-            return error("'${groups[i+2]}' can't be a valid root consonant")
-        val (cr, crStemUsed) = parseRoot(groups[i+2], precision, stem)
-        if (sentenceParsingState?.carrier == false && groups[i+2] == "s")
-            sentenceParsingState.carrier = true
-        firstSegment += complexVv.toString(precision, ignoreDefault, stemUsed = ciStemUsed).plusSeparator()
-        firstSegment += (if (precision > 0 && stem != 0 && groups[i+2] == "n") {
-            referentParsingData = PersonalReferentParsingData(false, stem)
-            REFERENT_ROOT_PLACEHOLDER
-        } else if (precision > 0 && stem != 0 && groups[i+2] == "d") {
-            referentParsingData = PersonalReferentParsingData(true, stem)
-            REFERENT_ROOT_PLACEHOLDER
-        } else {
-            cr
-        }).plusSeparator()
-        firstSegment += complexVr.toString(precision, ignoreDefault, stemUsed = crStemUsed).plusSeparator()
-        i += 4
-    } else { // Simple formative
-        val newGroups = if (groups[0].isConsonant()) {
-            arrayOf("a") + groups
-        } else groups // initial "a"-elision
+@Suppress("UNCHECKED_CAST")
+fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
+    val stress = groups.findStress()
+    var index = 0
 
-        if (newGroups.size < 4) {
-            return error("Simple formative ended unexpectedly: ${groups.joinToString("")}")
-        }
-        val vvParse = if (newGroups[1] matches "[wy]".toRegex()) {
-            i += 2
-            newGroups[0] + newGroups[1] + newGroups[2]
-        } else {
-            newGroups[0]
-        }
-        val (vv, negShortcut) = parseSimpleVv(vvParse) ?: return error("Unknown Vv value: $vvParse")
-        val vr = parseSimpleVr(newGroups[i+2]) ?: return error("Unknown Vr value: ${newGroups[i+2]}")
-        val stem = (vv[0] as Stem).ordinal
-        if (newGroups[i+1].isInvalidLexical())
-            return error("'${newGroups[i+1]}' can't be a valid root consonant")
-        val (cr, stemUsed) = parseRoot(newGroups[i+1], precision, stem)
-        if (sentenceParsingState?.carrier == false && newGroups[i+1] == "s") {
-            sentenceParsingState.carrier = true
-        }
-        firstSegment += join(
-                vv.toString(precision, ignoreDefault, stemUsed = stemUsed),
-                if (negShortcut) parseAffix("r", "ë", precision, ignoreDefault) else "")
-                .plusSeparator()
-        firstSegment += (if (precision > 0 && stem != 0 && newGroups[i+1] == "n") {
-            referentParsingData = PersonalReferentParsingData(false, stem)
-            REFERENT_ROOT_PLACEHOLDER
-        } else if (precision > 0 && stem != 0 && newGroups[i+1] == "d") {
-            referentParsingData = PersonalReferentParsingData(true, stem)
-            REFERENT_ROOT_PLACEHOLDER
-        } else {
-            cr
-        }).plusSeparator()
-        firstSegment += vr.toString(precision, ignoreDefault).plusSeparator()
-        i += 3
 
-        if (groups[0].isConsonant()) i-- //a-elision
+    val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
+        index++
+        parseCc(groups[0])
+    } else Pair(null, null)
+
+    val relation = if (concatenation != null) {
+        when (stress){
+            2 -> Relation.FRAMED
+            else -> Relation.UNFRAMED
+        }
+    } else null
+
+    val vv = if (index == 0 && groups[0].isConsonant()) "a" else {
+        groups[index].also { index++ }
     }
 
-    // i is now either at Ca or the beginning of Slot VIII
-    var secondSegment = ""
-    var j = groups.lastIndex
-    // Start from the end to easily identify each slot
-    val noGlottalTail = j >= 7
-            && groups[j-1].isVowel()
-            && (groups[j-2].isModular() || groups[j-2] == "'" && groups[j-4].isModular())
-    val glottalTail = j >= 6 && groups[j].startsWith("'")
-    if (noGlottalTail || glottalTail) { // Bias
-        val c = groups[j].trimGlottal()
-        val bias = Bias.byGroup(c)
-        val alternate = if (stress == 0 || stress == 3) {
-            Mood.byCy(c)
-        } else {
-            CaseScope.byCy(c)
-        }
-        secondSegment += (bias?.toString(precision)
-                ?: alternate?.toString(precision)
-                ?: return error("Unknown bias/case-scope/mood: $c")).plusSeparator(start = true)
-        j--
+    val slotII = parseVv(vv, shortcut) ?: return error("Unknown Vv value: $vv")
+
+    val stem = (slotII[0] as Stem).ordinal
+    val (root, stemUsed) = parseRoot(groups[index], precision, stem)
+    index++
+
+    val vr = if (shortcut != null) "a" else {
+        groups[index].also { index++ }
     }
-    if (groups[j].isVowel()) { // Vc/Vk
-        val v = if (groups[j-1] == "'" && stress > 0) {
-            j -= 2
-            groups[j] + "'" + groups[j+2]
-        } else if (groups[j-1] == "'") {
-            j -= 2
-            when {
-                // We've already established stress, it doesn't really matter which one of the two bears it
-                groups[j] eq groups[j+2] -> groups[j]
-                else -> groups[j] + groups[j+2]
-            }
-        } else {
-            groups[j]
-        }
-        val vcvk = if (stress == 0) {
-            parseVk(v)?.toString(precision, ignoreDefault)
-                    ?: return error("Unknown illocution/expectation/validation: $v")
-        } else {
-            Case.byVowel(v)?.toString(precision, ignoreDefault) ?: return error("Unknown case vowel: $v")
-        }.plusSeparator(start = true)
-        secondSegment = "$vcvk$secondSegment"
-        j--
-    }
-    if (j - i >= 2 && groups[j] matches "('?[hw].*|'y)".toRegex()) { // Cn
-        when {
-            groups[j].startsWith("h") -> {
-                val cn = if (stress == 0) {
-                    Mood.byCn(groups[j])
-                } else {
-                    CaseScope.byCn(groups[j])
-                } ?: return error("Unknown case-scope/mood: ${groups[j]}")
-                val vn = when {
-                    groups[j-2] == "y" -> {
-                        j -= 2
-                        groups[j-1] + "y" + groups[j+1]
-                    }
-                    else -> groups[j-1]
-                }
-                val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                        ?: return error("Unknown valence/phase/level/effect: $vn")
-                secondSegment = join(patternOne, cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
-            }
-            groups[j].startsWith("'h") -> {
-                val cnString = groups[j].trimGlottal()
-                val cn = if (stress == 0) {
-                    Mood.byCn(cnString)
-                } else {
-                    CaseScope.byCn(cnString)
-                } ?: return error("Unknown case-scope/mood: $cnString")
-                val vt = Aspect.byVowel(groups[j-1]) ?: return error("Unknown aspect: ${groups[j-1]}")
-                secondSegment = join(vt.toString(precision, ignoreDefault), cn.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
-            }
-            else -> {
-                assert(groups[j] matches "'?[wy]".toRegex())
-                val fncCn = if (groups[j-1].defaultForm().endsWith("u")) {
-                    "y"
-                } else {
-                    "w"
-                }
-                val contextIndex = listOf(fncCn, "'w", "'y").indexOf(groups[j])
-                if (contextIndex == -1)
-                    return error("Expected the Cn value to be $fncCn, but found '${groups[j]}'")
-                val context = Context.values()[contextIndex + 1]
-                val vn = when {
-                    groups[j-2] == "y" -> {
-                        j -= 2
-                        groups[j-1] + "y" + groups[j+1]
-                    }
-                    else -> groups[j-1]
-                }
-                val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                        ?: return error("Unknown phase/context: $vn")
-                secondSegment = join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator(start = true) + secondSegment
-            }
-        }
-        j -= 2
-    }
-    if (secondSegment.isEmpty() && stress == 0) { // Ensure that ASR/COG/OBS be always marked
-        secondSegment = "ASR/COG/OBS".plusSeparator(start = true)
-    }
-    var specialAffixJoin = false
-    // j is now either at Ca, or at the end of Slot X
-    if (i == j) { // We're at Ca, slots VIII and X are empty
-        val c = groups[i].unGlottalCa()
-        val ca = parseCa(c)
-        val alternate = if (c != "h" && c.startsWith("h")) {
-            if (stress == 0) {
-                Mood.byCn(c)?.toString(precision)
-            } else {
-                CaseScope.byCn(c)?.toString(precision)
-            }
-        } else null
-        var caString = ca?.toString(precision, ignoreDefault)
-        if (ca != null) {
-            if (referentParsingData?.isInanimate == false) {
-                val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
-                firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
-                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-            } else if (referentParsingData?.isInanimate == true) {
-                val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
-                firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
-                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-            }
-        }
-        sentenceParsingState?.rtiAffixScope = null
-        sentenceParsingState?.isLastFormativeVerbal = stress == 0
-        return firstSegment.dropLast(SLOT_SEPARATOR.length) +
-            (caString
-                    ?: alternate
-                    ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: ${groups[i]}")).plusSeparator(start = true) +
-            secondSegment
-    } else if (groups[j].isGlottalCa() || groups[j-2] == "'") { // We're at Ca, slot X is empty, but slot VIII isn't
-        val c = groups[j].unGlottalCa()
-        val ca = parseCa(c)
-        val alternate = if (c != "h" && c.startsWith("h")) {
-            if (stress == 0) {
-                Mood.byCn(c)?.toString(precision)
-            } else {
-                CaseScope.byCn(c)?.toString(precision)
-            }
-        } else null
-        var caString = ca?.toString(precision, ignoreDefault)
-        if (ca != null) {
-            if (referentParsingData?.isInanimate == false) {
-                val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
-                firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
-                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-            } else if (referentParsingData?.isInanimate == true) {
-                val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
-                firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
-                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-            }
-        }
-        secondSegment = (caString ?: (alternate
-                ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: $c"))) + secondSegment
-        j--
-    } else {
-        var caIndex = i
-        for (k in j downTo i) {
-            if (groups[k] == "'" || groups[k] == "'y") { // End of slot VIII, but the glottal stop isn't part of Ca
-                caIndex = k + 2
+
+    val slotIV = parseVr(vr) ?: return error("Unknown Vr value: $vr")
+
+    val csVxAffixes : MutableList<Affix> = mutableListOf()
+
+    if (shortcut == null) {
+        var indexV = index
+        while (true) {
+            if (indexV+1 >= groups.size || groups[indexV] in CN_CONSONANTS) {
+                csVxAffixes.clear()
+                indexV = index
                 break
-            } else if (groups[k].isGlottalCa()) { // Ca reached
-                caIndex = k
+            } else if (groups[indexV].isGlottalCa()) {
                 break
             }
-        }
-        var potentialPraShortcut : Pair<String, String>? = null
-        var isAlone : Boolean? = null
-        while (j > caIndex) {
-            isAlone = isAlone == null
-            if (!isAlone && potentialPraShortcut != null) {
-                val a = parseAffix(potentialPraShortcut.first, potentialPraShortcut.second, precision, ignoreDefault)
-                when {
-                    a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                    a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                    a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
+
+            if (groups.getOrNull(indexV+2) == "'") {
+                if (groups[indexV+1] == groups.getOrNull(indexV+3)) {
+                    csVxAffixes.add(Affix(groups[indexV+1], groups[indexV]))
+                } else {
+                    csVxAffixes.add(Affix(groups[indexV+1] + groups[indexV+3], groups[indexV]))
                 }
-                if (potentialPraShortcut.first == RTI_AFFIX_CONSONANT)
-                    rtiScope = rtiScope ?: "{Ca}"
-                secondSegment = a.plusSeparator(start = true) + secondSegment
+                indexV += 4
+                break
             }
-            if (j - 1 <= caIndex) {
-                return error("Affix group (slot X) ended unexpectedly")
-            }
-            val c = groups[j]
-            val v = if (groups[j-2] == "y") {
-                j -= 2
-                groups[j-1] + "y" + groups[j+1]
+            csVxAffixes.add(Affix(groups[indexV+1], groups[indexV]))
+            indexV += 2
+        }
+        index = indexV
+
+    }
+
+    val slotVI = if (shortcut == null) {
+        val ca = if (groups.getOrNull(index)?.isGlottalCa()
+                        ?: return error("Formative ended unexpectedly")) {
+            if (csVxAffixes.isNotEmpty()) {
+                groups[index].unGlottalCa()
+            } else return error("Unexpected glottal Ca: ${groups[index]}")
+        } else groups[index]
+
+        parseCa(ca).also { index++ } ?: return error("Unknown Ca value: $ca")
+    } else null
+
+    val vxCsAffixes : MutableList<Precision> = mutableListOf()
+
+    while (true) {
+        if (index + 3 >= groups.size || groups[index+1] in CN_CONSONANTS) {
+            break
+        }
+
+        if (groups[index+1] == "'") {
+            if (groups[index] == groups.getOrNull(index+2)) {
+                vxCsAffixes.add(Affix(groups[index], groups.getOrNull(index+3)
+                        ?: return error("Formative ends in glottal stop")))
             } else {
-                groups[j-1]
+                vxCsAffixes.add(Affix(groups[index] + groups[index+2], groups[index+3]))
             }
-            if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
-                return error("'$c' can't be a valid affix consonant")
-            val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = isAlone)
-            when {
-                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-                a == PRA_SHORTCUT_AFFIX_MARKER && potentialPraShortcut == null -> {
-                    potentialPraShortcut = c to v
-                    j -= 2
-                    continue
-                }
-            }
-            secondSegment = a.plusSeparator(start = true) + secondSegment
-            if (c == RTI_AFFIX_CONSONANT)
-                rtiScope = rtiScope ?: "{Ca}"
-            j -= 2
+
+            vxCsAffixes.add(PrecisionString("{slot V end}", "{Ca}"))
+            index += 4
         }
-        if (potentialPraShortcut != null && isAlone == true) { // PRA shortcut
-            val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
-                    ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
-            secondSegment = shortcut.plusSeparator(start = true) + secondSegment.replace(PRA_SHORTCUT_AFFIX_MARKER, shortcut)
-        }
-        val c = groups[caIndex].unGlottalCa()
-        val ca = parseCa(c)
-        val alternate = if (c != "h" && c.startsWith("h")) {
-            if (stress == 0) {
-                Mood.byCn(c)?.toString(precision)
-            } else {
-                CaseScope.byCn(c)?.toString(precision)
-            }
-        } else null
-        var caString = ca?.toString(precision, ignoreDefault)
-        if (ca != null) {
-            if (referentParsingData?.isInanimate == false) {
-                val desc = animateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
-                firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
-                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-            } else if (referentParsingData?.isInanimate == true) {
-                val desc = inanimateReferentDescriptions[referentParsingData.stem - 1][perspectiveIndexFromCa(ca)]
-                firstSegment = firstSegment.replace(REFERENT_ROOT_PLACEHOLDER, "'$desc'")
-                caString = caString?.replace("\\b[MPNA]\\b".toRegex(), "__$0__")
-            }
-        }
-        secondSegment = (caString ?: (alternate
-                ?: return error("Slot IX is neither a valid Ca value nor a case-scope/mood: $c"))) + secondSegment
-        specialAffixJoin = isAlone != null && caString.isNullOrEmpty()
-        j = caIndex - 1
+
+        vxCsAffixes.add(Affix(groups[index], groups[index+1]))
+        index += 2
     }
-    // j is now at the vowel before Ca
-    var potentialPraShortcut : Pair<String, String>? = null
-    var isAlone : Boolean? = null
-    var k = i
-    while (k <= j) { // Reminder : affixes are CV rather than VC here
-        isAlone = isAlone == null
-        if (!isAlone && potentialPraShortcut != null) {
-            val a = parseAffix(potentialPraShortcut.first, potentialPraShortcut.second, precision, ignoreDefault)
-            when {
-                a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-                a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-            }
-            if (potentialPraShortcut.first == RTI_AFFIX_CONSONANT)
-                rtiScope = rtiScope ?: "{Ca}"
-            firstSegment += a.plusSeparator()
-        }
-        var c = groups[k]
-        if (c.startsWith("'") && k == i) {
-            c = c.drop(1)
-        }
-        var v: String
-        if (k + 3 <= j && groups[k+2] matches "'?y|'".toRegex()) { // Standalone end of slot VIII or Type 2 "delineation"
-            v = when {
-                "y" in groups[k+2] -> groups[k+1] + "y" + groups[k+3]
-                groups[k+1] eq groups[k+3] -> groups[k+1]
-                else -> groups[k+1] + groups[k+3]
-            }
-            k += 2
-        } else if (k + 2 == j) { // Something went wrong in vowel parsing, by now groups[k+2] should be a consonant
-            return error("Affix group (slot VIII) ended unexpectedly")
-        } else { // Standard CV
-            v = groups[k+1]
-        }
-        if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
-            return error("'$c' can't be a valid affix consonant")
-        val a = parseAffix(c, v, precision, ignoreDefault, canBePraShortcut = isAlone)
-        when {
-            a.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${a.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-            a.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${a.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-            a.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${a.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-            a == PRA_SHORTCUT_AFFIX_MARKER && potentialPraShortcut == null -> {
-                potentialPraShortcut = c to v
-                k += 2
-                continue
-            }
-        }
-        firstSegment += a.plusSeparator()
-        if (c == RTI_AFFIX_CONSONANT)
-            rtiScope = rtiScope ?: "{Stm}"
-        k += 2
-    }
-    if (potentialPraShortcut != null && isAlone == true) { // PRA shortcut
-        val shortcut = parsePraShortcut(potentialPraShortcut.first, potentialPraShortcut.second, precision)
-                ?: return error("Unknown personal referent: '" + potentialPraShortcut.first + "'")
-        firstSegment += shortcut.plusSeparator()
-    }
-    sentenceParsingState?.rtiAffixScope = null
-    sentenceParsingState?.isLastFormativeVerbal = stress == 0
-    return if (secondSegment.isEmpty() || secondSegment.startsWith(SLOT_SEPARATOR)) {
-        firstSegment.dropLast(SLOT_SEPARATOR.length) + if (specialAffixJoin) {
-            SPECIAL_AFFIX_SLOT_SEPARATOR + secondSegment.drop(SLOT_SEPARATOR.length)
-        } else {
-            secondSegment
+
+    val marksMood = stress == 0
+
+    val slotVIII: List<Precision>? = if (groups.getOrNull(index+1) in CN_CONSONANTS) {
+        parseVnCn(groups[index], groups[index+1], marksMood).also{ index += 2 } ?: return error("Unknown VnCn value: ${groups[index] + groups[index+1]}")
+    } else null
+
+    val vcVk = if (groups.getOrNull(index+1) == "'" ) {
+        if (groups.size > index+1) {
+            groups[index] + groups[index+1] + groups[index+2]
+        } else return "Formative ends in a glottal stop"
+    } else groups.getOrNull(index) ?: "a"
+
+    val slotIX = if (concatenation == null) {
+        when (stress) {
+            0 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
+            1, 2 -> listOf(Case.byVowel(vcVk) ?: return error("Unknown Vc form $vcVk"))
+            else -> return error("Unknown stress: $stress from ultimate")
         }
     } else {
-        if (specialAffixJoin) {
-            firstSegment.dropLast(SLOT_SEPARATOR.length) + SPECIAL_AFFIX_SLOT_SEPARATOR
-        } else {
-            firstSegment
-        } + secondSegment
+        when (stress) {
+            1 -> listOf(Case.byVowel(vcVk) ?: return error("Unknown Vf form $vcVk (penultimate stress)"))
+            0 -> {
+                val glottalified = when (vcVk.length) {
+                    1 -> "$vcVk'$vcVk"
+                    2 -> "${vcVk[0]}'${vcVk[1]}"
+                    else -> return error("Vf form is too long: $vcVk")
+                }
+                listOf(Case.byVowel(glottalified) ?: return error("Unknown Vf form $vcVk (ultimate stress)"))
+            }
+            else -> return error("Unknown stress for concatenated formative: $stress from ultimate")
+        }
     }
+    index++
+
+    val cyMarksMood = (stress == 0) || (stress == 2 && slotVIII != null)
+
+    val slotX = if (concatenation == null && index < groups.size) {
+        parseCbCy(groups[index], cyMarksMood)
+    } else null
+
+    val parentFormative = if (groups.getOrNull(index) == "-") {
+        parseFormative(groups.drop(index+1).toTypedArray(), precision, ignoreDefault)
+    } else null
+
+    val slotList: List<Any> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
+            csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX, slotX)
+
+
+
+    val parsedFormative : String = slotList.joinToString(SLOT_SEPARATOR) {
+        if (it is List<*>) {
+            (it as List<Precision>).toString(precision, ignoreDefault, stemUsed = stemUsed) // Wacky casting, beware.
+        } else (it as Precision).toString(precision, ignoreDefault)
+    }
+
+    return if (parentFormative != null) {
+        "$parsedFormative $parentFormative"
+    } else parsedFormative
+
 }
 
 fun parseModular(groups: Array<String>,
