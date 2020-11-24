@@ -25,28 +25,41 @@ fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && fo
 
 fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
     val (series, form) = seriesAndForm(v)
+
+    if (series == -1 || form == -1) return when (v) { //Temporary solution, ideally
+        "ü'ä" -> "üä" to true
+        "ü'a" -> "üa" to true
+        "ü'e" -> "üe" to true
+        "ü'o" -> "üo" to true
+        else -> null
+    }
+
     return if (series >= 4) {
         (bySeriesAndForm(series - 4, form)?.to(true)) ?: return null
     } else {
         v to false
     }
+
 }
 
+fun glottalVowel(v: String) : Pair<String, Boolean>? {
+    val (series, form) = seriesAndForm(v)
 
+    if (series == -1 || form == -1) return when (v) { //Temporary solution, ideally
+        "üä" -> "ü'ä" to true
+        "üa" -> "ü'a" to true
+        "üe" -> "ü'e" to true
+        "üo" -> "ü'o" to true
+        else -> null
+    }
 
-fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
-    val i = VOWEL_FORM.indexOfFirst { it eq v }
-    if (i == -1 || secondHalf && i % 9 == 7) // one of the unused values
-        return null
-    return if (secondHalf) {
-        when {
-            i % 9 == 8 -> Case.values()[36 + i - i/9 - 1] // We have to move back 1 for each 8th vowel form that's skipped
-            else -> Case.values()[36 + i - i/9] // Likewise
-        }
+    return if (series <= 4) {
+        (bySeriesAndForm(series + 4, form)?.to(true)) ?: return null
     } else {
-        Case.values()[i]
+        v to false
     }
 }
+
 
 enum class Shortcut{
     Y_SHORTCUT,
@@ -91,9 +104,9 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
         null -> {
             additional = when (series) {
                 1 -> emptyList()
-                2 -> listOf(Affix("ë", "r"))
-                3 -> listOf(Affix("ë", "t"))
-                4 -> listOf(Affix("i", "t"))
+                2 -> listOf(Affix("ë", "r", isShortcut = true))
+                3 -> listOf(Affix("ë", "t", isShortcut = true))
+                4 -> listOf(Affix("i", "t", isShortcut = true))
                 else -> return null
             }
         }
@@ -121,11 +134,10 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 
 }
 
-class Affix(val vx: String, val cs : String) : Precision { //Definitely not final
+class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val isShortcut: Boolean = false) : Precision { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(this.cs, this.vx, precision, ignoreDefault)
-
+            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBePraShortcut, isShortcut = isShortcut)
 }
 
 
@@ -320,50 +332,32 @@ fun parseCbCy(s: String, marksMood: Boolean): Precision? {
 
 }
 
+fun parsePersonalReference(s: String) : List<Precision>? {
+    val r = s.defaultForm()
+    val referent = when (r) {
+        "l", "r", "ř" -> Referent.MONADIC_SPEAKER
+        "s", "š", "ž" -> Referent.MONADIC_ADDRESSEE
+        "n", "t", "d" -> Referent.POLYADIC_ADDRESSEE
+        "m", "p", "b" -> Referent.MONADIC_ANIMATE_THIRD_PARTY
+        "ň", "k", "g" -> Referent.POLYADIC_ANIMATE_THIRD_PARTY
+        "z", "ţ", "ḑ" -> Referent.MONADIC_INANIMATE_THIRD_PARTY
+        "ẓ", "ļ", "f", "v" -> Referent.POLYADIC_INANIMATE_THIRD_PARTY
+        "c", "č", "j" -> Referent.MIXED_THIRD_PARTY
+        "th", "ph", "kh" -> Referent.OBVIATIVE
+        "ll", "rr", "řř" -> Referent.PROVISIONAL
+        "ç", "x" -> Perspective.NOMIC
+        "w", "y" -> Perspective.ABSTRACT
+        else -> return null
+    }
 
+    val effect = when (r) {
+        "l", "s", "n", "m", "ň", "z", "ẓ", "ļ", "c", "th", "ll" -> Effect.NEUTRAL
+        "r", "š", "t", "p", "k", "ţ", "f", "č", "ph", "rr" -> Effect.BENEFICIAL
+        "ř", "ž", "d", "b", "g", "ḑ", "v", "j", "kh", "řř" -> Effect.DETRIMENTAL
+        else -> null
+    }
 
-
-fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? = when (val r = s.defaultForm()) {
-    "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)
-    "r" -> listOf(Referent.MONADIC_SPEAKER, Effect.BENEFICIAL)
-    "ř" -> listOf(Referent.MONADIC_SPEAKER, Effect.DETRIMENTAL)
-    "s" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.NEUTRAL)
-    "š" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.BENEFICIAL)
-    "ž" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.DETRIMENTAL)
-    "n" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.NEUTRAL)
-    "t" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.BENEFICIAL)
-    "d" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.DETRIMENTAL)
-    "m" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "p" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "b" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "ň" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "k" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "g" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "z" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "ţ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "ḑ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "tļ" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "f" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "v" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "x" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.NEUTRAL)
-    "c" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.BENEFICIAL)
-    "ż" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.DETRIMENTAL)
-    "th" -> listOf(Referent.OBVIATIVE, Effect.NEUTRAL)
-    "ph" -> listOf(Referent.OBVIATIVE, Effect.BENEFICIAL)
-    "kh" -> listOf(Referent.OBVIATIVE, Effect.DETRIMENTAL)
-    "tç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.NEUTRAL)
-    "pç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.BENEFICIAL)
-    "kç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
-    "çn", "nç" -> if (final || r == "çn") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.NEUTRAL) else null
-    "çm", "mç" -> if (final || r == "çm") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.BENEFICIAL) else null
-    "çň", "ňç" -> if (final || r == "çň") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.DETRIMENTAL) else null
-    "çl", "lç" -> if (final || r == "çl") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.NEUTRAL) else null
-    "çr", "rç" -> if (final || r == "çr") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.BENEFICIAL) else null
-    "çř", "řç" -> if (final || r == "çř") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.DETRIMENTAL) else null
-    "rr" -> listOf(Referent.ABSTRACT_REFERENT, Effect.NEUTRAL)
-    "č" -> listOf(Referent.ABSTRACT_REFERENT, Effect.BENEFICIAL)
-    "j" -> listOf(Referent.ABSTRACT_REFERENT, Effect.DETRIMENTAL)
-    else -> null
+    return listOfNotNull(referent, effect)
 }
 
 
@@ -393,7 +387,7 @@ fun parseCa(s: String) : List<Precision>? {
         return null
 
     var similarity = Similarity.UNIPLEX
-    var separability: Connectedness? = null
+    var separability: Separability? = null
     var extension = Extension.DELIMITIVE
     var affiliation = Affiliation.CONSOLIDATIVE
     var perspective = Perspective.MONADIC
@@ -445,11 +439,13 @@ fun parseCa(s: String) : List<Precision>? {
     }
 
     separability = when (original[0]) {
-        't', 'n' -> Connectedness.SEPARATE
-        'k', 'ň' -> Connectedness.CONNECTED
-        'p', 'm' -> Connectedness.FUSED
+        't', 'n' -> Separability.SEPARATE
+        'k', 'ň' -> Separability.CONNECTED
+        'p', 'm' -> Separability.FUSED
         else -> null
     }
+
+    if (separability != null) original = original.drop(1)
 
     if (original.getOrNull(0) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
         extension = when (original[0]) {
@@ -491,8 +487,6 @@ fun parseCa(s: String) : List<Precision>? {
     }
 }
 
-internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
-
 fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: Boolean = false): String? {
     val scope = when (s?.defaultForm()) {
         null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
@@ -519,19 +513,19 @@ fun parseModularScope(vh: String, precision: Int, ignoreDefault: Boolean) : Stri
             else -> null
 }
 
-fun parseCarrierAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
+fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
 
     val type = when(typeC.defaultForm()) {
-        "ç" ->  "[carrier]"
-        "hl" -> "[quotative]"
-        "hr" -> "[naming]"
-        "hm" -> "[phrasal]"
+        "hl" ->  "[carrier]"
+        "hm" -> "[quotative]"
+        "hn" -> "[naming]"
+        "hr" -> "[phrasal]"
         else -> null
     }
 
     val case = Case.byVowel(caseV.defaultForm())?.toString(precision, ignoreDefault)
 
     return if (type != null && case != null) {
-        type + (if (!case.isEmpty()) "$SLOT_SEPARATOR$case" else "")
+        type + (if (case.isNotEmpty()) "$SLOT_SEPARATOR$case" else "")
     } else null
 }

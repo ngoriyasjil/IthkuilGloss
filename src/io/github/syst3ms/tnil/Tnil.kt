@@ -129,33 +129,38 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    //sentence-start prefix logic here
+    val ss = s.replace("^çë?".toRegex(), "")
 
-    val groups = s.splitGroups()
+    val groups = ss.splitGroups()
     if (groups.isEmpty()) {
         return error("Empty word")
     }
 
-    return when {
+    val ssgloss = when (precision) {
+        0 -> "[.]-"
+        1 -> "[sentence:]-"
+        2, 3, 4 -> "[sentence start]-"
+        else -> ""
+    }
+
+    return (if (s != ss) ssgloss else "") + when {
         groups.size == 1 && groups[0].isConsonant() ->  {
             Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
         }
-        groups[0] in setOf("ç", "hl", "hr", "hm") && (groups.size == 2 || groups.size == 4 && groups[2] == "'") -> {
-            val v = if (groups.size == 4) groups[1] + groups[2] + groups[3] else groups[1]
-            parseCarrierAdjuncts(groups[0], v, precision, ignoreDefault) ?: error("Unknown carrier adjunct: $s")
+        groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> {
+            val v = groups[1]
+            parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault) ?: error("Unknown carrier adjunct: $s")
         }
         groups[0] == "h" && groups.size == 2 -> {
             val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
             return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
         }
         groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular()
-                || groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex() || groups[2] == "'" && (groups.size == 4 || groups[4] matches "[wy]".toRegex())) -> {
+                || groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex()) -> {
             parsePRA(groups, precision, ignoreDefault)
         }
         groups.size >= 4 && groups[0].isVowel() && groups[3] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 6 && groups[0].isVowel() && groups[3] == "'" && groups[5] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 5 && groups[0] !in CC_CONSONANTS && groups[2] == "'" && groups[4] in COMBINATION_PRA_SPECIFICATION -> {
+                || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION -> {
             parseCombinationPRA(groups, precision, ignoreDefault)
         }
         groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
@@ -232,6 +237,9 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     }
 
+    if (csVxAffixes.size == 1) csVxAffixes[0].canBePraShortcut = true
+
+
     var cnInVI = false
 
     val slotVI = if (shortcut == null) {
@@ -267,6 +275,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             }
         }
     }
+
+    if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBePraShortcut = true
 
     val marksMood = (stress == 0)
 
@@ -457,7 +467,7 @@ fun parsePRA(groups: Array<String>,
         if (i < groups.size) {
             if (!(i + 1 == groups.size || groups[i+1] == "ë" && i + 2 == groups.size))
                 return error("PRA ended unexpectedly: ${groups.joinToString("")}")
-            result += (parseFullReferent(groups[i], precision, ignoreDefault, final = true)
+            result += (parseFullReferent(groups[i], precision, ignoreDefault)
                     ?: return error("Unknown referent: ${groups[i]}")).plusSeparator(start = true)
             result += case.plusSeparator(start = true, sep = CATEGORY_SEPARATOR)
         } else {
