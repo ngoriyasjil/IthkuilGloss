@@ -93,16 +93,25 @@ fun String.splitGroups(): Array<String> {
             .map(Char::toString)
             .toList()
     while (chars.isNotEmpty()) {
-        val group = if (chars[0].isVowel()) {
-            if (chars.getOrNull(1)?.isVowel() == true) {
-                chars[0] + chars[1]
-            } else {
-                chars[0]
+        val group = when {
+            chars[0].isVowel() -> {
+                if (chars.getOrNull(1) == "'" && chars.getOrNull(2)?.isVowel() == true) {
+                    chars[0] + chars[1] + chars[2]
+                } else if (chars.getOrNull(1)?.isVowel() == true) {
+                    chars[0] + chars[1]
+                } else {
+                    chars[0]
+                }
             }
-        } else if (!chars[0].isConsonant()) {
-            throw IllegalArgumentException("Non-Ithkuil character: ${chars[0]}")
-        } else {
-            chars.takeWhile(String::isConsonant).joinToString("")
+            chars[0].isConsonant() -> {
+                chars.takeWhile(String::isConsonant).joinToString("")
+            }
+
+            chars[0] == "-" -> chars[0]
+
+            else -> {
+                throw IllegalArgumentException("Non-Ithkuil character: ${chars[0]}")
+            }
         }
         chars = chars.subList(group.length, chars.size)
         groups += group

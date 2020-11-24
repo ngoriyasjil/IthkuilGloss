@@ -13,7 +13,6 @@ val inanimateReferentDescriptions = listOf(
         listOf("monadic obviative (mObv)", "polyadic obviative (pObv)", "Nai, \"it\" as a generic concept", "Aai, \"it\" as an abstract referent"),
         listOf("monadic mixed animate+inanimate (mMx)", "polyadic mixed animate+inanimate (pMx)", "impersonal mixed animate+inanimate (IPx)", "everything and everyone, all about the world")
 )
-val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORM.indexOfFirst { it eq v }) {
@@ -21,6 +20,19 @@ fun seriesAndForm(v: String) : Pair<Int, Int> {
         else -> Pair((index / 9) + 1, (index % 9) + 1)
     }
 }
+
+fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) VOWEL_FORM.getOrNull(9 * (series-1) + (form-1)) else null
+
+fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
+    val (series, form) = seriesAndForm(v)
+    return if (series >= 4) {
+        (bySeriesAndForm(series - 4, form)?.to(true)) ?: return null
+    } else {
+        v to false
+    }
+}
+
+
 
 fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
     val i = VOWEL_FORM.indexOfFirst { it eq v }
@@ -308,65 +320,8 @@ fun parseCbCy(s: String, marksMood: Boolean): Precision? {
 
 }
 
-fun parseComplexVv(v: String): List<Precision>? {
-    val (series, form) = seriesAndForm(v.replace("[wy]".toRegex(), "'"))
-    val stem = when(form) {
-        1, 2 -> Stem.STEM_ONE
-        3, 5 -> Stem.STEM_TWO
-        9, 8 -> Stem.STEM_THREE
-        7, 6 -> Stem.STEM_ZERO
-        else -> return null
-    }
-    val version = when(form) {
-        1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 8, 6 -> Version.COMPLETIVE
-        else -> return null
-    }
-    val specification = when(series) {
-        1, 5 -> Specification.BASIC
-        2, 6 -> Specification.CONTENTIAL
-        3, 7 -> Specification.CONSTITUTIVE
-        4, 8 -> Specification.OBJECTIVE
-        else -> return null
-    }
-    val function = when(series) {
-        1, 2, 3, 4 -> Function.STATIVE
-        5, 6, 7, 8 -> Function.DYNAMIC
-        else -> return null
-    }
 
-    return listOf(stem, specification, version, function)
-}
 
-fun parseComplexVr(v: String, glottalStopInCa: Boolean) : List<Precision>? {
-    val (series, form) = seriesAndForm(v)
-    val stem = when(form) {
-        1, 2 -> Stem.STEM_ONE
-        3, 5 -> Stem.STEM_TWO
-        9, 8 -> Stem.STEM_THREE
-        7, 6 -> Stem.STEM_ZERO
-        else -> return null
-    }
-    val version = when(form) {
-        1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 8, 6 -> Version.COMPLETIVE
-        else -> return null
-    }
-    val specification = when(series) {
-        1, 5 -> Specification.BASIC
-        2, 6 -> Specification.CONTENTIAL
-        3, 7 -> Specification.CONSTITUTIVE
-        4, 8 -> Specification.OBJECTIVE
-        else -> return null
-    }
-    val function = when(series) {
-        1, 2, 3, 4 -> if (!glottalStopInCa) Function.STATIVE else Function.DYNAMIC
-        5, 6, 7, 8 -> Function.DYNAMIC
-        else -> return null
-    }
-
-    return listOf(stem, specification, version, function)
-}
 
 fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? = when (val r = s.defaultForm()) {
     "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)

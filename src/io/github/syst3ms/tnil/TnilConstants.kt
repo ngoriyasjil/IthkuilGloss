@@ -31,15 +31,14 @@ const val PRA_SHORTCUT_AFFIX_MARKER = "%%"
 const val SPECIAL_AFFIX_SLOT_SEPARATOR = "—"
 
 val VOWEL_FORM = listOf(
-    "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
-    "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
-    "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
-    "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
-    "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
-    "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
-    "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
-    "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
+        "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
+        "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
+        "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
+        "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
+        "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
+        "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
+        "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
+        "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
 )
 val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
@@ -106,6 +105,13 @@ val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
         "w", "y", "hw", "hlw", "hly", "hnw", "hny")
 
+
+val ITHKUIL_CHARS = setOf(
+        "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
+        "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř",
+        "a", "ä", "e", "ë", "i", "u", "ü", "o", "ö",
+        "'", "-"
+)
 
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String

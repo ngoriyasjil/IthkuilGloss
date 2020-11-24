@@ -176,9 +176,9 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
-    val stress = groups.findStress()
-    var index = 0
 
+    val stress = groups.findStress().coerceAtLeast(0)
+    var index = 0
 
     val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
         index++
@@ -213,7 +213,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     if (shortcut == null) {
         var indexV = index
         while (true) {
-            if (indexV+1 >= groups.size || groups[indexV] in CN_CONSONANTS) {
+            if (indexV+1 >= groups.size || groups[indexV] in CN_CONSONANTS || groups[indexV] == "-") {
                 csVxAffixes.clear()
                 indexV = index
                 break
@@ -221,21 +221,18 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 break
             }
 
-            if (groups.getOrNull(indexV+2) == "'") {
-                if (groups[indexV+1] == groups.getOrNull(indexV+3)) {
-                    csVxAffixes.add(Affix(groups[indexV+1], groups[indexV]))
-                } else {
-                    csVxAffixes.add(Affix(groups[indexV+1] + groups[indexV+3], groups[indexV]))
-                }
-                indexV += 4
-                break
-            }
-            csVxAffixes.add(Affix(groups[indexV+1], groups[indexV]))
+            val (vx, glottal) = unGlottalVowel(groups[indexV+1]) ?: return error("Unknown vowelform: ${groups[indexV+1]}")
+
+            csVxAffixes.add(Affix(vx, groups[indexV]))
             indexV += 2
+
+            if (glottal) break
         }
         index = indexV
 
     }
+
+    var cnInVI = false
 
     val slotVI = if (shortcut == null) {
         val ca = if (groups.getOrNull(index)?.isGlottalCa()
@@ -245,43 +242,46 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             } else return error("Unexpected glottal Ca: ${groups[index]}")
         } else groups[index]
 
-        parseCa(ca).also { index++ } ?: return error("Unknown Ca value: $ca")
+        if (ca !in setOf("hl", "hr", "hm", "hn", "hň")) {
+            parseCa(ca).also { index++ } ?: return error("Unknown Ca value: $ca")
+        } else {
+            parseCa("l")!!.also{ cnInVI = true }
+        }
     } else null
 
     val vxCsAffixes : MutableList<Precision> = mutableListOf()
 
-    while (true) {
-        if (index + 3 >= groups.size || groups[index+1] in CN_CONSONANTS) {
-            break
-        }
-
-        if (groups[index+1] == "'") {
-            if (groups[index] == groups.getOrNull(index+2)) {
-                vxCsAffixes.add(Affix(groups[index], groups.getOrNull(index+3)
-                        ?: return error("Formative ends in glottal stop")))
-            } else {
-                vxCsAffixes.add(Affix(groups[index] + groups[index+2], groups[index+3]))
+    if (!cnInVI) {
+        while (true) {
+            if (index+1 >= groups.size || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
+                break
             }
 
-            vxCsAffixes.add(PrecisionString("{slot V end}", "{Ca}"))
-            index += 4
-        }
+            val (vx, glottal) = unGlottalVowel(groups[index+1]) ?: return error("Unknown vowelform: ${groups[index+1]}")
 
-        vxCsAffixes.add(Affix(groups[index], groups[index+1]))
-        index += 2
+            vxCsAffixes.add(Affix(groups[index], vx))
+            index += 2
+
+            if (glottal) {
+                vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
+            }
+        }
     }
 
-    val marksMood = stress == 0
+    val marksMood = (stress == 0)
 
-    val slotVIII: List<Precision>? = if (groups.getOrNull(index+1) in CN_CONSONANTS) {
-        parseVnCn(groups[index], groups[index+1], marksMood).also{ index += 2 } ?: return error("Unknown VnCn value: ${groups[index] + groups[index+1]}")
-    } else null
+    val slotVIII: List<Precision>? = when {
+        cnInVI -> {
+            parseVnCn("a", groups[index], marksMood).also { index++ } ?: return error("Unknown Cn value in Ca: ${groups[index]}")
+        }
+        groups.getOrNull(index+1) in CN_CONSONANTS -> {
+            parseVnCn(groups[index], groups[index+1], marksMood).also { index += 2 } ?: return error("Unknown VnCn value: ${groups[index] + groups[index+1]}")
+        }
+        else -> null
+    }
 
-    val vcVk = if (groups.getOrNull(index+1) == "'" ) {
-        if (groups.size > index+1) {
-            groups[index] + groups[index+1] + groups[index+2]
-        } else return "Formative ends in a glottal stop"
-    } else groups.getOrNull(index) ?: "a"
+
+    val vcVk = groups.getOrNull(index) ?: "a"
 
     val slotIX = if (concatenation == null) {
         when (stress) {
@@ -312,19 +312,20 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     } else null
 
     val parentFormative = if (groups.getOrNull(index) == "-") {
-        parseFormative(groups.drop(index+1).toTypedArray(), precision, ignoreDefault)
+        if (concatenation != null) {
+            parseFormative(groups.drop(index+1).toTypedArray(), precision, ignoreDefault)
+        } else return error("Non-concatenated formative hyphenated")
+
     } else null
 
     val slotList: List<Any> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX, slotX)
 
-
-
-    val parsedFormative : String = slotList.joinToString(SLOT_SEPARATOR) {
+    val parsedFormative : String = slotList.map {
         if (it is List<*>) {
             (it as List<Precision>).toString(precision, ignoreDefault, stemUsed = stemUsed) // Wacky casting, beware.
         } else (it as Precision).toString(precision, ignoreDefault)
-    }
+    }.filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
 
     return if (parentFormative != null) {
         "$parsedFormative $parentFormative"
