@@ -381,7 +381,7 @@ fun String.unGlottalCa(): String = when {
 }
 
 
-fun parseCa(s: String) : List<Precision>? {
+fun parseCa(s: String) : List<Precision>? { // Change this to use indexes, please
     var original = s.defaultForm()
     if (original.isEmpty())
         return null

@@ -195,7 +195,7 @@ fun parseAffix(cs: String, vx: String,
     if (cs in CASE_AFFIXES) {
         val vc = when (cs) {
             "ll", "lw", "sw", "zw", "šw" -> vx
-            "rr", "ly", "sy", "zy", "šy" -> glottalVowel(vx)?.first ?: return "(Unknown vowel)"
+            "rr", "ly", "sy", "zy", "šy" -> glottalVowel(vx)?.first ?: return "(Unknown vowel: $vx)"
             else -> return "(Unknown case affix form)"
         }
 
@@ -234,7 +234,7 @@ fun parseAffix(cs: String, vx: String,
            "üa" -> 1
            "üe" -> 2
            "üo" -> 3
-           else -> return "(Unknown Vx)"
+           else -> return "(Unknown Vx: $vx)"
        }
     }
 
@@ -242,9 +242,9 @@ fun parseAffix(cs: String, vx: String,
 
     val affString = when {
         aff == null -> "**$cs**/$degree"
-        precision > 0 -> "'${aff.desc.getOrNull(degree) ?: return "(Unknown affix degree)"}'"
-        precision == 0 -> "${aff.abbr}/$degree"
-        else -> return "(Unknown affix)"
+        precision == 0 || degree == 0 -> "${aff.abbr}/$degree"
+        precision > 0 -> "'${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}'"
+        else -> return "(Unknown affix: $cs)"
     }
 
     val t = if (!isShortcut) when (type) {
