@@ -381,7 +381,7 @@ fun String.unGlottalCa(): String = when {
 }
 
 
-fun parseCa(s: String) : List<Precision>? { // Change this to use indexes, please
+fun parseCa(s: String) : List<Precision>? {
     var original = s.defaultForm()
     if (original.isEmpty())
         return null
@@ -413,24 +413,25 @@ fun parseCa(s: String) : List<Precision>? { // Change this to use indexes, pleas
         return listOf(similarity, extension, affiliation, perspective, essence)
     }
 
-    CA_SUBSTITUTIONS.forEach{ (substitution, normal) -> original.replace(substitution, normal) }
+    val normal = CA_SUBSTITUTIONS.fold(original) { it, (substitution, normal) -> it.replace(substitution, normal) }
+    var index = 0
 
-    when {
-        original[0] == 'l' -> {
+    when (normal[0]){
+        'l' -> {
             similarity = Similarity.MULTIPLEX_FUZZY
-            original = original.drop(1)
+            index++
         }
-        original[0] in setOf('r', 'ř') -> {
-            similarity = when (original.take(2)) {
+        'r', 'ř' -> {
+            similarity = when (normal.take(2)) {
                 "rt", "rk", "rp" -> Similarity.DUPLEX_SIMILAR
                 "rn", "rň", "rm" -> Similarity.DUPLEX_DISSIMILAR
                 "řt", "řk", "řp" -> Similarity.DUPLEX_FUZZY
                 else -> return null
             }
-            original = original.drop(1)
+            index++
         }
         else -> {
-            similarity = when (original[0]) {
+            similarity = when (normal[0]) {
                 't', 'k', 'p' -> Similarity.MULTIPLEX_SIMILAR
                 'n', 'ň', 'm' -> Similarity.MULTIPLEX_DISSIMILAR
                 else -> Similarity.UNIPLEX
@@ -438,17 +439,17 @@ fun parseCa(s: String) : List<Precision>? { // Change this to use indexes, pleas
         }
     }
 
-    separability = when (original[0]) {
+    separability = when (normal[index]) {
         't', 'n' -> Separability.SEPARATE
         'k', 'ň' -> Separability.CONNECTED
         'p', 'm' -> Separability.FUSED
         else -> null
     }
 
-    if (separability != null) original = original.drop(1)
+    if (separability != null) index++
 
-    if (original.getOrNull(0) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
-        extension = when (original[0]) {
+    if (normal.getOrNull(index) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
+        extension = when (normal[index]) {
             's' -> Extension.PROXIMAL
             'š' -> Extension.INCIPIENT
             'f' -> Extension.ATTENUATIVE
@@ -456,33 +457,33 @@ fun parseCa(s: String) : List<Precision>? { // Change this to use indexes, pleas
             'ç' -> Extension.DEPLETIVE
             else -> return null
         }
-        original = original.drop(1)
+        index++
     }
 
-    if (original.getOrNull(0) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
-        affiliation = when (original[0]) {
+    if (normal.getOrNull(index) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
+        affiliation = when (normal[index]) {
             't', 'd' -> Affiliation.ASSOCIATIVE
             'k', 'g' -> Affiliation.COALESCENT
             'p', 'b' -> Affiliation.VARIATIVE
             else -> return null
         }
-        original = original.drop(1)
+        index++
     }
 
-    if (original.isNotEmpty()) {
-        perspective = when(original[0]) {
+    if (normal.drop(index).isNotEmpty() && index > 0) {
+        perspective = when(normal[index]) {
             'r', 'v', 'l' -> Perspective.POLYADIC
             'w', 'm', 'h' -> Perspective.NOMIC
             'y', 'n', 'ç' -> Perspective.ABSTRACT
             else -> return null
         }
-        essence = when(original[0]) {
+        essence = when(normal[index]) {
             'ř', 'l', 'm', 'h', 'n', 'ç' -> Essence.REPRESENTATIVE
             else -> Essence.NORMAL
         }
-        original = original.drop(1)
+        index++
     }
-    return if (original.isNotEmpty()) null else {
+    return if (normal.drop(index).isNotEmpty()) null else {
         listOfNotNull(similarity, separability, extension, affiliation, perspective, essence)
     }
 }
