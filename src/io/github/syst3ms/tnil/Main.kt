@@ -16,7 +16,7 @@ import java.net.URL
 
 val logger = LoggerFactory.getLogger("tnilgloss")!!
 
-const val MORPHOPHONOLOGY_VERSION = "0.17.0 (unfinished)"
+const val MORPHOPHONOLOGY_VERSION = "0.17.1 (unfinished)"
 
 fun main() {
     val tokenFile = File("./resources/token.txt")

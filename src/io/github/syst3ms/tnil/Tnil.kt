@@ -74,9 +74,9 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                         // If quotativeAdjunct is true, case-scope needs default values like CTX or MNO to be shown, and we want to ignore them
                         state.quotativeAdjunct || ignoreDefault,
                         // This is fine because if quotativeAdjunct is false that means isLastFormativeVerbal is non-null
-                        !state.quotativeAdjunct && state.isLastFormativeVerbal!!,
+                        /* !state.quotativeAdjunct && state.isLastFormativeVerbal!!,
                         modularForcedStress,
-                        sentenceParsingState = state
+                        sentenceParsingState = state */
                 )
                 if (mod.startsWith("\u0000")) {
                     return errorList("**Parsing error**: ${mod.drop(1)}")
@@ -172,7 +172,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
             parseAffixualScoping(groups, precision, ignoreDefault)
         }
 
-        groups.all { it.isVowel() || it.isModular() } -> {
+        groups.all { it.isVowel() || it in CN_CONSONANTS } -> {
             parseModular(groups, precision, ignoreDefault)
         }
         else -> parseFormative(groups, precision, ignoreDefault)
@@ -343,85 +343,47 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
 }
 
-fun parseModular(groups: Array<String>,
-                 precision: Int,
-                 ignoreDefault: Boolean,
-                 verbalFormative: Boolean? = false,
-                 modularForcedStress: Int? = null,
-                 sentenceParsingState: SentenceParsingState? = null): String {
-    var stress = modularForcedStress ?: groups.findStress()
-    if (stress == -1) // Monosyllabic
-        stress = 1
-    var i = 0
-    var result = ""
-    if (groups[0] == "w" || groups[0] == "y") {
-        result += "{Incp}".plusSeparator()
-        i++
+fun parseVh(vh: String) : PrecisionString? = when (vh.defaultForm()) {
+    "a" -> PrecisionString("{concatenated formative only}", "{concat.}")
+    "e" -> PrecisionString("{scope over formative}", "{formative}")
+    "i", "u" -> PrecisionString("{scope over concatenated formative only}", "{concat. formative}")
+    "o" -> PrecisionString("{scope over adjacent adjuncts}", "{adjacent}")
+    "ö" -> PrecisionString("{scope over adjacent adjuncts of the concatenated formative}", "{concat. adjacent}")
+    else -> null
+}
+
+@Suppress("UNCHECKED_CAST")
+fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
+    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+    var index = 0
+
+    val slot1 = if (groups[0] == "w") {
+        PrecisionString("{parent formative only}", "{parent}")
+                .also { index++ }
+    } else null
+
+    val midSlotList : MutableList<List<Precision>> = mutableListOf()
+
+    while (groups.size > index + 2) {
+        midSlotList.add(parseVnCn(groups[index], groups[index+1], false) ?: return error("Unknown VnCn: ${groups[index]}${groups[index+1]}"))
+        index += 2
     }
-    while (i + 2 < groups.size && i < 7) {
-        if (groups[i+1].startsWith("h") || groups[i+1] == "y" && groups.getOrNull(i+3)?.startsWith("h") == true) {
-            val vn = when {
-                groups.getOrNull(i+1) == "y" -> {
-                    i += 2
-                    groups[i-2] + "y" + groups[i]
-                }
-                else -> groups[i]
-            }
-            val cn = when (verbalFormative) {
-                true -> Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault)
-                false -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)
-                null -> CaseScope.byCn(groups[i+1])?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(groups[i+1])?.toString(precision, ignoreDefault))
-            } ?: return error("Unknown case-scope/mood: ${groups[i]}")
-            val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown valence/phase/level/effect: $vn")
-            result += join(patternOne, cn).plusSeparator()
-        } else if (groups[i+1].startsWith("'h")) {
-            val cnString = groups[i+1].trimGlottal()
-            val cn = when (verbalFormative) {
-                true -> Mood.byCn(cnString)?.toString(precision, ignoreDefault)
-                false -> CaseScope.byCn(cnString)?.toString(precision, ignoreDefault)
-                null -> CaseScope.byCn(cnString)?.toString(precision, ignoreDefault)?.plusSeparator(sep = "|")?.plus(Mood.byCn(cnString)?.toString(precision, ignoreDefault))
-            } ?: return error("Unknown case-scope/mood: ${groups[i]}")
-            val vt = Aspect.byVowel(groups[i]) ?: return error("Unknown aspect: ${groups[i]}")
-            result += join(vt.toString(precision, ignoreDefault), cn).plusSeparator()
-        } else {
-            assert(groups[i+1] matches "'?[wy]".toRegex()
-                    || groups[i+1] == "y"
-                        && !groups[i].endsWith("u")
-                        && groups.getOrNull(i+3)?.matches("'?[wy]".toRegex()) == true
-            )
-            val vn = when {
-                groups[i+1] == "y" && !groups[i].endsWith("u") -> {
-                    i += 2
-                    groups[i-2] + "y" + groups[i]
-                }
-                else -> groups[i]
-            }
-            val fncCn = if (groups[i].defaultForm().endsWith("u")) {
-                "y"
-            } else {
-                "w"
-            }
-            val contextIndex = listOf(fncCn, "'w", "'y").indexOf(groups[i+1])
-            if (contextIndex == -1)
-                return error("Expected the Cn value to be $fncCn, but found '${groups[i+1]}'")
-            val context = Context.values()[contextIndex + 1]
-            val patternOne = parseVnPatternOne(vn, precision, ignoreDefault)
-                    ?: return error("Unknown phase/context: $vn")
-            result += join(patternOne, context.toString(precision, ignoreDefault)).plusSeparator()
-        }
-        i += 2
+
+    if (midSlotList.size > 3) return error("Too many (>3) middle slots in modular adjunct: ${midSlotList.size}")
+
+    val slot5 = when {
+        midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return error("Unknown aspect: ${groups[index]}")
+        stress == 1 -> parseVnCn(groups[index], "h", marksMood = false) ?: return error("Unknown non-aspect Vn: ${groups[index]}")
+        stress == 0 -> parseVh(groups[index]) ?: return error("Unknown Vh: ${groups[index]}")
+        else -> return error("Unknown stress on modular adjunct: $stress from ultimate")
     }
-    val valence = i > 1 && stress == 1
-    result += when {
-        valence -> parseVnPatternOne(groups[i], precision, ignoreDefault)
-                ?: return error("Unknown valence/context: ${groups[i]}")
-        i > 1 && stress == 0 -> parseModularScope(groups[i], precision, ignoreDefault)
-        else -> Aspect.byVowel(groups[i])?.toString(precision, ignoreDefault)
-                ?: return error("Unknown aspect: ${groups[i]}")
-    }
-    sentenceParsingState?.rtiAffixScope = null
-    return if (result.endsWith(SLOT_SEPARATOR)) result.dropLast(SLOT_SEPARATOR.length) else result
+
+    return listOfNotNull(slot1, *midSlotList.toTypedArray(), slot5).map {
+        if (it is List<*>) {
+            (it as List<Precision>).toString(precision, ignoreDefault) // More wacky casting, beware.
+        } else (it as Precision).toString(precision, ignoreDefault)
+    }.filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
+
 }
 
 fun parsePRA(groups: Array<String>,
