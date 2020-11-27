@@ -12,6 +12,8 @@ General commands (must be preceded by the proper prefix):
   - **sfull**: gives a morphological analysis of the whole following sentence, with strong precision
   - **sshort**: gives a morphological analysis of the whole following sentence, with weak precision
 
+(Sentence parsing is currently not stable)
+
 Precision:
   - *Default precision*: all morphological components except affixes are abbreviated, roots may change depending on the stem
   - *Strong precision*: all morphological components are completely written out, roots may change depending on the stem
@@ -28,10 +30,6 @@ Formatting details:
   - Underlined text means that the corresponding category was taken into account when looking for a description of the root.
    For example, " 'description'/S2 " indicates that S2 contributed nothing to the final result of 'description' ;
    However, " 'description'/__S2__ " indicates that 'description' was specifically picked because S2 was specified.
-   NOTE: this only applies to Stem, and in the special case of -N- and -D-, Perspective
+   NOTE: this currently only applies to Stem.
 
-The parsing logic is far from perfect (and also difficult to improve substantially), so if an error message looks like nonsense to you,
-it's probably actual nonsense caused by the algorithm not interpreting the structure of your input properly. If however the error pertains to
-the actual type of word you are trying to parse, there may be an actual bug, to which case make sure to let me (Syst3ms#9959) know.
-
-Currently maintained by Behemoth4#6479.
+The bot is currently in development, and may suffer from severe bugs. If you spot one, please contact me (Behemoth#6479) so I can hopefully go about fixing it.

@@ -93,16 +93,25 @@ fun String.splitGroups(): Array<String> {
             .map(Char::toString)
             .toList()
     while (chars.isNotEmpty()) {
-        val group = if (chars[0].isVowel()) {
-            if (chars.getOrNull(1)?.isVowel() == true) {
-                chars[0] + chars[1]
-            } else {
-                chars[0]
+        val group = when {
+            chars[0].isVowel() -> {
+                if (chars.getOrNull(1) == "'" && chars.getOrNull(2)?.isVowel() == true) {
+                    chars[0] + chars[1] + chars[2]
+                } else if (chars.getOrNull(1)?.isVowel() == true) {
+                    chars[0] + chars[1]
+                } else {
+                    chars[0]
+                }
             }
-        } else if (!chars[0].isConsonant()) {
-            throw IllegalArgumentException("Non-Ithkuil character: ${chars[0]}")
-        } else {
-            chars.takeWhile(String::isConsonant).joinToString("")
+            chars[0].isConsonant() -> {
+                chars.takeWhile(String::isConsonant).joinToString("")
+            }
+
+            chars[0] == "-" -> chars[0]
+
+            else -> {
+                throw IllegalArgumentException("Non-Ithkuil character: ${chars[0]}")
+            }
         }
         chars = chars.subList(group.length, chars.size)
         groups += group
@@ -110,19 +119,19 @@ fun String.splitGroups(): Array<String> {
     return groups.toTypedArray()
 }
 
-fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: Boolean = false): String? {
+fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
     val singleRef = parsePersonalReference(s)
     if (singleRef != null) {
         return singleRef.toString(precision, ignoreDefault)
     }
-    val singleJoined = s.toCharArray().map { parsePersonalReference(it.toString(), final) }
+    val singleJoined = s.toCharArray().map { parsePersonalReference(it.toString()) }
     if (singleJoined.none { it == null }) {
         return singleJoined.requireNoNulls()
                 .sortedBy { (it[0] as Enum<*>).ordinal }
                 .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END) { it.toString(precision, ignoreDefault) }
     } else if (s.length == 3) {
         if (s.endsWith("ç") || s.endsWith("h") || s.endsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s[0].toString(), final) to parsePersonalReference(s.substring(1, 3), final)
+            val (ref1, ref2) = parsePersonalReference(s[0].toString()) to parsePersonalReference(s.substring(1, 3))
             return if (ref1 != null && ref2 != null) {
                 REFERENT_START +
                         ref1.toString(precision, ignoreDefault) +
@@ -132,7 +141,7 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: 
                 null
             }
         } else if (s[1] == 'ç' || s[1] == 'h' || s.startsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s.substring(0, 2), final) to parsePersonalReference(s[2].toString(), final)
+            val (ref1, ref2) = parsePersonalReference(s.substring(0, 2)) to parsePersonalReference(s[2].toString())
             return if (ref1 != null && ref2 != null) {
                 REFERENT_START +
                         ref1.toString(precision, ignoreDefault) +
@@ -145,7 +154,7 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean, final: 
         }
     } else if (s.length == 4) {
         val halves = s.chunked(2)
-                .map { r -> parsePersonalReference(r, final) }
+                .map { r -> parsePersonalReference(r) }
         return if (halves.none { it == null }) {
             halves.requireNoNulls()
                     .sortedBy { (it[0] as Enum<*>).ordinal }
@@ -166,99 +175,87 @@ fun parseAffixes(data: String): List<AffixData> = data
         .map    { AffixData(it[0], it[1], it.subList(2, 11).toTypedArray()) }
         .toList()
 
-fun parseAffix(c: String,
-               v: String,
+
+val CASE_AFFIXES = setOf("ll", "lw", "sw", "zw", "šw", "rr", "ly", "sy", "zy", "šy")
+
+fun parseAffix(cs: String, vx: String,
                precision: Int,
                ignoreDefault: Boolean,
-               slotThree: Boolean = false,
-               canBePraShortcut: Boolean = false): String {
-    val vi = AFFIX_VOWELS.indexOfFirst { it eq v }
-    if (vi == -1 && v.defaultForm() != CA_STACKING_VOWEL) {
-        return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
-    }
-    val deg = vi % 10
-    var specialFormMessage = ""
-    val type = if (vi < 30) {
-        vi / 10 + 1
-    } else {
-        specialFormMessage = when {
-            slotThree && precision == 0 -> "{Stm}"
-            slotThree -> "{stem only}"
-            !slotThree && precision == 0 -> "{Incp+Main}"
-            else -> "{both incorporated and main}"
-        }
-        vi / 10 - 2
-    }
-    val aff = affixData.find { it.cs == c }
-    when {
-        c in CASE_STACKING_AFFIXES -> { // case-stacking affix
-            val secondHalf = CASE_STACKING_AFFIXES.indexOf(c) % 2 == 1
-            val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
-                secondHalf && v.length == 1 -> "$v'$v"
-                secondHalf -> v[0] + "'" + v[1]
-                else -> v
-            }
-            return "($case$specialFormMessage)"
-        }
-        c in CASE_ACCESSOR_AFFIXES -> { // case-accessor affix
-            val typeOne = CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
-            val secondHalf = CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
-            val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
-                secondHalf && v.length == 1 -> "$v'$v"
-                secondHalf -> v[0] + "'" + v[1]
-                else -> v
-            }
-            return if (precision > 0) {
-                "($case\\accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-            } else {
-                "(${case}a-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
-            }
-        }
-        c in INVERSE_CASE_ACCESSOR_AFFIXES -> { // inverse case-accessor affix
-            val typeOne = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) / 2 == 0
-            val secondHalf = INVERSE_CASE_ACCESSOR_AFFIXES.indexOf(c) % 2 == 1
-            val case = parseCaseAffixVowel(v, secondHalf)?.toString(precision) ?: return AFFIX_UNKNOWN_CASE_MARKER + when {
-                secondHalf && v.length == 1 -> "$v'$v"
-                secondHalf -> v[0] + "'" + v[1]
-                else -> v
-            }
-            return if (precision > 0) {
-                "($case\\inverse accessor-" + (if (typeOne) "Type 1" else "Type 2") + specialFormMessage.plusSeparator(start = true) + ")"
-            } else {
-                "(${case}ia-" + (if (typeOne) "T1" else "T2") + specialFormMessage.plusSeparator(start = true) + ")"
-            }
-        }
-        c == VK_AFFIX_CONSONANT -> {
-            val vk = parseVk(v) ?: return "$AFFIX_UNKNOWN_VOWEL_MARKER$v"
-            return "(" + vk.toString(precision, ignoreDefault) + ")"
-        }
-        v eq CA_STACKING_VOWEL -> {
-            val ca = parseCa(c) ?: return "$AFFIX_UNKNOWN_CASE_MARKER$c"
-            return if (slotThree) {
-                perspectiveIndexFromCa(ca).toString() + AFFIX_STACKED_CA_MARKER
-            } else {
-                ""
-            } + "(" + ca.toString(precision, ignoreDefault) + ")"
-        }
-// Special cases
-        else -> return if (type == 3 && canBePraShortcut) {
-            PRA_SHORTCUT_AFFIX_MARKER
-        } else if (aff != null) {
-            if (precision > 0 || deg == 0) {
-                aff.desc.getOrNull(deg - 1)
-                        ?.let { "'$it'" + (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) }
-                        ?: "'" + aff.desc[0] + "'" +
-                        (0x2080 + type).toChar() + specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) +
-                        CATEGORY_SEPARATOR + deg
-            } else {
-                aff.abbr + (0x2080 + type).toChar() +
-                        specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) + CATEGORY_SEPARATOR + deg
-            }
+               canBePraShortcut: Boolean = false,
+               isShortcut: Boolean = false) : String {
+    if (vx == CA_STACKING_VOWEL) {
+        val ca = parseCa(cs)?.toString(precision, ignoreDefault) ?: return "(Unknown Ca)"
+        return if (ca.isNotEmpty()) {
+            "($ca)"
         } else {
-            MarkdownUtil.bold(c.defaultForm()) + (0x2080 + type).toChar() +
-                    specialFormMessage.plusSeparator(start = true, sep = CATEGORY_SEPARATOR) + CATEGORY_SEPARATOR + deg
+            "(${Similarity.UNIPLEX.toString(precision, ignoreDefault = false)})"
         }
     }
+
+    if (cs in CASE_AFFIXES) {
+        val vc = when (cs) {
+            "ll", "lw", "sw", "zw", "šw" -> vx
+            "rr", "ly", "sy", "zy", "šy" -> glottalVowel(vx)?.first ?: return "(Unknown vowel: $vx)"
+            else -> return "(Unknown case affix form)"
+        }
+
+        val s = if (precision > 1) when (cs) {
+            "ll", "rr", "lw", "ly" -> "case accessor:"
+            "sw", "sy", "zw", "zy" -> "inverse accessor:"
+            "šw", "šy" -> "case-stacking:"
+            else -> return "(Unknown case affix form)"
+        } else when (cs) {
+            "ll", "rr", "lw", "ly" -> "acc:"
+            "sw", "sy", "zw", "zy" -> "ia:"
+            "šw", "šy" -> ""
+            else -> return "(Unknown case affix form)"
+        }
+
+        val type = when (cs) {
+            "ll", "rr", "sw", "sy" -> "\u2081"
+            "lw", "ly", "zw", "zy" -> "\u2082"
+            else -> ""
+        }
+
+        val case = Case.byVowel(vc)?.toString(precision) ?: return "(Unknown case)"
+        return "($s$case)$type"
+
+    }
+
+    var (type, degree) = seriesAndForm(vx)
+
+    if (canBePraShortcut && type == 3) {
+        return parsePraShortcut(cs, vx, precision) ?: "(Unknown PRA shortcut)"
+    }
+
+    if (type == -1 && degree == -1) {
+       degree = 0
+       type = when (vx) {
+           "üa" -> 1
+           "üe" -> 2
+           "üo" -> 3
+           else -> return "(Unknown Vx: $vx)"
+       }
+    }
+
+    val aff = affixData.find { it.cs == cs }
+
+    val affString = when {
+        aff == null -> "**$cs**/$degree"
+        precision == 0 || degree == 0 -> "${aff.abbr}/$degree"
+        precision > 0 -> "'${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}'"
+        else -> return "(Unknown affix: $cs)"
+    }
+
+    val t = if (!isShortcut) when (type) {
+        1 -> "\u2081"
+        2 -> "\u2082"
+        3 -> "\u2083"
+        else -> return "(Unknown type)"
+    } else ""
+
+    return "$affString$t"
+
 }
 
 fun parseRoots(data: String): List<RootData> = data
@@ -308,8 +305,6 @@ data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) 
 }
 
 data class RootData(val cr: String, val dsc: List<String>)
-
-data class PersonalReferentParsingData(var isInanimate: Boolean = false, var stem: Int = 1)
 
 class SentenceParsingState(var carrier: Boolean = false,
                            var register: MutableList<Register> = mutableListOf(),

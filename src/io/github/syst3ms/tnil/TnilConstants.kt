@@ -2,8 +2,6 @@
 
 package io.github.syst3ms.tnil
 
-import java.lang.AssertionError
-
 const val SLOT_SEPARATOR = "-"
 const val CATEGORY_SEPARATOR = "/"
 const val REFERENT_SEPARATOR = "+"
@@ -31,15 +29,14 @@ const val PRA_SHORTCUT_AFFIX_MARKER = "%%"
 const val SPECIAL_AFFIX_SLOT_SEPARATOR = "—"
 
 val VOWEL_FORM = listOf(
-    "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
-    "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
-    "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
-    "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
-    "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
-    "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
-    "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
-    "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
+        "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
+        "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
+        "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
+        "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
+        "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
+        "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
+        "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
+        "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
 )
 val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
@@ -49,12 +46,11 @@ val FRICATIVES = setOf('f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', '
 val AFFRICATES = setOf('c', 'ẓ', 'č', 'j')
 val NASALS = setOf('m', 'n', 'ň')
 val STOPS = setOf('p', 'b', 't', 'd', 'k', 'g')
-val CD_CONSONANTS = listOf(
-        "h", "ç", "w", "y",
-        "hw", "hh", "çw", "çç",
-        "hl", "hr", "hm", "hn",
-        "hlw", "hly", "hmw", "hmy"
-)
+val CC_CONSONANTS = setOf(
+        "w", "y",
+        "h" , "hl", "hm",
+        "hw", "hr", "hn")
+
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
 val CASE_ACCESSOR_AFFIXES = listOf("ll", "rr", "lw", "ly")
 val INVERSE_CASE_ACCESSOR_AFFIXES = listOf("sw", "sy", "zw", "zy")
@@ -102,11 +98,33 @@ val CA_SUBSTITUTIONS = listOf(
         "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
         "c" to "ts", "tš" to "č", "ḑ" to "tţ")
 
+
+val CN_CONSONANTS = setOf(
+        "h", "hl", "hr", "hm", "hn", "hň",
+        "w", "y", "hw", "hlw", "hly", "hnw", "hny")
+
+
+val ITHKUIL_CHARS = setOf(
+        "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
+        "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř",
+        "a", "ä", "e", "ë", "i", "u", "ü", "o", "ö",
+        "'", "-")
+
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
 }
 
-enum class Incorporation(private val short: String) : Precision {
+class PrecisionString(private val full: String, private val short: String = full, private val ignorable: Boolean = false) : Precision {
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return when {
+            ignorable && ignoreDefault -> ""
+            precision < 2 -> short
+            else -> full
+        }
+    }
+}
+
+enum class Concatenation(private val short: String) : Precision {
     TYPE_ONE("T1"),
     TYPE_TWO("T2");
 
@@ -190,7 +208,43 @@ enum class Similarity(private val short: String) : Precision {
     }
 }
 
-enum class Connectedness(private val short: String) : Precision {
+enum class Configuration(private val short: String) : Precision {
+    UNIPLEX("UNI"),
+    DUPLEX_SIMILAR_SEPARATE("DSS"),
+    DUPLEX_SIMILAR_CONNECTED("DSC"),
+    DUPLEX_SIMILAR_FUSED("DSF"),
+    DUPLEX_DISSIMILAR_SEPARATE("DDS"),
+    DUPLEX_DISSIMILAR_CONNECTED("DDC"),
+    DUPLEX_DISSIMILAR_FUSED("DDF"),
+    DUPLEX_FUZZY_SEPARATE("DFS"),
+    DUPLEX_FUZZY_CONNECTED("DFC"),
+    DUPLEX_FUZZY_FUSED("DFF"),
+    MULTIPLEX_SIMILAR_SEPARATE("MSS"),
+    MULTIPLEX_SIMILAR_CONNECTED("MSC"),
+    MULTIPLEX_SIMILAR_FUSED("MSF"),
+    MULTIPLEX_DISSIMILAR_SEPARATE("MDS"),
+    MULTIPLEX_DISSIMILAR_CONNECTED("MDC"),
+    MULTIPLEX_DISSIMILAR_FUSED("MDF"),
+    MULTIPLEX_FUZZY_SEPARATE("MFS"),
+    MULTIPLEX_FUZZY_CONNECTED("MFC"),
+    MULTIPLEX_FUZZY_FUSED("MFF");
+
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
+
+    companion object {
+        fun byAbbreviation(s: String) : Configuration? {
+            return values().find { it.short eq s  }
+        }
+    }
+
+}
+
+
+enum class Separability(private val short: String) : Precision {
     SEPARATE("SEP"),
     CONNECTED("CND"),
     FUSED("FSD");
@@ -282,6 +336,10 @@ enum class Valence(private val short: String) : Precision {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
+
+    companion object {
+        fun byForm(form: Int) = values()[form-1]
+    }
 }
 
 enum class Phase(private val short: String) : Precision {
@@ -300,6 +358,37 @@ enum class Phase(private val short: String) : Precision {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
+
+    companion object {
+        fun byForm(form: Int) = Valence.values()[form-1]
+    }
+
+}
+
+
+class EffectAndPerson(private val person: String?, private val effect: Effect) : Precision {
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return if (person != null) {
+            "$person:${effect.toString(precision, ignoreDefault = false)}"
+        } else effect.toString(precision, ignoreDefault = false)
+    }
+
+    companion object {
+        fun byForm(form: Int) = when (form) {
+            1 -> EffectAndPerson("1", Effect.BENEFICIAL)
+            2 -> EffectAndPerson("2", Effect.BENEFICIAL)
+            3 -> EffectAndPerson("3", Effect.BENEFICIAL)
+            4 -> EffectAndPerson("SLF", Effect.BENEFICIAL)
+            5 -> EffectAndPerson(null, Effect.UNKNOWN)
+            6 -> EffectAndPerson("SLF", Effect.DETRIMENTAL)
+            7 -> EffectAndPerson("3", Effect.DETRIMENTAL)
+            8 -> EffectAndPerson("2", Effect.DETRIMENTAL)
+            9 -> EffectAndPerson("1", Effect.DETRIMENTAL)
+            else -> throw(IndexOutOfBoundsException("Invalid vowelform: $form"))
+        }
+    }
+
 }
 
 enum class Effect(private val short: String) : Precision {
@@ -318,7 +407,7 @@ enum class Effect(private val short: String) : Precision {
 enum class Level(private val short: String) : Precision {
     EQUATIVE("EQU"),
     SURPASSIVE("SUR"),
-    DEFICIENT("DFC"),
+    DEFICIENT("DFT"),
     MAXIMAL("MAX"),
     MINIMAL("MIN"),
     SUPERLATIVE("SPL"),
@@ -329,6 +418,10 @@ enum class Level(private val short: String) : Precision {
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
+    }
+
+    companion object {
+        fun byForm(form: Int) = Valence.values()[form-1]
     }
 }
 
@@ -349,7 +442,7 @@ enum class Aspect(private val short: String, val vt: String) : Precision {
     PRECLUSIVE("PCL", "ëi"),
     CONTINUATIVE("CNT", "ou"),
     INCESSATIVE("ICS", "oi"),
-    ANTECENDENT("ATC", "iu"),
+    EXPERIENTIAL("EXP", "iu"),
     INTERRUPTIVE("IRP", "ui"),
     PREEMPTIVE("PMP", "ia/oä"),
     CLIMACTIC("CLM", "iä/uä"),
@@ -402,12 +495,12 @@ enum class Mood(private val short: String, val cn: String, val cy: String) : Pre
 }
 
 enum class CaseScope(private val short: String, val cn: String, val cy: String) : Precision {
-    CCH("CCh", "h/ç", ""),
-    CCL("CCl", "hl", "x"),
-    CCR("CCr", "hr", "rs"),
-    CCW("CCw", "hw", "rš"),
-    CCM("CCm", "hm", "rz"),
-    CCn("CCn", "hn", "rž");
+    NATURAL("CCN", "h/ç", ""),
+    ANTECEDENT("CCA", "hl", "x"),
+    SUBALTERN("CCS", "hr", "rs"),
+    QUALIFIER("CCQ", "hw", "rš"),
+    PRECEDENT("CCP", "hm", "rz"),
+    SUCCESSIVE("CCV", "hn", "rž");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -422,7 +515,7 @@ enum class CaseScope(private val short: String, val cn: String, val cy: String) 
     }
 }
 
-enum class Case(private val short: String, val vc: String, val vfShort: String? = null) : Precision {
+enum class Case(private val short: String, val vc: String) : Precision {
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
     ABSOLUTIVE("ABS", "e"),
@@ -432,6 +525,7 @@ enum class Case(private val short: String, val vc: String, val vfShort: String? 
     ERGATIVE("ERG", "o"),
     DATIVE("DAT", "ü"),
     INDUCIVE("IND", "u"),
+
     POSSESSIVE("POS", "ai"),
     PROPRIETIVE("PRP", "au"),
     GENITIVE("GEN", "ei"),
@@ -441,6 +535,7 @@ enum class Case(private val short: String, val vc: String, val vfShort: String? 
     ORIGINATIVE("OGN", "oi"),
     INTERDEPENDENT("IDP", "iu"),
     PARTITIVE("PAR", "ui"),
+
     APPLICATIVE("APL", "ia/oä"),
     PURPOSIVE("PUR", "iä/uä"),
     TRANSMISSIVE("TRA", "ie/oë"),
@@ -450,47 +545,53 @@ enum class Case(private val short: String, val vc: String, val vfShort: String? 
     COMMUTATIVE("CMM", "uo/io"),
     COMPARATIVE("CMP", "ue/eö"),
     CONSIDERATIVE("CSD", "ua/aö"),
-    FUNCTIVE("FUN", "ao", "ai"),
-    TRANSFORMATIVE("TFM", "ae", "au"),
-    CLASSIFICATIVE("CLA", "ea", "ei"),
-    RESULTATIVE("RSL", "eo", "eu"),
-    CONSUMPTIVE("CSM", "eë", "ëi"),
+
+    FUNCTIVE("FUN", "ao"),
+    TRANSFORMATIVE("TFM", "ae"),
+    CLASSIFICATIVE("CLA", "ea"),
+    RESULTATIVE("RSL", "eo"),
+    CONSUMPTIVE("CSM", "eë"),
     CONCESSIVE("CON", "öe"),
     AVERSIVE("AVS", "oe"),
     CONVERSIVE("CVS", "öa"),
     SITUATIVE("SIT", "oa"),
-    LOCATIVE("LOC", "a'a", "i"),
-    ATTENDANT("ATD", "ä'ä"),
-    ALLATIVE("ALL", "e'e"),
-    ABLATIVE("ABL", "ë'ë"),
-    ORIENTATIVE("ORI", "i'i"),
-    INTERRELATIVE("IRL", "ö'ö"),
-    INTRATIVE("INV", "o'o"),
-    NAVIGATIVE("NAV", "u'u"),
-    CONCURSIVE("CNR", "a'i", "iu"),
-    ASSESSIVE("ASS", "a'u"),
-    PERIODIC("PER", "e'i"),
-    PROLAPSIVE("PRO", "e'u"),
-    PRECURSIVE("PCV", "ë'i"),
-    POSTCURSIVE("PCR", "o'u"),
-    ELAPSIVE("ELP", "o'i"),
-    PROLIMITIVE("PLM", "u'i"),
-    REFERENTIAL("REF", "i'a", "a"),
-    ASSIMILATIVE("ASI", "i'ä", "ä"),
-    ESSIVE("ESS", "i'e", "e"),
-    CORRELATIVE("COR", "i'ë", "ë"),
-    COMPOSITIVE("CPS", "ë'u", "ëu"),
-    COMITATIVE("COM", "u'ö", "ö"),
-    UTILITATIVE("UTL", "u'o", "o"),
-    RELATIVE("RLT", "u'a", "u"),
-    ACTIVATIVE("ACT", "a'o", "ui"),
-    DESCRIPTIVE("DSC", "a'e", "oi"),
-    TERMINATIVE("TRM", "e'a", "ou"),
-    SELECTIVE("SEL", "e'o"),
-    CONFORMATIVE("CFM", "e'ë"),
-    DEPENDENT("DEP", "ö'e"),
-    PREDICATIVE("PRD", "o'e"),
-    VOCATIVE("VOC", "o'a");
+
+    REFERENTIAL("REF", "a'a"),
+    ASSIMILATIVE("ASI", "ä'ä"),
+    ESSIVE("ESS", "e'e"),
+    CORRELATIVE("COR", "ë'ë"),
+    COMPOSITIVE("CPS", "i'i"),
+    COMITATIVE("COM", "ö'ö"),
+    UTILITATIVE("UTL", "o'o"),
+    RELATIVE("RLT", "u'u"),
+
+    ACTIVATIVE("ACT", "a'i"),
+    DESCRIPTIVE("DSP", "a'u"),
+    TERMINATIVE("TRM", "e'i"),
+    SELECTIVE("SEL", "e'u"),
+    CONFORMATIVE("CFM", "ë'i"),
+    DEPENDENT("DEP", "o'u"),
+    PREDICATIVE("PRD", "o'i"),
+    VOCATIVE("VOC", "u'i"),
+
+    LOCATIVE("LOC", "i'a"),
+    ATTENDANT("ATD", "i'ä"),
+    ALLATIVE("ALL", "i'e"),
+    ABLATIVE("ABL", "i'ë"),
+    ORIENTATIVE("ORI", "ë'u"),
+    INTERRELATIVE("IRL", "u'ö"),
+    INTRATIVE("INV", "u'o"),
+    NAVIGATIVE("NAV", "u'a"),
+
+    CONCURSIVE("CNR", "a'o"),
+    ASSESSIVE("ASS", "a'e"),
+    PERIODIC("PER", "e'a"),
+    PROLAPSIVE("PRO", "e'o"),
+    PRECURSIVE("PCV", "e'ë"),
+    POSTCURSIVE("PCR", "ö'e"),
+    ELAPSIVE("ELP", "o'e"),
+    PROLIMITIVE("PLM", "o'a");
+
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         ignoreDefault && this.ordinal == 0 -> ""
@@ -499,7 +600,7 @@ enum class Case(private val short: String, val vc: String, val vfShort: String? 
     }
 
     companion object {
-        fun byVowel(vc: String, vfShort: Boolean = false) = values().find { (if (vfShort) it.vfShort ?: "" else it.vc) eq vc }
+        fun byVowel(vc: String) = values().find { it.vc eq vc }
     }
 }
 
@@ -650,10 +751,7 @@ enum class Referent(private val short: String) : Precision {
     POLYADIC_INANIMATE_THIRD_PARTY("pi"),
     MIXED_THIRD_PARTY("Mx"),
     OBVIATIVE("Obv"),
-    ANIMATE_IMPERSONAL("IPa"),
-    INANIMATE_IMPERSONAL("IPi"),
-    NOMIC_REFERENT("Nai"),
-    ABSTRACT_REFERENT("Aai");
+    PROVISIONAL("PVS");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
@@ -662,9 +760,9 @@ enum class Referent(private val short: String) : Precision {
 }
 
 fun parsePraShortcut(c: String, v: String, precision: Int): String? {
-    val i = AFFIX_VOWELS.indexOfFirst { it eq v }
-    assert(i / 10 == 2 && i != 20)
-    val case = when (i % 10) {
+    val (series, form) = seriesAndForm(v)
+    if (series != 3) return null
+    val case = when (form) {
         1 -> Case.POSSESSIVE
         2 -> Case.PROPRIETIVE
         3 -> Case.GENITIVE
@@ -674,8 +772,8 @@ fun parsePraShortcut(c: String, v: String, precision: Int): String? {
         7 -> Case.ORIGINATIVE
         8 -> Case.COMITATIVE
         9 -> Case.CORRELATIVE
-        else -> throw AssertionError()
+        else -> return null
     }
-    val ref = parsePersonalReference(c) ?: return null
-    return "(" + join(ref.toString(precision), case.toString(precision)) + ")"
+    val ref = parsePersonalReference(c)?.toString(precision) ?: return null
+    return "($ref-${case.toString(precision)})"
 }

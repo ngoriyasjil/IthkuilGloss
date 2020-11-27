@@ -2,7 +2,7 @@ package io.github.syst3ms.tnil
 
 import java.lang.IllegalStateException
 
-val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") }
+val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") } + listOf("üa", "üe", "üo", "üä")
 val animateReferentDescriptions = listOf(
         listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
         listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
@@ -13,7 +13,6 @@ val inanimateReferentDescriptions = listOf(
         listOf("monadic obviative (mObv)", "polyadic obviative (pObv)", "Nai, \"it\" as a generic concept", "Aai, \"it\" as an abstract referent"),
         listOf("monadic mixed animate+inanimate (mMx)", "polyadic mixed animate+inanimate (pMx)", "impersonal mixed animate+inanimate (IPx)", "everything and everyone, all about the world")
 )
-val scopes = listOf("{StmDom}", "{StmSub}", "{CaDom}", "{CaSub}", "{Form}", "{All}")
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORM.indexOfFirst { it eq v }) {
@@ -22,42 +21,125 @@ fun seriesAndForm(v: String) : Pair<Int, Int> {
     }
 }
 
-fun parseCaseAffixVowel(v: String, secondHalf: Boolean) : Case? {
-    val i = VOWEL_FORM.indexOfFirst { it eq v }
-    if (i == -1 || secondHalf && i % 9 == 7) // one of the unused values
-        return null
-    return if (secondHalf) {
-        when {
-            i % 9 == 8 -> Case.values()[36 + i - i/9 - 1] // We have to move back 1 for each 8th vowel form that's skipped
-            else -> Case.values()[36 + i - i/9] // Likewise
-        }
+fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) VOWEL_FORM.getOrNull(9 * (series-1) + (form-1)) else null
+
+fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
+    val (series, form) = seriesAndForm(v)
+
+    if (series == -1 || form == -1) return when (v) { //Temporary solution, ideally
+        "ü'ä" -> "üä" to true
+        "ü'a" -> "üa" to true
+        "ü'e" -> "üe" to true
+        "ü'o" -> "üo" to true
+        else -> null
+    }
+
+    return if (series >= 4) {
+        (bySeriesAndForm(series - 4, form)?.to(true)) ?: return null
     } else {
-        Case.values()[i]
+        v to false
+    }
+
+}
+
+fun glottalVowel(v: String) : Pair<String, Boolean>? {
+    val (series, form) = seriesAndForm(v)
+
+    if (series == -1 || form == -1) return when (v) { //Temporary solution, ideally
+        "üä" -> "ü'ä" to true
+        "üa" -> "ü'a" to true
+        "üe" -> "ü'e" to true
+        "üo" -> "ü'o" to true
+        else -> null
+    }
+
+    return if (series <= 4) {
+        (bySeriesAndForm(series + 4, form)?.to(true)) ?: return null
+    } else {
+        v to false
     }
 }
 
-fun parseCd(c: String) : Triple<List<Precision>, Boolean, Boolean>? {
-    val i = CD_CONSONANTS.indexOf(c.defaultForm())
-    if  (i == -1) return null
 
-    val (row, column) = (i%4) + 1 to (i/4) + 1
-    val type = when (row) {
-        1, 2 -> Incorporation.TYPE_ONE
-        3, 4 -> Incorporation.TYPE_TWO
-        else -> return null
-    }
-    val version = when (row) {
-        1, 3 -> Version.PROCESSUAL
-        2, 4 -> Version.COMPLETIVE
-        else -> return null
-    }
-
-    if (column !in 1 until 4) return null
-    val altVf            = column == 2 || column == 4
-    val slotThreePresent = column == 3 || column == 4
-
-    return Triple(listOf<Precision>(type, version), altVf, slotThreePresent)
+enum class Shortcut{
+    Y_SHORTCUT,
+    W_SHORTCUT;
 }
+
+fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
+    val concatenation = when (c) {
+        "h", "hl", "hm" -> Concatenation.TYPE_ONE
+        "hw", "hr", "hn" -> Concatenation.TYPE_TWO
+        else -> null
+    }
+
+    val shortcut = when (c) {
+        "w", "hl", "hr" -> Shortcut.W_SHORTCUT
+        "y", "hm", "hn" -> Shortcut.Y_SHORTCUT
+        else -> null
+    }
+
+    return Pair(concatenation, shortcut)
+}
+
+fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
+    val (series, form) = seriesAndForm(v)
+
+    val stem = when(form) {
+        1, 2 -> Stem.STEM_ONE
+        3, 5 -> Stem.STEM_TWO
+        9, 8 -> Stem.STEM_THREE
+        7, 6 -> Stem.STEM_ZERO
+        else -> return null
+    }
+    val version = when(form) {
+        1, 3, 9, 7 -> Version.PROCESSUAL
+        2, 5, 8, 6 -> Version.COMPLETIVE
+        else -> return null
+    }
+
+    var additional : List<Precision> = listOf()
+
+    when (shortcut) {
+        null -> {
+            additional = when (series) {
+                1 -> emptyList()
+                2 -> listOf(Affix("ë", "r", isShortcut = true))
+                3 -> listOf(Affix("ë", "t", isShortcut = true))
+                4 -> listOf(Affix("i", "t", isShortcut = true))
+                else -> return null
+            }
+        }
+        Shortcut.W_SHORTCUT -> {
+            additional = when (series) {
+                1 -> parseCa("l")!!
+                2 -> parseCa("r")!!
+                3 -> parseCa("v")!!
+                4 -> parseCa("tļ")!!
+                else -> return null
+            }
+        }
+        Shortcut.Y_SHORTCUT -> {
+            additional = when (series) {
+                1 -> parseCa("s")!!
+                2 -> parseCa("ř")!!
+                3 -> parseCa("z")!!
+                4 -> parseCa("sř")!!
+                else -> return null
+            }
+        }
+    }
+
+    return listOf(stem, version) + additional
+
+}
+
+class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val isShortcut: Boolean = false) : Precision { //Definitely not final
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String
+            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBePraShortcut, isShortcut = isShortcut)
+}
+
 
 fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
     val i = VOWEL_FORM.indexOfFirst { it eq v }
@@ -146,11 +228,9 @@ fun parseSimpleVv(s: String): Pair<List<Precision>, Boolean>? {
 
 }
 
-fun parseSimpleVr(v: String): List<Precision>? {
+fun parseVr(v: String): List<Precision>? {
     val (series, form) = seriesAndForm(v)
-    if (series != 1) {
-        return null
-    }
+
     val specification = when (form) {
         1, 9 -> Specification.BASIC
         2, 8 -> Specification.CONTENTIAL
@@ -164,111 +244,120 @@ fun parseSimpleVr(v: String): List<Precision>? {
         else -> return null
     }
 
-    return listOf(function, specification)
+    val context = when(series) {
+        1 -> Context.EXISTENTIAL
+        2 -> Context.FUNCTIONAL
+        3 -> Context.REPRESENTATIONAL
+        4 -> Context.AMALGAMATIVE
+        else -> return null
+    }
+
+    return listOf(function, specification, context)
 
 }
 
-fun parseComplexVv(v: String): List<Precision>? {
-    val (series, form) = seriesAndForm(v.replace("[wy]".toRegex(), "'"))
-    val stem = when(form) {
-        1, 2 -> Stem.STEM_ONE
-        3, 5 -> Stem.STEM_TWO
-        9, 8 -> Stem.STEM_THREE
-        7, 6 -> Stem.STEM_ZERO
-        else -> return null
-    }
-    val version = when(form) {
-        1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 8, 6 -> Version.COMPLETIVE
-        else -> return null
-    }
-    val specification = when(series) {
-        1, 5 -> Specification.BASIC
-        2, 6 -> Specification.CONTENTIAL
-        3, 7 -> Specification.CONSTITUTIVE
-        4, 8 -> Specification.OBJECTIVE
-        else -> return null
-    }
-    val function = when(series) {
-        1, 2, 3, 4 -> Function.STATIVE
-        5, 6, 7, 8 -> Function.DYNAMIC
+fun parseVnCn(vn: String, cn: String, marksMood: Boolean): List<Precision>? {
+    val pattern = when (cn) {
+        "h", "hl", "hr", "hm", "hn", "hň" -> 1
+        "w", "y", "hw", "hlw", "hly", "hnw", "hny" -> 2
         else -> return null
     }
 
-    return listOf(stem, specification, version, function)
+    val (series, form) = seriesAndForm(vn)
+
+    val vnValue: Precision = if (pattern == 1) {
+        when (series) {
+            1 -> Valence.byForm(form)
+            2 -> Phase.byForm(form)
+            3 -> EffectAndPerson.byForm(form)
+            4 -> Level.byForm(form)
+            else -> return null
+        }
+    } else {
+        Aspect.byVowel(vn) ?: return null
+    }
+
+    val cnValue: Precision = if (marksMood) {
+        when (cn) {
+            "h", "w", "y" -> Mood.FACTUAL
+            "hl", "hw" -> Mood.SUBJUNCTIVE
+            "hr", "hlw" -> Mood.ASSUMPTIVE
+            "hm", "hly" -> Mood.SPECULATIVE
+            "hn", "hnw" -> Mood.COUNTERFACTIVE
+            "hň", "hny" -> Mood.HYPOTHETICAL
+            else -> return null
+        }
+    } else {
+        when (cn) {
+            "h", "w", "y" -> CaseScope.NATURAL
+            "hl", "hw" -> CaseScope.ANTECEDENT
+            "hr", "hlw" -> CaseScope.SUBALTERN
+            "hm", "hly" -> CaseScope.QUALIFIER
+            "hn", "hnw" -> CaseScope.PRECEDENT
+            "hň", "hny" -> CaseScope.SUCCESSIVE
+            else -> return null
+        }
+    }
+
+    return listOf(vnValue, cnValue)
+
 }
 
-fun parseComplexVr(v: String, glottalStopInCa: Boolean) : List<Precision>? {
-    val (series, form) = seriesAndForm(v)
-    val stem = when(form) {
-        1, 2 -> Stem.STEM_ONE
-        3, 5 -> Stem.STEM_TWO
-        9, 8 -> Stem.STEM_THREE
-        7, 6 -> Stem.STEM_ZERO
-        else -> return null
-    }
-    val version = when(form) {
-        1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 8, 6 -> Version.COMPLETIVE
-        else -> return null
-    }
-    val specification = when(series) {
-        1, 5 -> Specification.BASIC
-        2, 6 -> Specification.CONTENTIAL
-        3, 7 -> Specification.CONSTITUTIVE
-        4, 8 -> Specification.OBJECTIVE
-        else -> return null
-    }
-    val function = when(series) {
-        1, 2, 3, 4 -> if (!glottalStopInCa) Function.STATIVE else Function.DYNAMIC
-        5, 6, 7, 8 -> Function.DYNAMIC
-        else -> return null
-    }
+fun parseCbCy(s: String, marksMood: Boolean): Precision? {
+    val c = s.removePrefix("'")
+    val bias = Bias.byGroup(c)
+    val cyValue = if (bias == null) {
+        if (marksMood) {
+            when (c) {
+                "x" -> Mood.SUBJUNCTIVE
+                "rs" -> Mood.ASSUMPTIVE
+                "rš" -> Mood.SPECULATIVE
+                "rz" -> Mood.COUNTERFACTIVE
+                "rž" -> Mood.HYPOTHETICAL
+                else -> return null
+            }
+        } else {
+            when (c) {
+                "x" -> CaseScope.ANTECEDENT
+                "rs" -> CaseScope.SUBALTERN
+                "rš" -> CaseScope.QUALIFIER
+                "rz" -> CaseScope.PRECEDENT
+                "rž" -> CaseScope.SUCCESSIVE
+                else -> return null
+            }
+        }
+    } else null
 
-    return listOf(stem, specification, version, function)
+    return bias ?: cyValue
+
 }
 
-fun parsePersonalReference(s: String, final: Boolean = false): List<Precision>? = when (val r = s.defaultForm()) {
-    "l" -> listOf(Referent.MONADIC_SPEAKER, Effect.NEUTRAL)
-    "r" -> listOf(Referent.MONADIC_SPEAKER, Effect.BENEFICIAL)
-    "ř" -> listOf(Referent.MONADIC_SPEAKER, Effect.DETRIMENTAL)
-    "s" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.NEUTRAL)
-    "š" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.BENEFICIAL)
-    "ž" -> listOf(Referent.MONADIC_ADDRESSEE, Effect.DETRIMENTAL)
-    "n" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.NEUTRAL)
-    "t" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.BENEFICIAL)
-    "d" -> listOf(Referent.POLYADIC_ADDRESSEE, Effect.DETRIMENTAL)
-    "m" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "p" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "b" -> listOf(Referent.MONADIC_ANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "ň" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "k" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "g" -> listOf(Referent.POLYADIC_ANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "z" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "ţ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "ḑ" -> listOf(Referent.MONADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "tļ" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.NEUTRAL)
-    "f" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.BENEFICIAL)
-    "v" -> listOf(Referent.POLYADIC_INANIMATE_THIRD_PARTY, Effect.DETRIMENTAL)
-    "x" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.NEUTRAL)
-    "c" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.BENEFICIAL)
-    "ż" -> listOf(Referent.MIXED_THIRD_PARTY, Effect.DETRIMENTAL)
-    "th" -> listOf(Referent.OBVIATIVE, Effect.NEUTRAL)
-    "ph" -> listOf(Referent.OBVIATIVE, Effect.BENEFICIAL)
-    "kh" -> listOf(Referent.OBVIATIVE, Effect.DETRIMENTAL)
-    "tç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.NEUTRAL)
-    "pç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.BENEFICIAL)
-    "kç" -> listOf(Referent.ANIMATE_IMPERSONAL, Effect.DETRIMENTAL)
-    "çn", "nç" -> if (final || r == "çn") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.NEUTRAL) else null
-    "çm", "mç" -> if (final || r == "çm") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.BENEFICIAL) else null
-    "çň", "ňç" -> if (final || r == "çň") listOf<Precision>(Referent.INANIMATE_IMPERSONAL, Effect.DETRIMENTAL) else null
-    "çl", "lç" -> if (final || r == "çl") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.NEUTRAL) else null
-    "çr", "rç" -> if (final || r == "çr") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.BENEFICIAL) else null
-    "çř", "řç" -> if (final || r == "çř") listOf<Precision>(Referent.NOMIC_REFERENT, Effect.DETRIMENTAL) else null
-    "rr" -> listOf(Referent.ABSTRACT_REFERENT, Effect.NEUTRAL)
-    "č" -> listOf(Referent.ABSTRACT_REFERENT, Effect.BENEFICIAL)
-    "j" -> listOf(Referent.ABSTRACT_REFERENT, Effect.DETRIMENTAL)
-    else -> null
+fun parsePersonalReference(s: String) : List<Precision>? {
+    val r = s.defaultForm()
+    val referent = when (r) {
+        "l", "r", "ř" -> Referent.MONADIC_SPEAKER
+        "s", "š", "ž" -> Referent.MONADIC_ADDRESSEE
+        "n", "t", "d" -> Referent.POLYADIC_ADDRESSEE
+        "m", "p", "b" -> Referent.MONADIC_ANIMATE_THIRD_PARTY
+        "ň", "k", "g" -> Referent.POLYADIC_ANIMATE_THIRD_PARTY
+        "z", "ţ", "ḑ" -> Referent.MONADIC_INANIMATE_THIRD_PARTY
+        "ẓ", "ļ", "f", "v" -> Referent.POLYADIC_INANIMATE_THIRD_PARTY
+        "c", "č", "j" -> Referent.MIXED_THIRD_PARTY
+        "th", "ph", "kh" -> Referent.OBVIATIVE
+        "ll", "rr", "řř" -> Referent.PROVISIONAL
+        "ç", "x" -> Perspective.NOMIC
+        "w", "y" -> Perspective.ABSTRACT
+        else -> return null
+    }
+
+    val effect = when (r) {
+        "l", "s", "n", "m", "ň", "z", "ẓ", "ļ", "c", "th", "ll" -> Effect.NEUTRAL
+        "r", "š", "t", "p", "k", "ţ", "f", "č", "ph", "rr" -> Effect.BENEFICIAL
+        "ř", "ž", "d", "b", "g", "ḑ", "v", "j", "kh", "řř" -> Effect.DETRIMENTAL
+        else -> null
+    }
+
+    return listOfNotNull(referent, effect)
 }
 
 
@@ -297,8 +386,7 @@ fun parseCa(s: String) : List<Precision>? {
     if (original.isEmpty())
         return null
 
-    var similarity = Similarity.UNIPLEX
-    var separability: Connectedness? = null
+    var configuration = Configuration.UNIPLEX
     var extension = Extension.DELIMITIVE
     var affiliation = Affiliation.CONSOLIDATIVE
     var perspective = Perspective.MONADIC
@@ -321,43 +409,50 @@ fun parseCa(s: String) : List<Precision>? {
         if (original in setOf("ř","tļ", "lm", "ln")) {
             essence = Essence.REPRESENTATIVE
         }
-        return listOf(similarity, extension, affiliation, perspective, essence)
+        return listOf(configuration, extension, affiliation, perspective, essence)
     }
 
-    CA_SUBSTITUTIONS.forEach{ (substitution, normal) -> original.replace(substitution, normal) }
+    val normal = CA_SUBSTITUTIONS.fold(original) { it, (substitution, normal) -> it.replace(substitution, normal) }
+    var index = 0
 
-    when {
-        original[0] == 'l' -> {
-            similarity = Similarity.MULTIPLEX_FUZZY
-            original = original.drop(1)
+    var conf = ""
+
+    when (normal[0]){
+        'l' -> {
+            conf = "MF"
+            index++
         }
-        original[0] in setOf('r', 'ř') -> {
-            similarity = when (original.take(2)) {
-                "rt", "rk", "rp" -> Similarity.DUPLEX_SIMILAR
-                "rn", "rň", "rm" -> Similarity.DUPLEX_DISSIMILAR
-                "řt", "řk", "řp" -> Similarity.DUPLEX_FUZZY
+        'r', 'ř' -> {
+            conf = when (normal.take(2)) {
+                "rt", "rk", "rp" -> "DS"
+                "rn", "rň", "rm" -> "DD"
+                "řt", "řk", "řp" -> "DF"
                 else -> return null
             }
-            original = original.drop(1)
+            index++
         }
         else -> {
-            similarity = when (original[0]) {
-                't', 'k', 'p' -> Similarity.MULTIPLEX_SIMILAR
-                'n', 'ň', 'm' -> Similarity.MULTIPLEX_DISSIMILAR
-                else -> Similarity.UNIPLEX
+            conf = when (normal[0]) {
+                't', 'k', 'p' -> "MS"
+                'n', 'ň', 'm' -> "MD"
+                else -> "UNI"
             }
         }
     }
 
-    separability = when (original[0]) {
-        't', 'n' -> Connectedness.SEPARATE
-        'k', 'ň' -> Connectedness.CONNECTED
-        'p', 'm' -> Connectedness.FUSED
+    conf += when (normal[index]) {
+        't', 'n' -> "S"
+        'k', 'ň' -> "C"
+        'p', 'm' -> "F"
         else -> null
     }
 
-    if (original.getOrNull(0) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
-        extension = when (original[0]) {
+    if (conf != "UNI") index++
+
+    configuration = Configuration.byAbbreviation(conf) ?: return null
+
+    if (normal.getOrNull(index) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
+        extension = when (normal[index]) {
             's' -> Extension.PROXIMAL
             'š' -> Extension.INCIPIENT
             'f' -> Extension.ATTENUATIVE
@@ -365,38 +460,36 @@ fun parseCa(s: String) : List<Precision>? {
             'ç' -> Extension.DEPLETIVE
             else -> return null
         }
-        original = original.drop(1)
+        index++
     }
 
-    if (original.getOrNull(0) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
-        affiliation = when (original[0]) {
+    if (normal.getOrNull(index) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
+        affiliation = when (normal[index]) {
             't', 'd' -> Affiliation.ASSOCIATIVE
             'k', 'g' -> Affiliation.COALESCENT
             'p', 'b' -> Affiliation.VARIATIVE
             else -> return null
         }
-        original = original.drop(1)
+        index++
     }
 
-    if (original.isNotEmpty()) {
-        perspective = when(original[0]) {
+    if (normal.drop(index).isNotEmpty() && index > 0) {
+        perspective = when(normal[index]) {
             'r', 'v', 'l' -> Perspective.POLYADIC
             'w', 'm', 'h' -> Perspective.NOMIC
             'y', 'n', 'ç' -> Perspective.ABSTRACT
             else -> return null
         }
-        essence = when(original[0]) {
+        essence = when(normal[index]) {
             'ř', 'l', 'm', 'h', 'n', 'ç' -> Essence.REPRESENTATIVE
             else -> Essence.NORMAL
         }
-        original = original.drop(1)
+        index++
     }
-    return if (original.isNotEmpty()) null else {
-        listOfNotNull(similarity, separability, extension, affiliation, perspective, essence)
+    return if (normal.drop(index).isNotEmpty()) null else {
+        listOfNotNull(configuration, extension, affiliation, perspective, essence)
     }
 }
-
-internal fun perspectiveIndexFromCa(ca: List<Precision>) = Perspective.values().indexOf(ca[ca.lastIndex - 1] as Perspective)
 
 fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: Boolean = false): String? {
     val scope = when (s?.defaultForm()) {
@@ -424,19 +517,19 @@ fun parseModularScope(vh: String, precision: Int, ignoreDefault: Boolean) : Stri
             else -> null
 }
 
-fun parseCarrierAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
+fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
 
     val type = when(typeC.defaultForm()) {
-        "ç" ->  "[carrier]"
-        "hl" -> "[quotative]"
-        "hr" -> "[naming]"
-        "hm" -> "[phrasal]"
+        "hl" ->  "[carrier]"
+        "hm" -> "[quotative]"
+        "hn" -> "[naming]"
+        "hr" -> "[phrasal]"
         else -> null
     }
 
     val case = Case.byVowel(caseV.defaultForm())?.toString(precision, ignoreDefault)
 
     return if (type != null && case != null) {
-        type + (if (!case.isEmpty()) "$SLOT_SEPARATOR$case" else "")
+        type + (if (case.isNotEmpty()) "$SLOT_SEPARATOR$case" else "")
     } else null
 }

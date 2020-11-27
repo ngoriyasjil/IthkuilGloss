@@ -2,6 +2,11 @@ package io.github.syst3ms.tnil
 
 
 fun main() {
+
+    println("Loading lexicon...")
+
+    respond("?!reload")
+
     do {
         print(">>> ")
         val msg = readLine() ?: ""

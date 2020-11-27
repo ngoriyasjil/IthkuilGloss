@@ -16,7 +16,7 @@ import java.net.URL
 
 val logger = LoggerFactory.getLogger("tnilgloss")!!
 
-const val MORPHOPHONOLOGY_VERSION = "0.17.0 (unfinished)"
+const val MORPHOPHONOLOGY_VERSION = "0.17.1 (unfinished)"
 
 fun main() {
     val tokenFile = File("./resources/token.txt")
@@ -35,7 +35,7 @@ fun parsePrecision(request: String) =
             request.contains("short") -> 0
             request.contains("full")  -> 2
             request.contains("debug") -> 3
-            else                            -> 1
+            else                      -> 1
         }
 
 fun loadResources() {
@@ -51,16 +51,16 @@ fun respond(content: String) : String? {
 
     when(request) {
         "gloss", "short", "full", "!debug" -> { // Word by word
-            val parts = content.split("[\\s.;,:]+".toRegex()).filter(kotlin.String::isNotBlank).drop(1)
+            val words = content.split("[\\s.;,:]+".toRegex()).filter(kotlin.String::isNotBlank).drop(1)
             val glosses = arrayListOf<String>()
-            for (part in parts) {
-                var w = part.toLowerCase().replace("’", "'")
+            for (word in words) {
+                var w = word.toLowerCase().replace("’", "'").replace("\u200b", "")
                 if (w.startsWith("_") || w.startsWith("/")) {
                     w = w.substring(1)
                 } else {
+
                     val nonIthkuil = w.filter {
-                        it.toString().defaultForm() !in CONSONANTS &&
-                                VOWEL_FORM.none { v -> v eq it.toString() } }
+                        it.toString().defaultForm() !in ITHKUIL_CHARS }
                     if(nonIthkuil.isNotEmpty()) {
                         glosses += error("Non-ithkuil characters detected: " +
                                 nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
@@ -73,8 +73,8 @@ fun respond(content: String) : String? {
                 } catch (ex: Exception) {
                     logger.error("{}", ex)
                     if (prec < 3) {
-                        error("A severe exception occurred during sentence parsing. We are unable to give more information. " +
-                                "For a more thorough (but technical) description of the error, please use debug mode.")
+                        error("""|A severe exception occurred during sentence parsing. We are unable to give more information.
+                                 |For a more thorough (but technical) description of the error, please use debug mode.""".trimMargin())
                     } else {
                         val sw = StringWriter()
                         ex.printStackTrace(PrintWriter(sw))
@@ -88,7 +88,7 @@ fun respond(content: String) : String? {
                 glosses += res.trim()
             }
             val newMessage = glosses.mapIndexed { i, s ->
-                MarkdownUtil.bold(parts[i] + ":") + " " + if (s.startsWith("\u0000")) {
+                MarkdownUtil.bold(words[i] + ":") + " " + if (s.startsWith("\u0000")) {
                     MarkdownUtil.italics(s.substring(1, s.length))
                 } else {
                     s
