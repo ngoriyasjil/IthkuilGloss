@@ -182,7 +182,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
 
-    val stress = groups.findStress().coerceAtLeast(0)
+    val stress = groups.takeWhile { it != "-" }.toTypedArray().findStress().coerceAtLeast(0)
     var index = 0
 
     val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
