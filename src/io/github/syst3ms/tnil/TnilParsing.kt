@@ -386,8 +386,7 @@ fun parseCa(s: String) : List<Precision>? {
     if (original.isEmpty())
         return null
 
-    var similarity = Similarity.UNIPLEX
-    var separability: Separability? = null
+    var configuration = Configuration.UNIPLEX
     var extension = Extension.DELIMITIVE
     var affiliation = Affiliation.CONSOLIDATIVE
     var perspective = Perspective.MONADIC
@@ -410,43 +409,47 @@ fun parseCa(s: String) : List<Precision>? {
         if (original in setOf("ř","tļ", "lm", "ln")) {
             essence = Essence.REPRESENTATIVE
         }
-        return listOf(similarity, extension, affiliation, perspective, essence)
+        return listOf(configuration, extension, affiliation, perspective, essence)
     }
 
     val normal = CA_SUBSTITUTIONS.fold(original) { it, (substitution, normal) -> it.replace(substitution, normal) }
     var index = 0
 
+    var conf = ""
+
     when (normal[0]){
         'l' -> {
-            similarity = Similarity.MULTIPLEX_FUZZY
+            conf = "MF"
             index++
         }
         'r', 'ř' -> {
-            similarity = when (normal.take(2)) {
-                "rt", "rk", "rp" -> Similarity.DUPLEX_SIMILAR
-                "rn", "rň", "rm" -> Similarity.DUPLEX_DISSIMILAR
-                "řt", "řk", "řp" -> Similarity.DUPLEX_FUZZY
+            conf = when (normal.take(2)) {
+                "rt", "rk", "rp" -> "DS"
+                "rn", "rň", "rm" -> "DD"
+                "řt", "řk", "řp" -> "DF"
                 else -> return null
             }
             index++
         }
         else -> {
-            similarity = when (normal[0]) {
-                't', 'k', 'p' -> Similarity.MULTIPLEX_SIMILAR
-                'n', 'ň', 'm' -> Similarity.MULTIPLEX_DISSIMILAR
-                else -> Similarity.UNIPLEX
+            conf = when (normal[0]) {
+                't', 'k', 'p' -> "MS"
+                'n', 'ň', 'm' -> "MD"
+                else -> "UNI"
             }
         }
     }
 
-    separability = when (normal[index]) {
-        't', 'n' -> Separability.SEPARATE
-        'k', 'ň' -> Separability.CONNECTED
-        'p', 'm' -> Separability.FUSED
+    conf += when (normal[index]) {
+        't', 'n' -> "S"
+        'k', 'ň' -> "C"
+        'p', 'm' -> "F"
         else -> null
     }
 
-    if (separability != null) index++
+    if (conf != "UNI") index++
+
+    configuration = Configuration.byAbbreviation(conf) ?: return null
 
     if (normal.getOrNull(index) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
         extension = when (normal[index]) {
@@ -484,7 +487,7 @@ fun parseCa(s: String) : List<Precision>? {
         index++
     }
     return if (normal.drop(index).isNotEmpty()) null else {
-        listOfNotNull(similarity, separability, extension, affiliation, perspective, essence)
+        listOfNotNull(configuration, extension, affiliation, perspective, essence)
     }
 }
 

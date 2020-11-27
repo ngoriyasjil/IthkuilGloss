@@ -208,6 +208,42 @@ enum class Similarity(private val short: String) : Precision {
     }
 }
 
+enum class Configuration(private val short: String) : Precision {
+    UNIPLEX("UNI"),
+    DUPLEX_SIMILAR_SEPARATE("DSS"),
+    DUPLEX_SIMILAR_CONNECTED("DSC"),
+    DUPLEX_SIMILAR_FUSED("DSF"),
+    DUPLEX_DISSIMILAR_SEPARATE("DDS"),
+    DUPLEX_DISSIMILAR_CONNECTED("DDC"),
+    DUPLEX_DISSIMILAR_FUSED("DDF"),
+    DUPLEX_FUZZY_SEPARATE("DFS"),
+    DUPLEX_FUZZY_CONNECTED("DFC"),
+    DUPLEX_FUZZY_FUSED("DFF"),
+    MULTIPLEX_SIMILAR_SEPARATE("MSS"),
+    MULTIPLEX_SIMILAR_CONNECTED("MSC"),
+    MULTIPLEX_SIMILAR_FUSED("MSF"),
+    MULTIPLEX_DISSIMILAR_SEPARATE("MDS"),
+    MULTIPLEX_DISSIMILAR_CONNECTED("MDC"),
+    MULTIPLEX_DISSIMILAR_FUSED("MDF"),
+    MULTIPLEX_FUZZY_SEPARATE("MFS"),
+    MULTIPLEX_FUZZY_CONNECTED("MFC"),
+    MULTIPLEX_FUZZY_FUSED("MFF");
+
+    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
+        ignoreDefault && this.ordinal == 0 -> ""
+        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+        else -> short
+    }
+
+    companion object {
+        fun byAbbreviation(s: String) : Configuration? {
+            return values().find { it.short eq s  }
+        }
+    }
+
+}
+
+
 enum class Separability(private val short: String) : Precision {
     SEPARATE("SEP"),
     CONNECTED("CND"),
