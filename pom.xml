@@ -15,6 +15,7 @@
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
     <main.class>io.github.syst3ms.tnil.MainKt</main.class>
+    <maven.test.skip>true</maven.test.skip>
   </properties>
 
   <repositories>
