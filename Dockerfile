@@ -6,4 +6,5 @@ RUN mvn package
 COPY src src
 COPY test test
 RUN mvn -o package
-COPY resources/ resources
+COPY .git .git
+COPY resources resources
