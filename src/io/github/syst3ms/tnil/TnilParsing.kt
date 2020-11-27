@@ -444,10 +444,10 @@ fun parseCa(s: String) : List<Precision>? {
         't', 'n' -> "S"
         'k', 'ň' -> "C"
         'p', 'm' -> "F"
-        else -> null
+        else -> ""
     }
 
-    if (conf != "UNI") index++
+    if (conf matches "..[SCF]".toRegex()) index++
 
     configuration = Configuration.byAbbreviation(conf) ?: return null
 
