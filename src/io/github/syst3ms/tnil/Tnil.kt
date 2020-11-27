@@ -129,21 +129,33 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    val ss = s.replace("^çë?".toRegex(), "")
+    val groups = s.splitGroups()
 
-    val groups = ss.splitGroups()
     if (groups.isEmpty()) {
         return error("Empty word")
     }
+
+    /*val initialGroups = s.splitGroups().toList()
+    if (initialGroups.isEmpty()) {
+        return error("Empty word")
+    }
+
+    var sentencePrefix = true
+
+    val groups = when {
+        initialGroups[0] == "ç" && initialGroups[1].isVowel() -> initialGroups.drop(1)
+        initialGroups[0] == "çw" -> listOf("w") + initialGroups.drop(1)
+        else -> initialGroups.also { sentencePrefix = false }
+    }.toTypedArray()
 
     val ssgloss = when (precision) {
         0 -> "[.]-"
         1 -> "[sentence:]-"
         2, 3, 4 -> "[sentence start]-"
         else -> ""
-    }
+    }*/
 
-    return (if (s != ss) ssgloss else "") + when {
+    return when {
         groups.size == 1 && groups[0].isConsonant() ->  {
             Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
         }
