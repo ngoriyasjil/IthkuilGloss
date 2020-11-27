@@ -386,60 +386,38 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
 
 }
 
-fun parsePRA(groups: Array<String>,
-             precision: Int,
-             ignoreDefault: Boolean,
-             sentenceParsingState: SentenceParsingState? = null): String {
-    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
-    if (stress == -1)
-        stress = 1
-    var result = ""
-    var i = 0
-    val refA = if (groups[1] == "ë" && groups.size >= 4 && !groups[2].isModular()) {
-        i += 2
-        groups[0] + groups[2]
-    } else {
-        groups[0]
-    }
-    i++
-    val ref = parseFullReferent(refA, precision, ignoreDefault) ?: return error("Unknown referent: $refA")
-    result += ref.plusSeparator(sep = CATEGORY_SEPARATOR)
-    val v1 = if (i + 2 < groups.size && groups[i+1] == "'") {
-        i += 2
-        groups[i-2] + "'" + groups[i]
-    } else {
-        groups[i]
-    }
-    i++
-    result += if (stress == 0) {
-        parseVk(v1)?.toString(precision) ?: return error("Unknown illocution/expectation/validation: $v1")
-    } else {
-        Case.byVowel(v1)?.toString(precision) ?: return error("Unknown case vowel: $v1")
-    }
-    if (i + 1 < groups.size) {
-        assert(groups[i] == "w" || groups[i] == "y")
-        val v2 = if (i + 3 < groups.size && groups[i+2] == "'") {
-            i += 2
-            groups[i-1] + "'" + groups[i+1]
-        } else {
-            groups[i+1]
-        }
-        i += 2
-        val case = Case.byVowel(v2)?.toString(precision) ?: return error("Unknown case vowel: $v2")
-        if (i < groups.size) {
-            if (!(i + 1 == groups.size || groups[i+1] == "ë" && i + 2 == groups.size))
-                return error("PRA ended unexpectedly: ${groups.joinToString("")}")
-            result += (parseFullReferent(groups[i], precision, ignoreDefault)
-                    ?: return error("Unknown referent: ${groups[i]}")).plusSeparator(start = true)
-            result += case.plusSeparator(start = true, sep = CATEGORY_SEPARATOR)
-        } else {
-            result += case.plusSeparator(start = true, sep = CATEGORY_SEPARATOR)
-        }
-    } else if (i + 1 == groups.size) { // Slot III isn't there all the way
-        return error("PRA ended unexpectedly: ${groups.joinToString("")}")
-    }
-    sentenceParsingState?.rtiAffixScope = null
-    return result
+fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sentenceParsingState: SentenceParsingState? = null) : String {
+    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+    val essence = (if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL).toString(precision, ignoreDefault)
+    var index = 0
+    val c1 = groups[0] + if (groups[1] == "ë") groups[2] else ""
+    val refA = parseFullReferent(c1, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c1")
+    if (groups[1] == "ë") index += 3 else index++
+
+    val caseA = Case.byVowel(groups[index])?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
+    index++
+
+    if (groups.getOrNull(index) in setOf("w", "y")) {
+        index++
+        val vc2 = groups.getOrNull(index) ?: return "PRA ended unexpectedly"
+        val caseB = Case.byVowel(vc2)?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
+        index++
+
+        val c2 = groups.getOrNull(index)
+        val refB = if (c2 != null) {
+            parseFullReferent(c2, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c2")
+        } else null
+
+        index++
+        if (groups.getOrNull(index) == "ë") index++
+
+        if (groups.size > index) return error("PRA is too long")
+
+        return listOfNotNull(refA, caseA, caseB, refB, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
+
+    } else if (groups.size > index+1) {
+        return error("PRA is too long")
+    } else return listOfNotNull(refA, caseA, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
 }
 
 fun parseCombinationPRA(groups: Array<String>,
