@@ -73,8 +73,8 @@ fun respond(content: String) : String? {
                 } catch (ex: Exception) {
                     logger.error("{}", ex)
                     if (prec < 3) {
-                        error("""A severe exception occurred during sentence parsing. We are unable to give more information.
-                                For a more thorough (but technical) description of the error, please use debug mode.""")
+                        error("""|A severe exception occurred during sentence parsing. We are unable to give more information.
+                                 |For a more thorough (but technical) description of the error, please use debug mode.""".trimMargin())
                     } else {
                         val sw = StringWriter()
                         ex.printStackTrace(PrintWriter(sw))

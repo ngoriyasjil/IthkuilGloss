@@ -420,7 +420,77 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sent
     } else return listOfNotNull(refA, caseA, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
 }
 
+@Suppress("UNCHECKED_CAST")
 fun parseCombinationPRA(groups: Array<String>,
+                        precision: Int,
+                        ignoreDefault: Boolean,
+                        sentenceParsingState: SentenceParsingState? = null): String {
+    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+    val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
+    var index = 0;
+
+    val shortcut = when(groups[0]) {
+        "w" -> Shortcut.W_SHORTCUT
+        "y" -> Shortcut.Y_SHORTCUT
+        else -> null
+    }
+    if (shortcut != null) index++
+
+    val slot1 = when {
+        !groups[index].isVowel() -> null
+        groups[index] == "ë" -> null.also { index++ }
+        else -> (parseVv(groups[index], shortcut) ?: return error("Unknown Vv: ${groups[index]}"))
+            .filter { it !is Stem }.also { index++ }
+    }
+
+    val ref = PrecisionString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
+    index++
+
+    val caseA = Case.byVowel(groups[index]) ?: "Unknown case: ${groups[index]}"
+    index++
+
+    val specification = when(groups[index]) {
+        "x" -> Specification.BASIC
+        "xx" -> Specification.CONTENTIAL
+        "lx" -> Specification.CONSTITUTIVE
+        "rx" -> Specification.OBJECTIVE
+        else -> return error("Unknown combination PRA specification: ${groups[index]}")
+    }
+    index++
+
+    val vxCsAffixes : MutableList<Precision> = mutableListOf()
+    while (true) {
+        if (index+1 >= groups.size || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
+            break
+        }
+
+        val (vx, glottal) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
+
+        if (glottal) return "Unexpected glottal stop"
+
+        vxCsAffixes.add(Affix(vx, groups[index+1]))
+        index += 2
+
+    }
+
+    val caseB = when (groups.getOrNull(index)?.defaultForm()) {
+        "a", null -> null
+        "üa" -> Case.THEMATIC
+        else -> Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
+    }
+
+    val slotList = listOfNotNull(slot1, ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
+
+    return slotList.map {
+        if (it is List<*>) {
+            (it as List<Precision>).toString(precision, ignoreDefault) // Wacky casting, beware.
+        } else (it as Precision).toString(precision, ignoreDefault) }
+            .filter { it.isNotEmpty() }
+            .joinToString(SLOT_SEPARATOR)
+
+}
+
+/*fun parseCombinationPRA(groups: Array<String>,
                         precision: Int,
                         ignoreDefault: Boolean,
                         sentenceParsingState: SentenceParsingState? = null): String {
@@ -495,7 +565,7 @@ fun parseCombinationPRA(groups: Array<String>,
     }
     sentenceParsingState?.rtiAffixScope = null
     return result
-}
+}*/
 
 fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,

@@ -2,7 +2,7 @@ package io.github.syst3ms.tnil
 
 import java.lang.IllegalStateException
 
-val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") }
+val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") } + listOf("üa", "üe", "üo", "üä")
 val animateReferentDescriptions = listOf(
         listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
         listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
