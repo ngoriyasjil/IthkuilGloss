@@ -16,7 +16,7 @@ import java.net.URL
 
 val logger = LoggerFactory.getLogger("tnilgloss")!!
 
-const val MORPHOPHONOLOGY_VERSION = "0.17.1 (unfinished)"
+const val MORPHOPHONOLOGY_VERSION = "0.17.1"
 
 fun main() {
     val tokenFile = File("./resources/token.txt")
@@ -196,7 +196,7 @@ class MessageListener : ListenerAdapter() {
 
         val response = respond(content)
         if (response != null) {
-            chan.sendMessage(MessageBuilder("**WORK IN PROGRESS**\n $response").build()).queue()
+            chan.sendMessage(MessageBuilder(response).build()).queue()
         }
     }
 }
