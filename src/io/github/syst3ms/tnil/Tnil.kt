@@ -168,7 +168,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
             parseAffixual(groups, precision, ignoreDefault)
         }
         groups.size >= 5 && groups[0].isConsonant() && groups[2].removePrefix("'") in CC_CONSONANTS
-                || (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
+                || groups.size >= 6 && (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
             parseAffixualScoping(groups, precision, ignoreDefault)
         }
 
