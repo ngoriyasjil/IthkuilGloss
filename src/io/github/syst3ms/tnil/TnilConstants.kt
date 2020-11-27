@@ -638,7 +638,6 @@ enum class Validation(private val short: String) : Precision {
     IMAGINARY("IMA");
 
     override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
         precision >= 2 -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
