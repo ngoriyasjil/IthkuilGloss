@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.github.syst3ms.tnil
 
 import net.dv8tion.jda.api.JDABuilder
@@ -13,8 +15,11 @@ import java.io.StringWriter
 import kotlin.system.exitProcess
 import org.slf4j.LoggerFactory
 import java.net.URL
+import kotlin.time.*
 
 val logger = LoggerFactory.getLogger("tnilgloss")!!
+
+val leStart = System.currentTimeMillis()
 
 const val MORPHOPHONOLOGY_VERSION = "0.17.1"
 
@@ -139,11 +144,19 @@ fun respond(content: String) : String? {
                 "Error while reloading external resources…"
             }
         }
-        "!status" -> return "__Status report:__\n" +
-                "**Ithkuil Version:** $MORPHOPHONOLOGY_VERSION\n" +
-                "**Roots:** ${rootData.size}\n" +
-                "**Affixes:** ${affixData.size}\n" +
-                "**Help file exists:** ${File("./resources/help.md").exists()}"
+        "!status" -> {
+            val git = ProcessBuilder("git", "log", "-1", "--oneline").start()
+            val lastCommit = String(git.getInputStream().readBytes())
+            return listOf(
+                  "__Status report:__",
+                  "**Ithkuil Version:** $MORPHOPHONOLOGY_VERSION",
+                  "**Roots:** ${rootData.size}",
+                  "**Affixes:** ${affixData.size}", 
+                  "**Help file exists:** ${File("./resources/help.md").exists()}",
+                  "**Uptime:** ${(System.currentTimeMillis() - leStart).milliseconds}",
+                  "**Last commit:** ${lastCommit}"
+              ).joinToString("\n")
+        }
 
         "!whosagoodbot" -> return "(=^ェ^=✿)"
         else -> return null
