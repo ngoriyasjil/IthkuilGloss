@@ -202,7 +202,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         parseCc(groups[0])
     } else Pair(null, null)
 
-    val relation = if (concatenation != null) {
+    val relation = if (concatenation == null) {
         when (stress){
             2 -> Relation.FRAMED
             else -> Relation.UNFRAMED
