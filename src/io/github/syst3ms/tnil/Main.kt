@@ -69,7 +69,7 @@ fun respond(content: String) : String? {
                     if(nonIthkuil.isNotEmpty()) {
                         glosses += error("Non-ithkuil characters detected: " +
                                 nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
-                                if (nonIthkuil.contains("[qˇ^]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else "")
+                                if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else "")
                         continue
                     }
                 }
@@ -78,8 +78,8 @@ fun respond(content: String) : String? {
                 } catch (ex: Exception) {
                     logger.error("{}", ex)
                     if (prec < 3) {
-                        error("""|A severe exception occurred during sentence parsing. We are unable to give more information.
-                                 |For a more thorough (but technical) description of the error, please use debug mode.""".trimMargin())
+                        error("A severe exception occurred during sentence parsing. Please contact the maintainers.")
+
                     } else {
                         val sw = StringWriter()
                         ex.printStackTrace(PrintWriter(sw))
