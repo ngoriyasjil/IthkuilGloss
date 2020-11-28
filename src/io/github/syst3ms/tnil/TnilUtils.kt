@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
 
-fun String.isVowel() = this.defaultForm() in flatVowelForm
+fun String.isVowel() = defaultForm().all { it in setOf('a', 'ä', 'e', 'ë', 'i', 'ö', 'o', 'ü', 'u', '\'')}
 
 fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
 

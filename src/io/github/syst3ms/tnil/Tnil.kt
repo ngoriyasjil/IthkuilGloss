@@ -129,13 +129,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    val groups = s.splitGroups()
-
-    if (groups.isEmpty()) {
-        return error("Empty word")
-    }
-
-    /*val initialGroups = s.splitGroups().toList()
+    val initialGroups = s.splitGroups().toList()
     if (initialGroups.isEmpty()) {
         return error("Empty word")
     }
@@ -143,8 +137,11 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     var sentencePrefix = true
 
     val groups = when {
+        initialGroups.size in 5..6 && initialGroups.take(4) == listOf("ç", "ë", "h","ë") -> initialGroups.drop(3) // Single-affix adjunct, degree 4
+        initialGroups.size >= 4 && initialGroups[0] == "ç" && initialGroups[1] == "ë" -> initialGroups.drop(2)
         initialGroups[0] == "ç" && initialGroups[1].isVowel() -> initialGroups.drop(1)
         initialGroups[0] == "çw" -> listOf("w") + initialGroups.drop(1)
+        initialGroups[0] == "çç" -> listOf("y") + initialGroups.drop(1)
         else -> initialGroups.also { sentencePrefix = false }
     }.toTypedArray()
 
@@ -153,9 +150,9 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         1 -> "[sentence:]-"
         2, 3, 4 -> "[sentence start]-"
         else -> ""
-    }*/
+    }
 
-    return when {
+    return (if (sentencePrefix) ssgloss else "") +  when {
         groups.size == 1 && groups[0].isConsonant() ->  {
             Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
         }
@@ -220,7 +217,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     index++
 
     val vr = if (shortcut != null) "a" else {
-        groups[index].also { index++ }
+        groups.getOrNull(index).also { index++ } ?: return error("Formative ended unexpectedly: ${groups.joinToString("")}")
     }
 
     val slotIV = parseVr(vr) ?: return error("Unknown Vr value: $vr")
@@ -409,27 +406,30 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sent
     val caseA = Case.byVowel(groups[index])?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
     index++
 
-    if (groups.getOrNull(index) in setOf("w", "y")) {
-        index++
-        val vc2 = groups.getOrNull(index) ?: return "PRA ended unexpectedly"
-        val caseB = Case.byVowel(vc2)?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
-        index++
+    when {
+        groups.getOrNull(index) in setOf("w", "y") -> {
+            index++
+            val vc2 = groups.getOrNull(index) ?: return "PRA ended unexpectedly"
+            val caseB = Case.byVowel(vc2)?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
+            index++
 
-        val c2 = groups.getOrNull(index)
-        val refB = if (c2 != null) {
-            parseFullReferent(c2, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c2")
-        } else null
+            val c2 = groups.getOrNull(index)
+            val refB = if (c2 != null) {
+                parseFullReferent(c2, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c2")
+            } else null
 
-        index++
-        if (groups.getOrNull(index) == "ë") index++
+            index++
+            if (groups.getOrNull(index) == "ë") index++
 
-        if (groups.size > index) return error("PRA is too long")
+            if (groups.size > index) return error("PRA is too long")
 
-        return listOfNotNull(refA, caseA, caseB, refB, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
+            return listOfNotNull(refA, caseA, caseB, refB, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
 
-    } else if (groups.size > index+1) {
-        return error("PRA is too long")
-    } else return listOfNotNull(refA, caseA, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
+        }
+        groups.size > index+1 -> return error("PRA is too long")
+        
+        else -> return listOfNotNull(refA, caseA, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
+    }
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -439,7 +439,7 @@ fun parseCombinationPRA(groups: Array<String>,
                         sentenceParsingState: SentenceParsingState? = null): String {
     val stress =  groups.findStress().let { if (it != -1) it else 1 }
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
-    var index = 0;
+    var index = 0
 
     val shortcut = when(groups[0]) {
         "w" -> Shortcut.W_SHORTCUT
