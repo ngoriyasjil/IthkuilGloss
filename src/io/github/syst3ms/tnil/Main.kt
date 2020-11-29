@@ -21,7 +21,7 @@ val logger = LoggerFactory.getLogger("tnilgloss")!!
 
 val leStart = System.currentTimeMillis()
 
-const val MORPHOPHONOLOGY_VERSION = "0.17.1"
+const val MORPHOPHONOLOGY_VERSION = "0.17.2"
 
 fun main() {
     val tokenFile = File("./resources/token.txt")
