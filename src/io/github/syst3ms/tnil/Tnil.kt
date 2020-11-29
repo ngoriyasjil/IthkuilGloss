@@ -523,19 +523,7 @@ fun parseCombinationPRA(groups: Array<String>,
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     var index = 0
 
-    val shortcut = when(groups[0]) {
-        "w" -> Shortcut.W_SHORTCUT
-        "y" -> Shortcut.Y_SHORTCUT
-        else -> null
-    }
-    if (shortcut != null) index++
-
-    val slot1 = when {
-        !groups[index].isVowel() -> null
-        groups[index] == "ë" -> null.also { index++ }
-        else -> (parseVv(groups[index], shortcut) ?: return error("Unknown Vv: ${groups[index]}"))
-            .filter { it !is Stem }.also { index++ }
-    }
+    if (groups[0] == "ë") index++
 
     val ref = PrecisionString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
     index++
@@ -573,7 +561,7 @@ fun parseCombinationPRA(groups: Array<String>,
         else -> Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
     }
 
-    val slotList = listOfNotNull(slot1, ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
+    val slotList = listOfNotNull(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
 
     return slotList.map {
         if (it is List<*>) {
