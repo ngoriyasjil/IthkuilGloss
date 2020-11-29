@@ -164,11 +164,11 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
             val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
             return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
         }
-        groups.size == 2 && groups[0].isConsonant() && !groups[0].isModular()
-                || groups.size >= 4 && !groups[0].isModular() && (groups[1] == "ë" || groups[2] matches "[wy]".toRegex()) -> {
-            parsePRA(groups, precision, ignoreDefault)
+        (groups[0].isVowel() || groups[0] in setOf("w", "y"))
+                && groups.all { it.isVowel() || it in CN_CONSONANTS } -> {
+            parseModular(groups, precision, ignoreDefault)
         }
-        groups.size >= 4 && groups[0].isVowel() && groups[3] in COMBINATION_PRA_SPECIFICATION
+        groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
                 || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION -> {
             parseCombinationPRA(groups, precision, ignoreDefault)
         }
@@ -180,10 +180,10 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
                 || groups.size >= 6 && (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
             parseAffixualScoping(groups, precision, ignoreDefault)
         }
-
-        groups.all { it.isVowel() || it in CN_CONSONANTS } -> {
-            parseModular(groups, precision, ignoreDefault)
+        groups.takeWhile { it !in setOf("w", "y") }.dropLast(1).all { it.isConsonant() || it == "ë" } -> {
+            parsePRA(groups, precision, ignoreDefault)
         }
+
         else -> parseFormative(groups, precision, ignoreDefault)
     }
 }
@@ -427,11 +427,10 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): List<Precision>? {
 }
 
 fun parseVh(vh: String) : PrecisionString? = when (vh.defaultForm()) {
-    "a" -> PrecisionString("{concatenated formative only}", "{concat.}")
-    "e" -> PrecisionString("{scope over formative}", "{formative}")
-    "i", "u" -> PrecisionString("{scope over concatenated formative only}", "{concat. formative}")
-    "o" -> PrecisionString("{scope over adjacent adjuncts}", "{adjacent}")
-    "ö" -> PrecisionString("{scope over adjacent adjuncts of the concatenated formative}", "{concat. adjacent}")
+    "a" -> PrecisionString("{scope over formative}", "{form.}")
+    "e" -> PrecisionString("{scope over case/mood}", "{mood}")
+    "i", "u" -> PrecisionString("{scope over formative, but not adjacent adjuncts}", "{under adj.}")
+    "o" -> PrecisionString("{scope over formative and adjacent adjuncts}", "{over adj.}")
     else -> null
 }
 
@@ -440,10 +439,13 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
     val stress =  groups.findStress().let { if (it != -1) it else 1 }
     var index = 0
 
-    val slot1 = if (groups[0] == "w") {
-        PrecisionString("{parent formative only}", "{parent}")
-                .also { index++ }
-    } else null
+    val slot1 = when (groups[0]) {
+        "w" -> PrecisionString("{parent formative only}", "{parent}")
+        "y" -> PrecisionString("{concatenated formative only}", "{concat.}")
+        else -> null
+    }
+
+    if (slot1 != null) index++
 
     val midSlotList : MutableList<List<Precision>> = mutableListOf()
 
@@ -472,10 +474,16 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
 fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sentenceParsingState: SentenceParsingState? = null) : String {
     val stress =  groups.findStress().let { if (it != -1) it else 1 }
     val essence = (if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL).toString(precision, ignoreDefault)
-    var index = 0
-    val c1 = groups[0] + if (groups[1] == "ë") groups[2] else ""
+    val c1 = groups
+            .takeWhile { it !in setOf("w", "y") }
+            .filter { it != "ë"}
+            .dropLast(1)
+            .takeIf { it.size <= 6 }
+            ?.joinToString("") ?: return error("Too many (>3) initial ë-separated consonants")
     val refA = parseFullReferent(c1, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c1")
-    if (groups[1] == "ë") index += 3 else index++
+    var index = (groups
+            .indexOfFirst { it in setOf("w", "y") }
+            .takeIf { it != -1 } ?: groups.size) - 1
 
     val caseA = Case.byVowel(groups[index])?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
     index++

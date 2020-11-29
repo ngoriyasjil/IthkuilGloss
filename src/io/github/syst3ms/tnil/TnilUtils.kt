@@ -119,7 +119,31 @@ fun String.splitGroups(): Array<String> {
     return groups.toTypedArray()
 }
 
+val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
+
 fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
+    var refList = mutableListOf<List<Precision>>()
+    var index = 0
+
+    while (index < s.length) {
+        refList.add(
+                if (index + 1 < s.length && s.substring(index, index + 2) in BICONSONANTAL_PRS) {
+                    parsePersonalReference(s.substring(index, index + 2)).also { index += 2 }
+                            ?: return null
+                } else parsePersonalReference(s.substring(index, index + 1)).also { index++ }
+                        ?: return null
+        )
+    }
+    return when (refList.size) {
+        0 -> null
+        1 -> refList[0].toString(precision, ignoreDefault)
+        else -> refList
+                .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
+                { it.toString(precision, ignoreDefault) }
+    }
+}
+
+/*fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
     val singleRef = parsePersonalReference(s)
     if (singleRef != null) {
         return singleRef.toString(precision, ignoreDefault)
@@ -164,7 +188,7 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String
         }
     }
     return null
-}
+}*/
 
 fun parseAffixes(data: String): List<AffixData> = data
         .lines()
