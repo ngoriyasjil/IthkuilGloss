@@ -82,7 +82,11 @@ fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
     return Pair(concatenation, shortcut)
 }
 
+
+
+
 fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
+
     val (series, form) = seriesAndForm(v)
 
     val stem = when(form) {
@@ -137,7 +141,7 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val isShortcut: Boolean = false) : Precision { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBePraShortcut, isShortcut = isShortcut)
+            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = isShortcut)
 }
 
 

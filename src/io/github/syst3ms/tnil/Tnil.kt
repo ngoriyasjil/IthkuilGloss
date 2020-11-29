@@ -188,10 +188,12 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     }
 }
 
+val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
+
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
 
-    val stress = groups.takeWhile { it != "-" }.toTypedArray().findStress().coerceAtLeast(0)
+    val stress = groups.takeWhile { it != "-" }.toTypedArray().findStress().let { if (it == -1) 0 else it }
     var index = 0
 
     val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
@@ -210,19 +212,46 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         groups[index].also { index++ }
     }
 
-    val slotII = parseVv(vv, shortcut) ?: return error("Unknown Vv value: $vv")
+    var rootMode = "root"
 
-    val stem = (slotII[0] as Stem).ordinal
-    val (root, stemUsed) = parseRoot(groups[index], precision, stem)
+    val slotII = if (vv in SPECIAL_VV_VOWELS) {
+        when (vv) {
+            "ëi", "eë", "ëu", "öë" -> {
+                rootMode = "affix"
+                if (shortcut != null) return error("Shortcuts can't be used with a Cs-root")
+            }
+            "eä", "öä" -> rootMode = "reference"
+        }
+        parseSpecialVv(vv, shortcut) ?: return error("Unknown Vv value: $vv")
+    } else parseVv(vv, shortcut) ?: return error("Unknown Vv value: $vv")
+
+    val (root, stemUsed) = when (rootMode) {
+        "root" -> {
+            val stem = (slotII[0] as Stem).ordinal
+            parseRoot(groups[index], precision, stem)
+        }
+        "affix" -> {
+            val vx = bySeriesAndForm(1, seriesAndForm(groups[index+1]).second) ?: return error("Unknown Cs-root Vr value: ${groups[index+1]}")
+            parseAffix(groups[index], vx, precision, ignoreDefault, noType = true) to false
+        }
+        "reference" -> {
+            (parseFullReferent(groups[index], precision, ignoreDefault) ?: "**${groups[index]}**") to false
+        }
+        else -> return error("Unable to parse root: ${groups[index]}, $rootMode")
+    }
     index++
 
     val vr = if (shortcut != null) "a" else {
         groups.getOrNull(index).also { index++ } ?: return error("Formative ended unexpectedly: ${groups.joinToString("")}")
     }
 
-    val slotIV = parseVr(vr) ?: return error("Unknown Vr value: $vr")
+    val slotIV = when (rootMode) {
+        "root", "reference" -> parseVr(vr) ?: return error("Unknown Vr value: $vr")
+        "affix" -> parseAffixVr(vr) ?: return error("Unknown Cs-root Vr value: $vr")
+        else -> return error("A bug has occured: Unknown rootmode: $rootMode")
+    }
 
-    val csVxAffixes : MutableList<Affix> = mutableListOf()
+    val csVxAffixes: MutableList<Affix> = mutableListOf()
 
     if (shortcut == null) {
         var indexV = index
@@ -352,6 +381,51 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
 }
 
+fun parseAffixVr(vr: String): List<Precision>? {
+    val (series, form) = seriesAndForm(vr)
+    if (form !in 1..9) return null
+
+    val degree = PrecisionString("D$form")
+
+    val specification = when (series) {
+        1 -> Specification.BASIC
+        2 -> Specification.CONTENTIAL
+        3 -> Specification.CONSTITUTIVE
+        4 -> Specification.OBJECTIVE
+        else -> return null
+    }
+
+    return listOf(degree, specification)
+}
+
+fun parseSpecialVv(vv: String, shortcut: Shortcut?): List<Precision>? {
+    val version = when (vv) {
+        "ëi", "eë", "eä" -> Version.PROCESSUAL
+        "ëu", "öë", "öä" -> Version.COMPLETIVE
+        else -> return null
+    }
+
+    val function = when (vv) {
+        "ëi", "ëu" -> Function.STATIVE
+        "eë", "öë" -> Function.DYNAMIC
+        else -> null
+    }
+
+    val ca = if (shortcut != null && vv in setOf("eä", "öä") ) {
+        when (shortcut) {
+            Shortcut.W_SHORTCUT -> parseCa("l")!!
+            Shortcut.Y_SHORTCUT -> parseCa("s")!!
+        }
+    } else if (shortcut != null) {
+        return null
+    } else emptyList()
+
+    return listOfNotNull(version, function) + ca
+
+
+
+}
+
 fun parseVh(vh: String) : PrecisionString? = when (vh.defaultForm()) {
     "a" -> PrecisionString("{concatenated formative only}", "{concat.}")
     "e" -> PrecisionString("{scope over formative}", "{formative}")
@@ -427,7 +501,7 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sent
 
         }
         groups.size > index+1 -> return error("PRA is too long")
-        
+
         else -> return listOfNotNull(refA, caseA, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
     }
 }

@@ -182,7 +182,7 @@ fun parseAffix(cs: String, vx: String,
                precision: Int,
                ignoreDefault: Boolean,
                canBePraShortcut: Boolean = false,
-               isShortcut: Boolean = false) : String {
+               noType: Boolean = false) : String {
     if (vx == CA_STACKING_VOWEL) {
         val ca = parseCa(cs)?.toString(precision, ignoreDefault) ?: return "(Unknown Ca)"
         return if (ca.isNotEmpty()) {
@@ -247,7 +247,7 @@ fun parseAffix(cs: String, vx: String,
         else -> return "(Unknown affix: $cs)"
     }
 
-    val t = if (!isShortcut) when (type) {
+    val t = if (!noType) when (type) {
         1 -> "\u2081"
         2 -> "\u2082"
         3 -> "\u2083"
