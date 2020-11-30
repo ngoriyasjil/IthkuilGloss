@@ -40,7 +40,7 @@ val VOWEL_FORM = listOf(
 )
 val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
-    "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř"
+    "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř", "'"
 )
 val FRICATIVES = setOf('f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', 'ř', 'h', 'ļ')
 val AFFRICATES = setOf('c', 'ẓ', 'č', 'j')

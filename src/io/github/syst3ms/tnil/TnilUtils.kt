@@ -94,7 +94,7 @@ fun String.splitGroups(): Array<String> {
             .toList()
     while (chars.isNotEmpty()) {
         val group = when {
-            chars[0].isVowel() -> {
+            chars[0].isVowel() && chars[0] != "'" -> {
                 if (chars.getOrNull(1) == "'" && chars.getOrNull(2)?.isVowel() == true) {
                     chars[0] + chars[1] + chars[2]
                 } else if (chars.getOrNull(1)?.isVowel() == true) {
