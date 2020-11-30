@@ -180,7 +180,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
                 || groups.size >= 6 && (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
             parseAffixualScoping(groups, precision, ignoreDefault)
         }
-        groups.takeWhile { it !in setOf("w", "y") }.dropLast(1).all { it.isConsonant() || it == "ë" } -> {
+        groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
             parsePRA(groups, precision, ignoreDefault)
         }
 
