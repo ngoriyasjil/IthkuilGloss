@@ -158,7 +158,7 @@ fun respond(content: String) : String? {
               ).joinToString("\n")
         }
 
-        "!whosagoodbot" -> return "(=^ェ^=✿)"
+        "!whosagoodbot", "!whosacutebot" -> return "(=^ェ^=✿)"
         else -> return null
     }
 }
