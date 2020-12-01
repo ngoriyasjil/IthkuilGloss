@@ -56,7 +56,7 @@ fun respond(content: String) : String? {
 
     when(request) {
         "gloss", "short", "full", "!debug" -> { // Word by word
-            val words = content.split("[\\s.;,:]+".toRegex()).filter(kotlin.String::isNotBlank).drop(1)
+            val words = content.split("[\\s.;,:?!]+".toRegex()).filter(kotlin.String::isNotBlank).drop(1)
             val glosses = arrayListOf<String>()
             for (word in words) {
                 var w = word.toLowerCase().replace("’", "'").replace("\u200b", "")
