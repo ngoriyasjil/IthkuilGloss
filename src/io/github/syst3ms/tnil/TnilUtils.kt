@@ -250,7 +250,7 @@ fun parseRoots(data: String): List<RootData> = data
         .toList()
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
-    val root = rootData.find { it.cr == c } ?: return MarkdownUtil.bold(c.defaultForm()) to false
+    val root = rootData.find { it.cr == c.defaultForm() } ?: return MarkdownUtil.bold(c.defaultForm()) to false
     return if (precision > 0) {
         var stemUsed = false
         val d = when (val stemDsc = root.dsc[stem]) {

@@ -141,7 +141,7 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val isShortcut: Boolean = false) : Precision { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = isShortcut)
+            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = isShortcut)
 }
 
 
