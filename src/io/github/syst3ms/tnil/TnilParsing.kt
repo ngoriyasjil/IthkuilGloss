@@ -26,7 +26,7 @@ fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && fo
 fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
     val (series, form) = seriesAndForm(v)
 
-    if (series == -1 || form == -1) return when (v) { //Temporary solution, ideally
+    if (series == -1 && form == -1) return when (v) { //Temporary solution, ideally
         "ü'ä" -> "üä" to true
         "ü'a" -> "üa" to true
         "ü'e" -> "üe" to true
@@ -34,7 +34,7 @@ fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
         else -> null
     }
 
-    return if (series >= 4) {
+    return if (series > 4) {
         (bySeriesAndForm(series - 4, form)?.to(true)) ?: return null
     } else {
         v to false
