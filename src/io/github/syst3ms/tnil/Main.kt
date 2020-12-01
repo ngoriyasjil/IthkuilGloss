@@ -154,7 +154,7 @@ fun respond(content: String) : String? {
                   "**Affixes:** ${affixData.size}", 
                   "**Help file exists:** ${File("./resources/help.md").exists()}",
                   "**Uptime:** ${(System.currentTimeMillis() - leStart).milliseconds}",
-                  "**Last commit:** ${lastCommit}"
+                  "**Last commit:** $lastCommit"
               ).joinToString("\n")
         }
 

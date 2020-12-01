@@ -5,17 +5,21 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
 
-fun String.isVowel() = defaultForm().all { it in setOf('a', 'ä', 'e', 'ë', 'i', 'ö', 'o', 'ü', 'u', '\'')}
+val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
+
+fun String.isVowel() = when (length) {
+    1, 2 -> all { it.toString().defaultForm() in VOWELS }
+    3 -> this[1] == '\'' && this[0].toString().defaultForm() in VOWELS && this[2].toString().defaultForm() in VOWELS
+    else -> false
+}
 
 fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
 
 fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
 
-fun String.hasStress() = this.isVowel() && this.defaultForm() != this
+fun String.hasStress() = this.isVowel() && this.defaultForm() != this //Dangerous
 
 fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
-
-fun String.trimGlottal() = if (isGlottalCa()) this.drop(1) else this
 
 fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) = when {
     this.isEmpty() -> this
@@ -94,10 +98,10 @@ fun String.splitGroups(): Array<String> {
             .toList()
     while (chars.isNotEmpty()) {
         val group = when {
-            chars[0].isVowel() && chars[0] != "'" -> {
-                if (chars.getOrNull(1) == "'" && chars.getOrNull(2)?.isVowel() == true) {
+            chars[0].defaultForm().isVowel() -> {
+                if (chars.size >= 3 && (chars[0] + chars[1] + chars[2]).isVowel()) {
                     chars[0] + chars[1] + chars[2]
-                } else if (chars.getOrNull(1)?.isVowel() == true) {
+                } else if (chars.size >= 2 && (chars[0] + chars[1]).isVowel()) {
                     chars[0] + chars[1]
                 } else {
                     chars[0]
@@ -143,52 +147,6 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String
     }
 }
 
-/*fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
-    val singleRef = parsePersonalReference(s)
-    if (singleRef != null) {
-        return singleRef.toString(precision, ignoreDefault)
-    }
-    val singleJoined = s.toCharArray().map { parsePersonalReference(it.toString()) }
-    if (singleJoined.none { it == null }) {
-        return singleJoined.requireNoNulls()
-                .sortedBy { (it[0] as Enum<*>).ordinal }
-                .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END) { it.toString(precision, ignoreDefault) }
-    } else if (s.length == 3) {
-        if (s.endsWith("ç") || s.endsWith("h") || s.endsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s[0].toString()) to parsePersonalReference(s.substring(1, 3))
-            return if (ref1 != null && ref2 != null) {
-                REFERENT_START +
-                        ref1.toString(precision, ignoreDefault) +
-                        REFERENT_SEPARATOR +
-                        ref2.toString(precision, ignoreDefault) + REFERENT_END
-            } else {
-                null
-            }
-        } else if (s[1] == 'ç' || s[1] == 'h' || s.startsWith("rr")) {
-            val (ref1, ref2) = parsePersonalReference(s.substring(0, 2)) to parsePersonalReference(s[2].toString())
-            return if (ref1 != null && ref2 != null) {
-                REFERENT_START +
-                        ref1.toString(precision, ignoreDefault) +
-                        REFERENT_SEPARATOR +
-                        ref2.toString(precision, ignoreDefault) +
-                        REFERENT_END
-            } else {
-                null
-            }
-        }
-    } else if (s.length == 4) {
-        val halves = s.chunked(2)
-                .map { r -> parsePersonalReference(r) }
-        return if (halves.none { it == null }) {
-            halves.requireNoNulls()
-                    .sortedBy { (it[0] as Enum<*>).ordinal }
-                    .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END) { it.toString(precision, ignoreDefault) }
-        } else {
-            null
-        }
-    }
-    return null
-}*/
 
 fun parseAffixes(data: String): List<AffixData> = data
         .lines()
