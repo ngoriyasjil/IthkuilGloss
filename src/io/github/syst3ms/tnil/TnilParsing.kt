@@ -89,16 +89,18 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 
     val (series, form) = seriesAndForm(v)
 
+    if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
+
     val stem = when(form) {
         1, 2 -> Stem.STEM_ONE
-        3, 5 -> Stem.STEM_TWO
+        3, 5, 4 -> Stem.STEM_TWO
         9, 8 -> Stem.STEM_THREE
         7, 6 -> Stem.STEM_ZERO
         else -> return null
     }
     val version = when(form) {
         1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 8, 6 -> Version.COMPLETIVE
+        2, 5, 4, 8, 6 -> Version.COMPLETIVE
         else -> return null
     }
 
@@ -108,9 +110,9 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
         null -> {
             additional = when (series) {
                 1 -> emptyList()
-                2 -> listOf(Affix("ë", "r", isShortcut = true))
-                3 -> listOf(Affix("ë", "t", isShortcut = true))
-                4 -> listOf(Affix("i", "t", isShortcut = true))
+                2 -> listOf(Affix("ë", "r", noType = true))
+                3 -> listOf(Affix("ë", "t", noType = true))
+                4 -> listOf(Affix("i", "t", noType = true))
                 else -> return null
             }
         }
@@ -138,10 +140,10 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 
 }
 
-class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val isShortcut: Boolean = false) : Precision { //Definitely not final
+class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val noType: Boolean = false) : Precision { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = isShortcut)
+            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
 }
 
 
@@ -235,15 +237,17 @@ fun parseSimpleVv(s: String): Pair<List<Precision>, Boolean>? {
 fun parseVr(v: String): List<Precision>? {
     val (series, form) = seriesAndForm(v)
 
+    if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
+
     val specification = when (form) {
         1, 9 -> Specification.BASIC
         2, 8 -> Specification.CONTENTIAL
         3, 7 -> Specification.CONSTITUTIVE
-        5, 6 -> Specification.OBJECTIVE
+        5, 4, 6 -> Specification.OBJECTIVE
         else -> return null
     }
     val function = when (form) {
-        1, 2, 3, 5 -> Function.STATIVE
+        1, 2, 3, 5, 4 -> Function.STATIVE
         9, 8, 7, 6 -> Function.DYNAMIC
         else -> return null
     }
@@ -419,7 +423,7 @@ fun parseCa(s: String) : List<Precision>? {
     val normal = CA_SUBSTITUTIONS.fold(original) { it, (substitution, normal) -> it.replace(substitution, normal) }
     var index = 0
 
-    var conf = ""
+    var conf: String
 
     when (normal[0]){
         'l' -> {
