@@ -530,6 +530,18 @@ fun parseCombinationPRA(groups: Array<String>,
 
 }
 
+/*fun parseAffixualScoping(groups: Array<String>,
+                         precision: Int,
+                         ignoreDefault: Boolean,
+                         sentenceParsingState: SentenceParsingState? = null): String {
+    val stress = groups.findStress().let { if (it == -1) 1 else it }
+    var index = 0
+    if (groups[0] == "ë") index++
+
+
+
+}*/
+
 //Rewrite
 fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,
@@ -605,44 +617,19 @@ fun parseAffixualScoping(groups: Array<String>,
 }
 
 
-//Rewrite
 fun parseAffixual(groups: Array<String>,
                   precision: Int,
                   ignoreDefault: Boolean,
-                  sentenceParsingState: SentenceParsingState? = null): String {
-    var rtiScope = sentenceParsingState?.rtiAffixScope
-    var stress = sentenceParsingState?.forcedStress ?: groups.findStress()
-    if (stress == -1) // Monosyllabic
-        stress = 1 // I'll be consistent with 2011 Ithkuil, this precise behaviour is actually not documented
-    var i = 0
-    val v = if (groups[1] == "y") {
-        i += 2
-        groups[0] + "y" + groups[2]
-    } else {
-        groups[0]
-    }
-    val c = groups[i+1]
-    if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
-        return error("'$c' can't be a valid affix consonant")
-    val aff = parseAffix(c, v, precision, ignoreDefault)
-    val scope = affixAdjunctScope((groups.getOrNull(i+2)?.defaultForm()), ignoreDefault)
-    return when {
-        aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-        scope == null -> error("Invalid scope: ${groups[i+2]}")
-        else -> {
-            if (c == RTI_AFFIX_CONSONANT)
-                rtiScope = rtiScope ?: scope
-            if (rtiScope != null)
-                sentenceParsingState?.rtiAffixScope = rtiScope
-            aff + scope.plusSeparator(start = true) + if (stress != 1) {
-                "{Incp}".plusSeparator(start = true)
-            } else {
-                ""
-            }
-        }
-    }
+                  sentenceParsingState: SentenceParsingState? = null) : String {
+    val stress = groups.findStress().let { if (it == -1) 1 else it }
+    val concatOnly = if (stress == 0) "{concat.}" else null
+
+    if (groups.size < 2) return error("Affixual adjunct too short: ${groups.size}")
+
+    val affix = Affix(groups[0], groups[1]).toString(precision, ignoreDefault)
+    val scope = affixAdjunctScope(groups.getOrNull(2), ignoreDefault)
+    return listOfNotNull(affix, scope, concatOnly).joinToString("-")
+
 }
 
 
