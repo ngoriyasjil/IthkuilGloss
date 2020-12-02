@@ -26,7 +26,7 @@ fun String.hasStress() = this.isVowel() && this.defaultForm() != this //Dangerou
 fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
 
 fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) = when {
-    this.isEmpty -> this
+    this.isEmpty() -> this
     start -> "$sep$this"
     else -> "$this$sep"
 }
@@ -39,7 +39,7 @@ fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, ste
                 it is Stem && stemUsed -> {
                     val s = it.toString(precision, ignoreDefault)
                     when {
-                        s.isEmpty -> ""
+                        s.isEmpty() -> ""
                         else -> MarkdownUtil.underline(s)
                     }
                 }
