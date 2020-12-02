@@ -22,7 +22,7 @@ fun String.hasStress() = this.isVowel() && this.defaultForm() != this //Dangerou
 fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
 
 fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) = when {
-    this.isEmpty() -> this
+    this.isEmpty -> this
     start -> "$sep$this"
     else -> "$this$sep"
 }
@@ -35,7 +35,7 @@ fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, ste
                 it is Stem && stemUsed -> {
                     val s = it.toString(precision, ignoreDefault)
                     when {
-                        s.isEmpty() -> ""
+                        s.isEmpty -> ""
                         else -> MarkdownUtil.underline(s)
                     }
                 }
@@ -126,7 +126,7 @@ fun String.splitGroups(): Array<String> {
 val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
 
 fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
-    var refList = mutableListOf<List<Precision>>()
+    val refList = mutableListOf<List<Precision>>()
     var index = 0
 
     while (index < s.length) {
@@ -170,7 +170,7 @@ fun parseAffix(cs: String, vx: String,
         return if (ca.isNotEmpty()) {
             "($ca)"
         } else {
-            "(${Similarity.UNIPLEX.toString(precision, ignoreDefault = false)})"
+            "(${Configuration.UNIPLEX.toString(precision, ignoreDefault = false)})"
         }
     }
 

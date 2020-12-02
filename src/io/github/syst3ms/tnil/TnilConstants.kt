@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "unused")
 
 package io.github.syst3ms.tnil
 
@@ -16,19 +16,13 @@ const val REGISTER_END = "}"
 const val DISCURSIVE_START = "«"
 const val DISCURSIVE_END = "»"
 const val MODULAR_PLACEHOLDER = "@@"
-const val REFERENT_ROOT_PLACEHOLDER = "@@"
-const val CONCATENATIVE_START = "{{"
 const val CONCATENATIVE_END = "}}"
 const val AFFIX_UNKNOWN_VOWEL_MARKER = "@"
 const val AFFIX_UNKNOWN_CASE_MARKER = "&&"
 const val AFFIX_UNKNOWN_CA_MARKER = "^"
-const val AFFIX_STACKED_CA_MARKER = "##"
 const val RTI_AFFIX_CONSONANT = "lt"
-const val VK_AFFIX_CONSONANT = "rl"
-const val PRA_SHORTCUT_AFFIX_MARKER = "%%"
-const val SPECIAL_AFFIX_SLOT_SEPARATOR = "—"
 
-val VOWEL_FORM = listOf(
+val VOWEL_FORMS = listOf(
         "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
         "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
         "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
@@ -38,6 +32,9 @@ val VOWEL_FORM = listOf(
         "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
         "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
 )
+
+val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
+
 val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
     "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř", "'"
@@ -46,34 +43,9 @@ val FRICATIVES = setOf('f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', '
 val AFFRICATES = setOf('c', 'ẓ', 'č', 'j')
 val NASALS = setOf('m', 'n', 'ň')
 val STOPS = setOf('p', 'b', 't', 'd', 'k', 'g')
-val CC_CONSONANTS = setOf(
-        "w", "y",
-        "h" , "hl", "hm",
-        "hw", "hr", "hn")
+val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")
 
 val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
-val CASE_ACCESSOR_AFFIXES = listOf("ll", "rr", "lw", "ly")
-val INVERSE_CASE_ACCESSOR_AFFIXES = listOf("sw", "sy", "zw", "zy")
-val CASE_STACKING_AFFIXES = listOf("šw", "šy")
-val AFFIX_VOWELS = listOf(
-    "üa", "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
-    "üe", "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "üo", "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
-    "üö", "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
-    "üyö", "ayo", "aye", "eya", "eyo", "eyë", "öye", "oye", "öya", "oya"
-)
-val SIMPLE_VV_FORMS = listOf(
-        "a", "ä", "e", "i", "u", "ü", "o", "ö",
-        "ai", "au", "ei", "eu", "ui", "iu", "oi", "ou",
-        "ia", "iä", "ie", "ië", "ua", "ue", "uo", "uö",
-        "oä", "uä", "oë", "uë", "aö", "eö", "iö", "io",
-        "ao", "ae", "ea", "eo", "oa", "öa", "oe", "öe",
-        "awa", "äwä", "ewe", "iwi", "uyu", "üwü", "owo", "öwö",
-        "awi", "awu", "ewi", "ewu", "uwi", "iwu", "owi", "owu",
-        "iwa", "iwä", "iwe", "iwë", "uya", "uye", "uyo", "uyö",
-        "owä", "uwä", "owë", "uwë", "awö", "ewö", "iwo", "iwö",
-        "awo", "awe", "ewa", "ewo", "owa", "öwa", "owe", "öwe"
-)
 
 val COMBINATION_PRA_SPECIFICATION = listOf("x", "xx", "lx", "rx")
 
@@ -101,17 +73,30 @@ val CA_SUBSTITUTIONS = listOf(
 
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
-        "w", "y", "hw", "hlw", "hly", "hnw", "hny")
+        "w", "y", "hw", "hlw", "hly", "hnw", "hny"
+)
 
 
 val ITHKUIL_CHARS = setOf(
         "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
         "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř",
         "a", "ä", "e", "ë", "i", "u", "ü", "o", "ö",
-        "'", "-")
+        "'", "-"
+)
 
 interface Precision {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
+}
+
+class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val noType: Boolean = false) : Precision { //Definitely not final
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String
+            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
+}
+
+enum class Shortcut{
+    Y_SHORTCUT,
+    W_SHORTCUT;
 }
 
 class PrecisionString(private val full: String, private val short: String = full, private val ignorable: Boolean = false) : Precision {
@@ -192,22 +177,6 @@ enum class Function(private val short: String) : Precision {
     }
 }
 
-enum class Similarity(private val short: String) : Precision {
-    UNIPLEX("UXS"),
-    DUPLEX_SIMILAR("DPS"),
-    DUPLEX_DISSIMILAR("DPD"),
-    DUPLEX_FUZZY("DPF"),
-    MULTIPLEX_SIMILAR("MPS"),
-    MULTIPLEX_DISSIMILAR("MPD"),
-    MULTIPLEX_FUZZY("MPF");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-}
-
 enum class Configuration(private val short: String) : Precision {
     UNIPLEX("UNI"),
     DUPLEX_SIMILAR_SEPARATE("DSS"),
@@ -241,18 +210,6 @@ enum class Configuration(private val short: String) : Precision {
         }
     }
 
-}
-
-
-enum class Separability(private val short: String) : Precision {
-    SEPARATE("SEP"),
-    CONNECTED("CND"),
-    FUSED("FSD");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
 enum class Affiliation(private val short: String) : Precision {

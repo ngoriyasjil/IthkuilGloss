@@ -1,27 +1,15 @@
 package io.github.syst3ms.tnil
 
-import java.lang.IllegalStateException
-
-val flatVowelForm = VOWEL_FORM.flatMap { it.split("/") } + listOf("üa", "üe", "üo", "üä")
-val animateReferentDescriptions = listOf(
-        listOf("monadic speaker (1m), \"I\"", "polyadic speaker (1p), \"we\"", "oneself in a hypothetical/timeless context", "all that I am, that makes me myself"),
-        listOf("monadic addressee (2m), \"you (sg.)\"", "polyadic addressee (2p) \"you (pl.)\"", "the addressee in a hypothetical/timeless context", "all that you are, that makes you yourself"),
-        listOf("monadic animate 3rd party (ma), \"he/she/they\"", "polyadic animate 3rd party (pa), \"they (pl.)\"", "impersonal animate (IPa), \"one\"", "all that (s)he/they are")
-)
-val inanimateReferentDescriptions = listOf(
-        listOf("monadic inanimate 3rd party (mi), \"it\"", "polyadic inanimate 3rd party (pi), \"them/those\"", "impersonal inanimate (IPi), \"something\"", "all that it/they are"),
-        listOf("monadic obviative (mObv)", "polyadic obviative (pObv)", "Nai, \"it\" as a generic concept", "Aai, \"it\" as an abstract referent"),
-        listOf("monadic mixed animate+inanimate (mMx)", "polyadic mixed animate+inanimate (pMx)", "impersonal mixed animate+inanimate (IPx)", "everything and everyone, all about the world")
-)
+val flatVowelForm = VOWEL_FORMS.flatMap { it.split("/") } + listOf("üa", "üe", "üo", "üä")
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
-    return when (val index = VOWEL_FORM.indexOfFirst { it eq v }) {
+    return when (val index = VOWEL_FORMS.indexOfFirst { it eq v }) {
         -1 -> Pair(-1, -1)
         else -> Pair((index / 9) + 1, (index % 9) + 1)
     }
 }
 
-fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) VOWEL_FORM.getOrNull(9 * (series-1) + (form-1)) else null
+fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) VOWEL_FORMS.getOrNull(9 * (series-1) + (form-1)) else null
 
 fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
     val (series, form) = seriesAndForm(v)
@@ -60,12 +48,6 @@ fun glottalVowel(v: String) : Pair<String, Boolean>? {
     }
 }
 
-
-enum class Shortcut{
-    Y_SHORTCUT,
-    W_SHORTCUT;
-}
-
 fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
     val concatenation = when (c) {
         "h", "hl", "hm" -> Concatenation.TYPE_ONE
@@ -81,9 +63,6 @@ fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
 
     return Pair(concatenation, shortcut)
 }
-
-
-
 
 fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 
@@ -140,42 +119,8 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 
 }
 
-class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val noType: Boolean = false) : Precision { //Definitely not final
-
-    override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
-}
 
 
-fun parseVnPatternOne(v: String, precision: Int, ignoreDefault: Boolean): String? {
-    val i = VOWEL_FORM.indexOfFirst { it eq v }
-    if (i == -1 || i in 36..71)
-        return null
-    return when {
-        i < 9 -> Valence.values()[i % 9].toString(precision, ignoreDefault)
-        i < 18 -> Phase.values()[i % 9].toString(precision, ignoreDefault)
-        i < 27 -> effectString(precision, i % 9)
-        else -> Level.values()[i % 9].toString(precision, false) + (if (i >= 72 && precision > 0) "(abs)" else if (i >= 72) "a" else "")
-    }
-}
-
-fun effectString(precision: Int, effectIndex: Int): String? {
-    val ben = Effect.BENEFICIAL.toString(precision)
-    val det = Effect.DETRIMENTAL.toString(precision)
-    val unk = Effect.UNKNOWN.toString(precision)
-    return when (effectIndex) {
-        0 -> "1:$ben"
-        1 -> "2:$ben"
-        2 -> "3:$ben"
-        3 -> "SLF:$ben"
-        4 -> unk
-        5 -> "SLF:$det"
-        6 -> "3:$det"
-        7 -> "2:$det"
-        8 -> "1:$det"
-        else -> throw IllegalStateException()
-    }
-}
 
 fun parseVk(s: String) : List<Precision>? {
     val (series, form) = seriesAndForm(s)
@@ -204,35 +149,6 @@ fun parseVk(s: String) : List<Precision>? {
     return if (values.size > 1) values else null
 }
 
-fun parseSimpleVv(s: String): Pair<List<Precision>, Boolean>? {
-    val (series, form) = seriesAndForm(s.replace("[wy]".toRegex(), "'"))
-    val stem = when(form) {
-        1, 2 -> Stem.STEM_ONE
-        3, 5 -> Stem.STEM_TWO
-        9, 8 -> Stem.STEM_THREE
-        7, 6 -> Stem.STEM_ZERO
-        else -> return null
-    }
-    val version = when(form) {
-        1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 8, 6 -> Version.COMPLETIVE
-        else -> return null
-    }
-    val context = when(series) {
-        1, 5 -> Context.EXISTENTIAL
-        2, 6 -> Context.FUNCTIONAL
-        3, 7 -> Context.REPRESENTATIONAL
-        4, 8 -> Context.AMALGAMATIVE
-        else -> return null
-    }
-    val negShortcut = when(series) {
-        5, 6, 7, 8 -> true
-        else -> false
-    }
-
-    return Pair(listOf(stem, version, context), negShortcut)
-
-}
 
 fun parseVr(v: String): List<Precision>? {
     val (series, form) = seriesAndForm(v)
@@ -390,7 +306,7 @@ fun String.unGlottalCa(): String = when {
 
 
 fun parseCa(s: String) : List<Precision>? {
-    var original = s.defaultForm()
+    val original = s.defaultForm()
     if (original.isEmpty())
         return null
 
@@ -514,15 +430,6 @@ fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: B
     val default = (scope == "{VDom}" && !scopingAdjunctVowel) || (scope == "{same}" && scopingAdjunctVowel)
 
     return if (default && ignoreDefault) "" else scope
-}
-
-fun parseModularScope(vh: String, precision: Int, ignoreDefault: Boolean) : String? =
-        when (vh.defaultForm()) {
-            "a" -> if (!ignoreDefault) "{normal}" else ""
-            "e" -> "{successive}"
-            "i", "u" -> "{formative}"
-            "o" -> "{adjacent}"
-            else -> null
 }
 
 fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {

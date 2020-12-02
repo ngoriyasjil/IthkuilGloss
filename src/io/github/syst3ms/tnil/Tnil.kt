@@ -5,10 +5,6 @@ package io.github.syst3ms.tnil
 import java.io.PrintWriter
 import java.io.StringWriter
 
-fun main() {
-    println(parseWord("lada'lad", 1, true))
-}
-
 fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
     if (s.isBlank()) {
         return errorList("Nothing to parse.")
@@ -187,8 +183,6 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         else -> parseFormative(groups, precision, ignoreDefault)
     }
 }
-
-val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
 
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
