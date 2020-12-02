@@ -7,3 +7,4 @@
     - Move stress parsing from individual word types to general word level
     - Reimplement Mood/Case-Scope distinction in modular adjuncts
  - Implement suppletive adjunct forms into PRAs (potentially eliminate them as a distinct class?)
+ - Rewrite parseAffixual and parseAffixualScoping

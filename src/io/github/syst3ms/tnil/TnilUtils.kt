@@ -5,6 +5,10 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
 
+fun error(s: String) = "\u0000" + s
+
+fun errorList(s: String) = listOf("\u0000", s)
+
 val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
 
 fun String.isVowel() = when (length) {

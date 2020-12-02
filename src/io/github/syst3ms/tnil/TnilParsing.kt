@@ -119,7 +119,39 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
 
 }
 
+fun parseSpecialVv(vv: String, shortcut: Shortcut?): List<Precision>? {
+    val version = when (vv) {
+        "ëi", "eë", "eä" -> Version.PROCESSUAL
+        "ëu", "öë", "öä" -> Version.COMPLETIVE
+        else -> return null
+    }
 
+    val function = when (vv) {
+        "ëi", "ëu" -> Function.STATIVE
+        "eë", "öë" -> Function.DYNAMIC
+        else -> null
+    }
+
+    val ca = if (shortcut != null && vv in setOf("eä", "öä") ) {
+        when (shortcut) {
+            Shortcut.W_SHORTCUT -> parseCa("l")!!
+            Shortcut.Y_SHORTCUT -> parseCa("s")!!
+        }
+    } else if (shortcut != null) {
+        return null
+    } else emptyList()
+
+    return listOfNotNull(version, function) + ca
+
+}
+
+fun parseVh(vh: String) : PrecisionString? = when (vh.defaultForm()) {
+    "a" -> PrecisionString("{scope over formative}", "{form.}")
+    "e" -> PrecisionString("{scope over case/mood}", "{mood}")
+    "i", "u" -> PrecisionString("{scope over formative, but not adjacent adjuncts}", "{under adj.}")
+    "o" -> PrecisionString("{scope over formative and adjacent adjuncts}", "{over adj.}")
+    else -> null
+}
 
 
 fun parseVk(s: String) : List<Precision>? {
