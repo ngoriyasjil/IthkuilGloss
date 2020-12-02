@@ -250,7 +250,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     if (shortcut == null) {
         var indexV = index
         while (true) {
-            if (indexV + 1 >= groups.size || groups[indexV] in CN_CONSONANTS || groups[indexV] == "-") {
+            if (indexV + 1 > groups.lastIndex || groups[indexV] in CN_CONSONANTS || groups[indexV] == "-") {
                 csVxAffixes.clear()
                 indexV = index
                 break
@@ -263,7 +263,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             csVxAffixes.add(Affix(vx, groups[indexV]))
             indexV += 2
 
-            if (glottal && (groups.size > indexV + 1)) break
+            if (glottal && (groups.lastIndex >= indexV)) break
         }
         index = indexV
 

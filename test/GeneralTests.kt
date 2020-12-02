@@ -26,4 +26,9 @@ class TestTest {
     mapOf("čpwälahái'ļļč" to "S1-**čpw**-CTE-RSP/OBS-STU").glossTest()
   }
 
+  @Test
+  fun slotVTest() {
+    mapOf("alarfu'ul" to "S1-**l**-**rf**/9₁").glossTest()
+  }
+
 }
