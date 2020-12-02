@@ -203,7 +203,7 @@ fun parseAffix(cs: String, vx: String,
             else -> ""
         }
 
-        val case = Case.byVowel(vc)?.toString(precision) ?: return "(Unknown case)"
+        val case = Case.byVowel(vc)?.toString(precision) ?: return "(Unknown case: $vc)"
         return "($s$case)$type"
 
     }

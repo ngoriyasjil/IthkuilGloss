@@ -12,39 +12,25 @@ fun seriesAndForm(v: String) : Pair<Int, Int> {
 fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) VOWEL_FORMS.getOrNull(9 * (series-1) + (form-1)) else null
 
 fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
-    val (series, form) = seriesAndForm(v)
+    if (!v.isVowel()) return null
 
-    if (series == -1 && form == -1) return when (v) { //Temporary solution, ideally
-        "ü'ä" -> "üä" to true
-        "ü'a" -> "üa" to true
-        "ü'e" -> "üe" to true
-        "ü'o" -> "üo" to true
-        else -> null
-    }
+    if (v.length != 3) return v to false
 
-    return if (series > 4) {
-        (bySeriesAndForm(series - 4, form)?.to(true)) ?: return null
-    } else {
-        v to false
-    }
+    return if (v[1] == '\'') {
+        if (v[0] == v[2]) {
+            v[0].toString() to true
+        } else "${v[0]}${v[2]}" to true
+    } else v to false
 
 }
 
 fun glottalVowel(v: String) : Pair<String, Boolean>? {
-    val (series, form) = seriesAndForm(v)
+    if (!v.isVowel()) return null
 
-    if (series == -1 || form == -1) return when (v) { //Temporary solution, ideally
-        "üä" -> "ü'ä" to true
-        "üa" -> "ü'a" to true
-        "üe" -> "ü'e" to true
-        "üo" -> "ü'o" to true
-        else -> null
-    }
-
-    return if (series <= 4) {
-        (bySeriesAndForm(series + 4, form)?.to(true)) ?: return null
-    } else {
-        v to false
+    return when (v.length) {
+        1 -> "$v'$v" to true
+        2 -> "${v[0]}'${v[1]}" to true
+        else -> v to false
     }
 }
 
