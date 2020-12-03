@@ -550,19 +550,18 @@ fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): Precisi
     return scope?.let { PrecisionString(it, ignorable = default) }
 }
 
-fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {
+fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String {
 
     val type = when(typeC.defaultForm()) {
-        "hl" ->  "[carrier]"
-        "hm" -> "[quotative]"
-        "hn" -> "[naming]"
-        "hr" -> "[phrasal]"
-        else -> null
+        "hl" -> PrecisionString("[carrier]", "[CAR]")
+        "hm" -> PrecisionString("[quotative]", "[QUO]")
+        "hn" -> PrecisionString("[naming]", "[NAM]")
+        "hr" -> PrecisionString("[phrasal]", "[PHR]")
+        else -> return error("Unknown suppletive adjunct consonant: $typeC")
     }
 
-    val case = Case.byVowel(caseV.defaultForm())?.toString(precision, ignoreDefault)
+    val case = Case.byVowel(caseV.defaultForm()) ?: return error("Unknown case: $caseV")
 
-    return if (type != null && case != null) {
-        type + (if (case.isNotEmpty()) "$SLOT_SEPARATOR$case" else "")
-    } else null
+    return listOf(type, case).glossSlots(precision, ignoreDefault)
+
 }

@@ -154,7 +154,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         }
         groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> {
             val v = groups[1]
-            parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault) ?: error("Unknown carrier adjunct: $s")
+            parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault)
         }
         groups[0] == "h" && groups.size == 2 -> {
             val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
