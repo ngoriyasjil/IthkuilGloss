@@ -204,7 +204,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val vv = if (index == 0 && groups[0].isConsonant()) "a" else {
         groups[index].also { index++ }
-    }
+    }.defaultForm()
 
     var rootMode = "root"
 
@@ -260,7 +260,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
             val (vx, glottal) = unGlottalVowel(groups[indexV+1]) ?: return error("Unknown vowelform: ${groups[indexV+1]} (slot V)")
 
-            csVxAffixes.add(Affix(vx, groups[indexV]))
+            csVxAffixes.add(Affix(vx, groups[index]))
             indexV += 2
 
             if (glottal && (groups.lastIndex >= indexV)) break
@@ -297,12 +297,14 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 break
             }
 
-            val (vx, glottal) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
+            val (vx, glottalVowel) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
 
-            vxCsAffixes.add(Affix(vx, groups[index+1]))
+            val glottalCs = groups[index+1].startsWith("'")
+
+            vxCsAffixes.add(Affix(vx, groups[index+1].removePrefix("'")))
             index += 2
 
-            if (glottal) {
+            if (glottalVowel || glottalCs) {
                 vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
             }
         }
