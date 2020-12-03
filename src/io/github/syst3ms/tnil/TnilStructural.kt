@@ -16,19 +16,31 @@ interface Category : Precision {
     }
 }
 
+interface NoDefault : Category {
+    override fun toString(precision: Int, ignoreDefault: Boolean): String =
+        super.toString(precision, false)
+}
 
-class Slot(private vararg val values: Precision) : Precision {
+class Slot(private vararg val values: Precision?) : Precision {
 
     var stemUsed = false
 
+    val size: Int
+        get() = values.size
+
     override fun toString(precision: Int, ignoreDefault: Boolean): String {
         return values
+            .filterNotNull()
             .map {
                 val gloss = it.toString(precision, ignoreDefault)
                 if (stemUsed && it is Stem) "__${gloss}__" else gloss
             }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
+    }
+
+    fun getStem() : Int? {
+        return (values.find { it is Stem } as? Stem)?.ordinal
     }
 }
 

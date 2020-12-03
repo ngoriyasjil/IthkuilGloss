@@ -1,7 +1,5 @@
 package io.github.syst3ms.tnil
 
-val flatVowelForm = VOWEL_FORMS.flatMap { it.split("/") } + listOf("üa", "üe", "üo", "üä")
-
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it eq v }) {
         -1 -> Pair(-1, -1)
@@ -50,7 +48,7 @@ fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
     return Pair(concatenation, shortcut)
 }
 
-fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
+fun parseVv(v: String, shortcut: Shortcut?) : Slot? {
 
     val (series, form) = seriesAndForm(v)
 
@@ -69,15 +67,15 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
         else -> return null
     }
 
-    var additional : List<Precision> = listOf()
+    val additional : Precision
 
     when (shortcut) {
         null -> {
             additional = when (series) {
-                1 -> emptyList()
-                2 -> listOf(Affix("ë", "r", noType = true))
-                3 -> listOf(Affix("ë", "t", noType = true))
-                4 -> listOf(Affix("i", "t", noType = true))
+                1 -> Slot()
+                2 -> Affix("ë", "r", noType = true)
+                3 -> Affix("ë", "t", noType = true)
+                4 -> Affix("i", "t", noType = true)
                 else -> return null
             }
         }
@@ -101,11 +99,11 @@ fun parseVv(v: String, shortcut: Shortcut?) : List<Precision>? {
         }
     }
 
-    return listOf(stem, version) + additional
+    return Slot(stem, version, additional)
 
 }
 
-fun parseSpecialVv(vv: String, shortcut: Shortcut?): List<Precision>? {
+fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
     val version = when (vv) {
         "ëi", "eë", "eä" -> Version.PROCESSUAL
         "ëu", "öë", "öä" -> Version.COMPLETIVE
@@ -125,9 +123,9 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): List<Precision>? {
         }
     } else if (shortcut != null) {
         return null
-    } else emptyList()
+    } else Slot()
 
-    return listOfNotNull(version, function) + ca
+    return Slot(version, function, ca)
 
 }
 
@@ -140,7 +138,7 @@ fun parseVh(vh: String) : PrecisionString? = when (vh.defaultForm()) {
 }
 
 
-fun parseVk(s: String) : List<Precision>? {
+fun parseVk(s: String) : Slot? {
     val (series, form) = seriesAndForm(s)
 
     val illocution = if (form == 5) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
@@ -162,13 +160,13 @@ fun parseVk(s: String) : List<Precision>? {
         9 -> Validation.INFERENTIAL
         else -> null
     }
-    val values = listOfNotNull(illocution, expectation, validation)
+    val values = Slot(illocution, expectation, validation)
 
     return if (values.size > 1) values else null
 }
 
 
-fun parseVr(v: String): List<Precision>? {
+fun parseVr(v: String): Slot? {
     val (series, form) = seriesAndForm(v)
 
     if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
@@ -194,11 +192,11 @@ fun parseVr(v: String): List<Precision>? {
         else -> return null
     }
 
-    return listOf(function, specification, context)
+    return Slot(function, specification, context)
 
 }
 
-fun parseVnCn(vn: String, cn: String, marksMood: Boolean): List<Precision>? {
+fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
     val pattern = when (cn) {
         "h", "hl", "hr", "hm", "hn", "hň" -> 1
         "w", "y", "hw", "hlw", "hly", "hnw", "hny" -> 2
@@ -241,7 +239,7 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): List<Precision>? {
         }
     }
 
-    return listOf(vnValue, cnValue)
+    return Slot(vnValue, cnValue)
 
 }
 
@@ -274,7 +272,7 @@ fun parseCbCy(s: String, marksMood: Boolean): Precision? {
 
 }
 
-fun parsePersonalReference(s: String) : List<Precision>? {
+fun parsePersonalReference(s: String) : Slot? {
     val r = s.defaultForm()
     val referent = when (r) {
         "l", "r", "ř" -> Referent.MONADIC_SPEAKER
@@ -299,7 +297,7 @@ fun parsePersonalReference(s: String) : List<Precision>? {
         else -> null
     }
 
-    return listOfNotNull(referent, effect)
+    return Slot(referent, effect)
 }
 
 
@@ -323,7 +321,7 @@ fun String.unGlottalCa(): String = when {
 }
 
 
-fun parseCa(s: String) : List<Precision>? {
+fun parseCa(s: String) : Slot? {
     val original = s.defaultForm()
     if (original.isEmpty())
         return null
@@ -351,7 +349,7 @@ fun parseCa(s: String) : List<Precision>? {
         if (original in setOf("ř","tļ", "lm", "ln")) {
             essence = Essence.REPRESENTATIVE
         }
-        return listOf(configuration, extension, affiliation, perspective, essence)
+        return Slot(configuration, extension, affiliation, perspective, essence)
     }
 
     val normal = CA_SUBSTITUTIONS.fold(original) { it, (substitution, normal) -> it.replace(substitution, normal) }
@@ -429,11 +427,12 @@ fun parseCa(s: String) : List<Precision>? {
         index++
     }
     return if (normal.drop(index).isNotEmpty()) null else {
-        listOfNotNull(configuration, extension, affiliation, perspective, essence)
+        Slot(configuration, extension, affiliation, perspective, essence)
     }
 }
 
-fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: Boolean = false): String? {
+
+fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): PrecisionString? {
     val scope = when (s?.defaultForm()) {
         null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
         "h", "a" -> "{VDom}"
@@ -447,7 +446,7 @@ fun affixAdjunctScope(s: String?, ignoreDefault: Boolean, scopingAdjunctVowel: B
     }
     val default = (scope == "{VDom}" && !scopingAdjunctVowel) || (scope == "{same}" && scopingAdjunctVowel)
 
-    return if (default && ignoreDefault) "" else scope
+    return scope?.let { PrecisionString(it, ignorable = default) }
 }
 
 fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String? {

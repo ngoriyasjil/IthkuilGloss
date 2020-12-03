@@ -98,7 +98,12 @@ enum class Shortcut {
     W_SHORTCUT;
 }
 
-class PrecisionString(private val full: String, private val short: String = full, private val ignorable: Boolean = false) : Precision {
+class PrecisionString(
+    private val full: String,
+    private val short: String = full,
+    private val ignorable: Boolean = false
+) : Precision {
+
     override fun toString(precision: Int, ignoreDefault: Boolean): String {
         return when {
             ignorable && ignoreDefault -> ""
@@ -108,75 +113,40 @@ class PrecisionString(private val full: String, private val short: String = full
     }
 }
 
-enum class Concatenation(private val short: String) : Precision {
+enum class Concatenation(override val short: String) : Category {
     TYPE_ONE("T1"),
     TYPE_TWO("T2");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Version(private val short: String) : Precision {
+enum class Version(override val short: String) : Category {
     PROCESSUAL("PRC"),
     COMPLETIVE("CPT");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Relation(private val short: String) : Precision {
+enum class Relation(override val short: String) : Category {
     UNFRAMED("UNF"),
     FRAMED("FRA");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Stem(private val short: String) : Precision {
+enum class Stem(override val short: String) : NoDefault {
     STEM_ZERO("S0"),
     STEM_ONE("S1"),
     STEM_TWO("S2"),
     STEM_THREE("S3");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Specification(private val short: String) : Precision {
+enum class Specification(override val short: String) : Category {
     BASIC("BSC"),
     CONTENTIAL("CTE"),
     CONSTITUTIVE("CSV"),
     OBJECTIVE("OBJ");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
-enum class Function(private val short: String) : Precision {
+enum class Function(override val short: String) : Category {
     STATIVE("STA"),
     DYNAMIC("DYN");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Configuration(private val short: String) : Precision {
+enum class Configuration(override val short: String) : Category {
     UNIPLEX("UNI"),
     DUPLEX_SIMILAR_SEPARATE("DSS"),
     DUPLEX_SIMILAR_CONNECTED("DSC"),
@@ -197,12 +167,6 @@ enum class Configuration(private val short: String) : Precision {
     MULTIPLEX_FUZZY_CONNECTED("MFC"),
     MULTIPLEX_FUZZY_FUSED("MFF");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byAbbreviation(s: String) : Configuration? {
             return values().find { it.short eq s  }
@@ -211,72 +175,42 @@ enum class Configuration(private val short: String) : Precision {
 
 }
 
-enum class Affiliation(private val short: String) : Precision {
+enum class Affiliation(override val short: String) : Category {
     CONSOLIDATIVE("CSL"),
     ASSOCIATIVE("ASO"),
     VARIATIVE("VAR"),
     COALESCENT("COA");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Extension(private val short: String) : Precision {
+enum class Extension(override val short: String) : Category {
     DELIMITIVE("DEL"),
     PROXIMAL("PRX"),
     INCIPIENT("ICP"),
     ATTENUATIVE("ATV"),
     GRADUATIVE("GRA"),
     DEPLETIVE("DPL");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Perspective(private val short: String) : Precision {
+enum class Perspective(override val short: String) : Category {
     MONADIC("M"),
     POLYADIC("P"),
     NOMIC("N"),
     ABSTRACT("A");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Essence(private val short: String) : Precision {
+enum class Essence(override val short: String) : Category {
     NORMAL("NRM"),
     REPRESENTATIVE("RPV");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Context(private val short: String) : Precision {
+enum class Context(override val short: String) : Category {
     EXISTENTIAL("EXS"),
     FUNCTIONAL("FNC"),
     REPRESENTATIONAL("RPS"),
     AMALGAMATIVE("AMG");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Valence(private val short: String) : Precision {
+enum class Valence(override val short: String) : Category {
     MONOACTIVE("MNO"),
     PARALLEL("PRL"),
     COROLLARY("CRO"),
@@ -287,18 +221,12 @@ enum class Valence(private val short: String) : Precision {
     CONTINGENT("CNG"),
     PARTICIPATIVE("PTI");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byForm(form: Int) = values()[form-1]
     }
 }
 
-enum class Phase(private val short: String) : Precision {
+enum class Phase(override val short: String) : Category {
     CONTEXTUAL("CTX"),
     PUNCTUAL("PCT"),
     ITERATIVE("ITR"),
@@ -308,12 +236,6 @@ enum class Phase(private val short: String) : Precision {
     FREQUENTATIVE("FRE"),
     FRAGMENTATIVE("FRG"),
     FLUCTUATIVE("FLC");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 
     companion object {
         fun byForm(form: Int) = Valence.values()[form-1]
@@ -347,20 +269,14 @@ class EffectAndPerson(private val person: String?, private val effect: Effect) :
 
 }
 
-enum class Effect(private val short: String) : Precision {
+enum class Effect(override val short: String) : Category {
     NEUTRAL("NEU"),
     BENEFICIAL("BEN"),
     UNKNOWN("UNK"),
     DETRIMENTAL("DET");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Level(private val short: String) : Precision {
+enum class Level(override val short: String) : NoDefault {
     EQUATIVE("EQU"),
     SURPASSIVE("SUR"),
     DEFICIENT("DFT"),
@@ -371,17 +287,12 @@ enum class Level(private val short: String) : Precision {
     SUPEREQUATIVE("SPQ"),
     SUBEQUATIVE("SUBEQUATIVE");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byForm(form: Int) = Valence.values()[form-1]
     }
 }
 
-enum class Aspect(private val short: String, val vn: String) : Precision {
+enum class Aspect(override val short: String, val vn: String) : NoDefault {
     RETROSPECTIVE("RTR", "a"),
     PROSPECTIVE("PRS", "ä"),
     HABITUAL("HAB", "e"),
@@ -419,17 +330,12 @@ enum class Aspect(private val short: String, val vn: String) : Precision {
     MOTIVE("MTV", "öa"),
     SEQUENTIAL("SQN", "oa");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byVowel(vt: String) = values().find { it.vn eq vt }
     }
 }
 
-enum class Mood(private val short: String, val cn: String, val cy: String) : Precision {
+enum class Mood(override val short: String, val cn: String, val cy: String) : Category {
     FACTUAL("FAC", "h/ç", ""),
     SUBJUNCTIVE("SUB", "hl", "x"),
     ASSUMPTIVE("ASM", "hr", "rs"),
@@ -437,12 +343,6 @@ enum class Mood(private val short: String, val cn: String, val cy: String) : Pre
     COUNTERFACTIVE("COU", "hm", "rz"),
     HYPOTHETICAL("HYP", "hn", "rž");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byCn(cn: String) = values().find { it.cn eq cn }
 
@@ -450,7 +350,7 @@ enum class Mood(private val short: String, val cn: String, val cy: String) : Pre
     }
 }
 
-enum class CaseScope(private val short: String, val cn: String, val cy: String) : Precision {
+enum class CaseScope(override val short: String, val cn: String, val cy: String) : Category {
     NATURAL("CCN", "h/ç", ""),
     ANTECEDENT("CCA", "hl", "x"),
     SUBALTERN("CCS", "hr", "rs"),
@@ -458,12 +358,6 @@ enum class CaseScope(private val short: String, val cn: String, val cy: String) 
     PRECEDENT("CCP", "hm", "rz"),
     SUCCESSIVE("CCV", "hn", "rž");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byCn(cn: String) = values().find { it.cn eq cn }
 
@@ -471,7 +365,7 @@ enum class CaseScope(private val short: String, val cn: String, val cy: String) 
     }
 }
 
-enum class Case(private val short: String, val vc: String) : Precision {
+enum class Case(override val short: String, val vc: String) : Category {
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
     ABSOLUTIVE("ABS", "e"),
@@ -548,42 +442,23 @@ enum class Case(private val short: String, val vc: String) : Precision {
     ELAPSIVE("ELP", "o'e"),
     PROLIMITIVE("PLM", "o'a");
 
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byVowel(vc: String) = values().find { it.vc eq vc }
     }
 }
 
-enum class Illocution(private val short: String) : Precision {
+enum class Illocution(override val short: String) : Category {
     ASSERTIVE("ASR"),
     PERFORMATIVE("PFM");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Expectation(private val short: String) : Precision {
+enum class Expectation(override val short: String) : Category {
     COGNITIVE("COG"),
     RESPONSIVE("RSP"),
     EXECUTIVE("EXE");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Validation(private val short: String) : Precision {
+enum class Validation(override val short: String) : NoDefault {
     OBSERVATIONAL("OBS"),
     RECOLLECTIVE("REC"),
     PURPORTIVE("PUP"),
@@ -592,14 +467,9 @@ enum class Validation(private val short: String) : Precision {
     INFERENTIAL("INF"),
     INTUITIVE("ITU"),
     IMAGINARY("IMA");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
-enum class Bias(private val short: String, val cb: String) : Precision {
+enum class Bias(override val short: String, val cb: String) : NoDefault {
     DOLOROUS("DOL", "řřx"),
     SKEPTICAL("SKP", "rnž"),
     IMPATIENT("IPT", "žžv"),
@@ -660,17 +530,12 @@ enum class Bias(private val short: String, val cb: String) : Precision {
     CORRUPTIVE("CRP", "gžž"),
     DEJECTIVE("DEJ", "žžg");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byGroup(cb: String) = values().find { it.cb eq cb }
     }
 }
 
-enum class Register(private val short: String, val initial: String, val final: String) : Precision {
+enum class Register(override val short: String, val initial: String, val final: String) : NoDefault {
     DISCURSIVE("DSV", "a", "ai"),
     PARENTHETICAL("PNT", "e", "ei"),
     COGITANT("CGT", "o", "oi"),
@@ -679,24 +544,15 @@ enum class Register(private val short: String, val initial: String, val final: S
     MATHEMATICAL("MTH", "u", "ui"),
     CARRIER_END("CAR", "", "ü");
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
-
     companion object {
         fun byVowel(v: String): Pair<Register, Boolean>? {
-            val i = values().indexOfFirst { it.initial eq v }
-            return if (i != -1) {
-                values()[i] to true
-            } else {
-                values().find { it.final eq v }?.to(false)
-            }
+            return values().find { it.initial eq v }?.let { it to true }
+                ?: values().find { it.final eq v }?.to(false)
         }
     }
 }
 
-enum class Referent(private val short: String) : Precision {
+enum class Referent(override val short: String) : NoDefault {
     MONADIC_SPEAKER("1m"),
     MONADIC_ADDRESSEE("2m"),
     POLYADIC_ADDRESSEE("2p"),
@@ -707,11 +563,6 @@ enum class Referent(private val short: String) : Precision {
     MIXED_THIRD_PARTY("Mx"),
     OBVIATIVE("Obv"),
     PROVISIONAL("PVS");
-
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
-        else -> short
-    }
 }
 
 fun parsePraShortcut(c: String, v: String, precision: Int): String? {
@@ -729,6 +580,6 @@ fun parsePraShortcut(c: String, v: String, precision: Int): String? {
         9 -> Case.CORRELATIVE
         else -> return null
     }
-    val ref = parsePersonalReference(c)?.glossSlots(precision) ?: return null
+    val ref = parsePersonalReference(c)?.toString(precision) ?: return null
     return "($ref-${case.toString(precision)})"
 }

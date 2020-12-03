@@ -23,13 +23,6 @@ fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
 
 fun String.hasStress() = this.isVowel() && this.defaultForm() != this //Dangerous
 
-fun String.isInvalidLexical() = this.defaultForm() in INVALID_LEXICAL_CONSONANTS || this.startsWith("h") || this.contains("'")
-
-fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) = when {
-    this.isEmpty() -> this
-    start -> "$sep$this"
-    else -> "$this$sep"
-}
 
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
@@ -113,7 +106,7 @@ fun String.splitGroups(): Array<String> {
 val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
 
 fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
-    val refList = mutableListOf<List<Precision>>()
+    val refList = mutableListOf<Slot>()
     var index = 0
 
     while (index < s.length) {
@@ -127,10 +120,10 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String
     }
     return when (refList.size) {
         0 -> null
-        1 -> refList[0].glossSlots(precision, ignoreDefault)
+        1 -> refList[0].toString(precision, ignoreDefault)
         else -> refList
                 .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
-                { it.glossSlots(precision, ignoreDefault) }
+                { it.toString(precision, ignoreDefault) }
     }
 }
 
@@ -153,7 +146,7 @@ fun parseAffix(cs: String, vx: String,
                canBePraShortcut: Boolean = false,
                noType: Boolean = false) : String {
     if (vx == CA_STACKING_VOWEL) {
-        val ca = parseCa(cs)?.glossSlots(precision, ignoreDefault) ?: return "(Unknown Ca)"
+        val ca = parseCa(cs)?.toString(precision, ignoreDefault) ?: return "(Unknown Ca)"
 
         return if (ca.isNotEmpty()) {
             "($ca)"
