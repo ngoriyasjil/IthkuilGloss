@@ -125,7 +125,9 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    val initialGroups = s.splitGroups().toList()
+    val stress = s.splitGroups().findStress()
+
+    val initialGroups = s.defaultForm().splitGroups().toList()
     if (initialGroups.isEmpty()) {
         return error("Empty word")
     }

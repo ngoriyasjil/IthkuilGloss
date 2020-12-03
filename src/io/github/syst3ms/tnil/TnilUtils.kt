@@ -21,8 +21,9 @@ fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS 
 
 fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
 
-fun String.hasStress() = this.isVowel() && this.defaultForm() != this //Dangerous
+val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'ô', 'ó', 'û', 'ú')
 
+fun String.hasStress() = this[0] in STRESSED_VOWELS
 
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
@@ -53,13 +54,12 @@ fun String.defaultForm() = this.replace("á", "a")
 
 fun Array<String>.findStress(): Int {
     val i = this.filter(String::isVowel)
-            .map { it.replace("[ìı]".toRegex(), "i").replace("ù", "u") }
             .flatMap {
                 val (series, form) = seriesAndForm(it.defaultForm())
-                if (it.length == 2 && series != 2 && !(series == 3 && form == 5)) {
-                    it.toCharArray().map(Char::toString)
-                } else {
+                if (series == 2 || (series == 3 && form == 5)) {
                     listOf(it)
+                } else {
+                    it.toCharArray().map(Char::toString)
                 }
             }
             .reversed()
