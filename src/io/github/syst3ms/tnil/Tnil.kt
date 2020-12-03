@@ -532,90 +532,47 @@ fun parseCombinationPRA(groups: Array<String>,
 
 }
 
-/*fun parseAffixualScoping(groups: Array<String>,
-                         precision: Int,
-                         ignoreDefault: Boolean,
-                         sentenceParsingState: SentenceParsingState? = null): String {
-    val stress = groups.findStress().let { if (it == -1) 1 else it }
-    var index = 0
-    if (groups[0] == "ë") index++
-
-
-
-}*/
-
-//Rewrite
 fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,
                          ignoreDefault: Boolean,
                          sentenceParsingState: SentenceParsingState? = null): String {
-    var rtiScope: String? = sentenceParsingState?.rtiAffixScope
-    var result = ""
-    var i = 0
-    if (groups[0] == "ë")
-        i++
-    var c = groups[i]
-    var v: String
-    if (groups[i+2] == "y") {
-        v = groups[i+1] + "y" + groups[i+3]
-        i += 4
-    } else {
-        v = groups[i+1]
-        i += 2
+    val stress = groups.findStress().let { if (it == -1) 1 else it }
+    val concatenation = if (stress == 0) PrecisionString("{concatenated formative only}","{concat.}") else null
+    var index = 0
+    if (groups[0] == "ë") index++
+    val firstAffix = Affix(groups[index+1], groups[index])
+    index += 2
+    val scopeOfFirst = affixAdjunctScope(groups[index], ignoreDefault) ?: return error("Unknown Cz: ${groups[index]}")
+    val wrappedScopeOfFirst = if (scopeOfFirst.isNotEmpty()) PrecisionString(scopeOfFirst) else null
+    index++
+
+    val vxCsAffixes : MutableList<Precision> = mutableListOf()
+
+    while (true) {
+        if (index+1 > groups.lastIndex) break
+
+        val (vx, glottal) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]}")
+
+       if (glottal) return error("Unexpected glottal stop in affixual scoping adjunct")
+
+        vxCsAffixes.add(Affix(vx, groups[index+1]))
+        index += 2
     }
-    if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
-        return error("'$c' can't be a valid affix consonant")
-    var aff = parseAffix(c, v, precision, ignoreDefault)
-    when {
-        aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-        aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-    }
-    result += aff.plusSeparator()
-    val scope = affixAdjunctScope(groups[i], ignoreDefault) ?: return error("Invalid scope: ${groups[i]}")
-    if (c == RTI_AFFIX_CONSONANT)
-        rtiScope = rtiScope ?: scope
-    result += scope.plusSeparator()
-    i++
-    while (i + 2 <= groups.size) {
-        if (groups[i+1] == "y") {
-            if (i + 3 >= groups.size) {
-                return error("Second affix group ended unexpectedly")
-            }
-            v = groups[i] + "y" + groups[i+2]
-            c = groups[i+3]
-            i += 4
-        } else {
-            v = groups[i]
-            c = groups[i+1]
-            i += 2
-        }
-        if (c.isInvalidLexical() && v != CA_STACKING_VOWEL)
-            return error("'$c' can't be a valid affix consonant")
-        aff = parseAffix(c, v, precision, ignoreDefault)
-        when {
-            aff.startsWith(AFFIX_UNKNOWN_VOWEL_MARKER) -> return error("Unknown affix vowel: ${aff.drop(AFFIX_UNKNOWN_VOWEL_MARKER.length)}")
-            aff.startsWith(AFFIX_UNKNOWN_CASE_MARKER) -> return error("Unknown case vowel: ${aff.drop(AFFIX_UNKNOWN_CASE_MARKER.length)}")
-            aff.startsWith(AFFIX_UNKNOWN_CA_MARKER) -> return error("Unknown Ca cluster: ${aff.drop(AFFIX_UNKNOWN_CA_MARKER.length)}")
-        }
-        if (c == RTI_AFFIX_CONSONANT)
-            rtiScope = rtiScope ?: ""
-        result += aff
-        i += 2
-    }
-    val sc = affixAdjunctScope(groups.getOrNull(i), ignoreDefault, scopingAdjunctVowel = true)
-    if (sc != "" && rtiScope == "")
-        rtiScope = sc
-    result += (sc ?: return error("Invalid scope: ${groups[i]}")).plusSeparator(start = true)
-    val stress = sentenceParsingState?.forcedStress ?: groups.findStress()
-    result += when (stress) {
-        0 -> "{Incp}".plusSeparator(start = true)
-        1 -> ""
-        else -> return error("Couldn't parse stress: stress was on syllable $stress from the end")
-    }
-    if (rtiScope != null)
-        sentenceParsingState?.rtiAffixScope = rtiScope
-    return result
+
+    if (vxCsAffixes.isEmpty()) return error("Only one affix found in affixual scoping adjunct")
+
+    val vz = groups.getOrNull(index)
+
+    val scopeOfRest = if (vz != null) {
+        affixAdjunctScope(vz, ignoreDefault, scopingAdjunctVowel = true) ?: return error("Unknown Vz: $vz")
+    } else null
+    val wrappedScopeOfRest = if (scopeOfRest?.isNotEmpty() == true) PrecisionString(scopeOfRest) else null
+
+    return listOfNotNull(firstAffix, wrappedScopeOfFirst, *vxCsAffixes.toTypedArray(), wrappedScopeOfRest, concatenation)
+        .map { it.toString(precision, ignoreDefault) }
+        .filter(String::isNotEmpty)
+        .joinToString(SLOT_SEPARATOR)
+
 }
 
 
