@@ -137,90 +137,6 @@ fun parseAffixes(data: String): List<AffixData> = data
         .map    { AffixData(it[0], it[1], it.subList(2, 11).toTypedArray()) }
         .toList()
 
-
-val CASE_AFFIXES = setOf("ll", "lw", "sw", "zw", "šw", "rr", "ly", "sy", "zy", "šy")
-
-fun parseAffix(cs: String, vx: String,
-               precision: Int,
-               ignoreDefault: Boolean,
-               canBePraShortcut: Boolean = false,
-               noType: Boolean = false) : String {
-    if (vx == CA_STACKING_VOWEL) {
-        val ca = parseCa(cs)?.toString(precision, ignoreDefault) ?: return "(Unknown Ca)"
-
-        return if (ca.isNotEmpty()) {
-            "($ca)"
-        } else {
-            "(${Configuration.UNIPLEX.toString(precision, ignoreDefault = false)})"
-        }
-    }
-
-    if (cs in CASE_AFFIXES) {
-        val vc = when (cs) {
-            "ll", "lw", "sw", "zw", "šw" -> vx
-            "rr", "ly", "sy", "zy", "šy" -> glottalVowel(vx)?.first ?: return "(Unknown vowel: $vx)"
-            else -> return "(Unknown case affix form)"
-        }
-
-        val s = if (precision > 1) when (cs) {
-            "ll", "rr", "lw", "ly" -> "case accessor:"
-            "sw", "sy", "zw", "zy" -> "inverse accessor:"
-            "šw", "šy" -> "case-stacking:"
-            else -> return "(Unknown case affix form)"
-        } else when (cs) {
-            "ll", "rr", "lw", "ly" -> "acc:"
-            "sw", "sy", "zw", "zy" -> "ia:"
-            "šw", "šy" -> ""
-            else -> return "(Unknown case affix form)"
-        }
-
-        val type = when (cs) {
-            "ll", "rr", "sw", "sy" -> "\u2081"
-            "lw", "ly", "zw", "zy" -> "\u2082"
-            else -> ""
-        }
-
-        val case = Case.byVowel(vc)?.toString(precision) ?: return "(Unknown case: $vc)"
-        return "($s$case)$type"
-
-    }
-
-    var (type, degree) = seriesAndForm(vx)
-
-    if (canBePraShortcut && type == 3) {
-        return parsePraShortcut(cs, vx, precision) ?: "(Unknown PRA shortcut)"
-    }
-
-    if (type == -1 && degree == -1) {
-       degree = 0
-       type = when (vx) {
-           "üa" -> 1
-           "üe" -> 2
-           "üo" -> 3
-           else -> return "(Unknown Vx: $vx)"
-       }
-    }
-
-    val aff = affixData.find { it.cs == cs }
-
-    val affString = when {
-        aff == null -> "**$cs**/$degree"
-        precision == 0 || degree == 0 -> "${aff.abbr}/$degree"
-        precision > 0 -> "'${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}'"
-        else -> return "(Unknown affix: $cs)"
-    }
-
-    val t = if (!noType) when (type) {
-        1 -> "\u2081"
-        2 -> "\u2082"
-        3 -> "\u2083"
-        else -> return "(Unknown type)"
-    } else ""
-
-    return "$affString$t"
-
-}
-
 fun parseRoots(data: String): List<RootData> = data
         .lines()
         .asSequence()
@@ -229,24 +145,6 @@ fun parseRoots(data: String): List<RootData> = data
         .filter { it.size >= 5 }
         .map    { RootData(it[0], it.subList(1, 5)) }
         .toList()
-
-fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
-    val root = rootData.find { it.cr == c.defaultForm() } ?: return MarkdownUtil.bold(c.defaultForm()) to false
-    return if (precision > 0) {
-        var stemUsed = false
-        val d = when (val stemDsc = root.dsc[stem]) {
-            "" -> root.dsc[0]
-            else -> {
-                stemUsed = true
-                stemDsc
-            }
-        }
-
-        "'$d'" to stemUsed
-    } else {
-        "'${root.dsc[0]}'" to false
-    }
-}
 
 data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) {
     override fun equals(other: Any?): Boolean {

@@ -49,6 +49,8 @@ val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw",
 
 val COMBINATION_PRA_SPECIFICATION = listOf("x", "xx", "lx", "rx")
 
+val CASE_AFFIXES = setOf("ll", "lw", "sw", "zw", "šw", "rr", "ly", "sy", "zy", "šy")
+
 val UNGLOTTAL_MAP = mapOf(
         "rrç" to "pk" , "llç" to "tk" , "řřţ" to "kt",
         "rrt" to "pt" , "řřf" to "kp" , "llf" to "tp",
