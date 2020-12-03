@@ -84,17 +84,16 @@ val ITHKUIL_CHARS = setOf(
         "'", "-"
 )
 
-interface Precision {
-    fun toString(precision: Int, ignoreDefault: Boolean = false): String
-}
-
-class Affix(private val vx: String, private val cs : String, var canBePraShortcut: Boolean = false, private val noType: Boolean = false) : Precision { //Definitely not final
+class Affix(private val vx: String,
+            private val cs : String,
+            var canBePraShortcut: Boolean = false,
+            private val noType: Boolean = false) : Precision { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
             = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
 }
 
-enum class Shortcut{
+enum class Shortcut {
     Y_SHORTCUT,
     W_SHORTCUT;
 }
@@ -382,7 +381,7 @@ enum class Level(private val short: String) : Precision {
     }
 }
 
-enum class Aspect(private val short: String, val vt: String) : Precision {
+enum class Aspect(private val short: String, val vn: String) : Precision {
     RETROSPECTIVE("RTR", "a"),
     PROSPECTIVE("PRS", "ä"),
     HABITUAL("HAB", "e"),
@@ -426,7 +425,7 @@ enum class Aspect(private val short: String, val vt: String) : Precision {
     }
 
     companion object {
-        fun byVowel(vt: String) = values().find { it.vt eq vt }
+        fun byVowel(vt: String) = values().find { it.vn eq vt }
     }
 }
 
@@ -730,6 +729,6 @@ fun parsePraShortcut(c: String, v: String, precision: Int): String? {
         9 -> Case.CORRELATIVE
         else -> return null
     }
-    val ref = parsePersonalReference(c)?.toString(precision) ?: return null
+    val ref = parsePersonalReference(c)?.glossSlots(precision) ?: return null
     return "($ref-${case.toString(precision)})"
 }

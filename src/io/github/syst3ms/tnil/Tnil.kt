@@ -367,7 +367,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val parsedFormative : String = slotList.map {
         if (it is List<*>) {
-            (it as List<Precision>).toString(precision, ignoreDefault, stemUsed = stemUsed) // Wacky casting, beware.
+            (it as List<Precision>).glossSlots(precision, ignoreDefault, stemUsed = stemUsed) // Wacky casting, beware.
         } else (it as Precision).toString(precision, ignoreDefault)
     }.filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
 
@@ -425,7 +425,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
 
     return listOfNotNull(slot1, *midSlotList.toTypedArray(), slot5).map {
         if (it is List<*>) {
-            (it as List<Precision>).toString(precision, ignoreDefault) // More wacky casting, beware.
+            (it as List<Precision>).glossSlots(precision, ignoreDefault) // More wacky casting, beware.
         } else (it as Precision).toString(precision, ignoreDefault)
     }.filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
 
@@ -525,7 +525,7 @@ fun parseCombinationPRA(groups: Array<String>,
 
     return slotList.map {
         if (it is List<*>) {
-            (it as List<Precision>).toString(precision, ignoreDefault) // Wacky casting, beware.
+            (it as List<Precision>).glossSlots(precision, ignoreDefault) // Wacky casting, beware.
         } else (it as Precision).toString(precision, ignoreDefault) }
             .filter { it.isNotEmpty() }
             .joinToString(SLOT_SEPARATOR)

@@ -33,24 +33,6 @@ fun String.plusSeparator(start: Boolean = false, sep: String = SLOT_SEPARATOR) =
 
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
-fun List<Precision>.toString(precision: Int, ignoreDefault: Boolean = false, stemUsed: Boolean = false) = join(
-        *this.map {
-            when {
-                it is Stem && stemUsed -> {
-                    val s = it.toString(precision, ignoreDefault)
-                    when {
-                        s.isEmpty() -> ""
-                        else -> MarkdownUtil.underline(s)
-                    }
-                }
-                else -> it.toString(precision, ignoreDefault)
-            }
-        }.toTypedArray()
-)
-
-fun join(vararg strings: String, sep: String = CATEGORY_SEPARATOR) = strings.filter { it.isNotEmpty() }
-        .joinToString(sep)
-
 
 //Deals with series three vowels and non-default consonant forms
 infix fun String.eq(s: String): Boolean = if ("/" in this) {
@@ -80,7 +62,8 @@ fun Array<String>.findStress(): Int {
     val i = this.filter(String::isVowel)
             .map { it.replace("[ìı]".toRegex(), "i").replace("ù", "u") }
             .flatMap {
-                if (it.length == 2 && flatVowelForm.indexOf(it.defaultForm()) !in 9 until 18 && it.defaultForm() != "ëu") {
+                val (series, form) = seriesAndForm(it.defaultForm())
+                if (it.length == 2 && series != 2 && !(series == 3 && form == 5)) {
                     it.toCharArray().map(Char::toString)
                 } else {
                     listOf(it)
@@ -144,10 +127,10 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String
     }
     return when (refList.size) {
         0 -> null
-        1 -> refList[0].toString(precision, ignoreDefault)
+        1 -> refList[0].glossSlots(precision, ignoreDefault)
         else -> refList
                 .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
-                { it.toString(precision, ignoreDefault) }
+                { it.glossSlots(precision, ignoreDefault) }
     }
 }
 
@@ -170,7 +153,8 @@ fun parseAffix(cs: String, vx: String,
                canBePraShortcut: Boolean = false,
                noType: Boolean = false) : String {
     if (vx == CA_STACKING_VOWEL) {
-        val ca = parseCa(cs)?.toString(precision, ignoreDefault) ?: return "(Unknown Ca)"
+        val ca = parseCa(cs)?.glossSlots(precision, ignoreDefault) ?: return "(Unknown Ca)"
+
         return if (ca.isNotEmpty()) {
             "($ca)"
         } else {
