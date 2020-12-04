@@ -31,4 +31,15 @@ class TestTest {
     mapOf("alarfu'ul" to "S1-**l**-**rf**/9₁").glossTest()
   }
 
+  @Test
+  fun stressTest() {
+    assertEquals(-1, "a".splitGroups().findStress())
+    assertEquals(1, "ala".splitGroups().findStress())
+    assertEquals(0, "alá".splitGroups().findStress())
+    assertEquals(1, "lìala".splitGroups().findStress(), "lìala")
+    assertEquals(1, "ua".splitGroups().findStress(), "ua")
+    assertEquals(-1, "ëu".splitGroups().findStress())
+    assertEquals(0, "alái".splitGroups().findStress())
+  }
+
 }

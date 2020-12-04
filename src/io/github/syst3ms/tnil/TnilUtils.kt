@@ -1,7 +1,5 @@
 package io.github.syst3ms.tnil
 
-import net.dv8tion.jda.api.utils.MarkdownUtil
-
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
 
@@ -53,21 +51,22 @@ fun String.defaultForm() = this.replace("á", "a")
 
 
 fun Array<String>.findStress(): Int {
-    val i = this.filter(String::isVowel)
-            .flatMap {
-                val (series, form) = seriesAndForm(it.defaultForm())
-                if (series == 2 || (series == 3 && form == 5)) {
-                    listOf(it)
-                } else {
-                    it.toCharArray().map(Char::toString)
-                }
+    val vowels = this.filter(String::isVowel)
+        .flatMap {
+            val (series, form) = seriesAndForm(it.defaultForm())
+            if (series == 2 || (series == 3 && form == 5)) {
+                listOf(it)
+            } else {
+                it.toCharArray().map(Char::toString)
             }
+        }
+    val stressIndex = vowels
             .reversed()
             .indexOfFirst { it.hasStress() }
     return when {
-        this.count(String::isVowel) == 1 -> -1
-        i == -1 -> 1
-        else -> i
+        vowels.size == 1 -> -1
+        stressIndex == -1 -> 1
+        else -> stressIndex
     }
 }
 
