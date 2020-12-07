@@ -1,5 +1,3 @@
-@file:Suppress("IMPLICIT_CAST_TO_ANY")
-
 package io.github.syst3ms.tnil
 
 import java.io.PrintWriter
@@ -184,7 +182,6 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
 fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
 
     val stress = groups.takeWhile { it != "-" }.toTypedArray().findStress().let { if (it == -1) 0 else it }
@@ -394,7 +391,6 @@ fun parseAffixVr(vr: String): Slot? {
     return Slot(degree, specification)
 }
 
-@Suppress("UNCHECKED_CAST")
 fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
     val stress =  groups.findStress().let { if (it != -1) it else 1 }
     var index = 0
@@ -470,7 +466,6 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sent
     }
 }
 
-@Suppress("UNCHECKED_CAST")
 fun parseCombinationPRA(groups: Array<String>,
                         precision: Int,
                         ignoreDefault: Boolean,
@@ -484,7 +479,7 @@ fun parseCombinationPRA(groups: Array<String>,
     val ref = PrecisionString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
     index++
 
-    val caseA = Case.byVowel(groups[index]) ?: "Unknown case: ${groups[index]}"
+    val caseA: Case = Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
     index++
 
     val specification = when(groups[index]) {
@@ -517,14 +512,9 @@ fun parseCombinationPRA(groups: Array<String>,
         else -> Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
     }
 
-    val slotList = listOfNotNull(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
+    val slotList: List<Precision> = listOfNotNull(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
 
-    return slotList.map {
-        if (it is List<*>) {
-            (it as List<Precision>).glossSlots(precision, ignoreDefault) // Wacky casting, beware.
-        } else (it as Precision).toString(precision, ignoreDefault) }
-            .filter { it.isNotEmpty() }
-            .joinToString(SLOT_SEPARATOR)
+    return slotList.glossSlots(precision, ignoreDefault)
 
 }
 
