@@ -21,6 +21,7 @@ const val AFFIX_UNKNOWN_VOWEL_MARKER = "@"
 const val AFFIX_UNKNOWN_CASE_MARKER = "&&"
 const val AFFIX_UNKNOWN_CA_MARKER = "^"
 const val RTI_AFFIX_CONSONANT = "lt"
+const val CONCATENATION_SEPARATOR = "—"
 
 val VOWEL_FORMS = listOf(
         "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",

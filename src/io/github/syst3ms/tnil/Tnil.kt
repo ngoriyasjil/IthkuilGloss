@@ -1,11 +1,6 @@
-@file:Suppress("IMPLICIT_CAST_TO_ANY")
-
 package io.github.syst3ms.tnil
 
-import java.io.PrintWriter
-import java.io.StringWriter
-
-fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
+fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> = TODO() /*{
     if (s.isBlank()) {
         return errorList("Nothing to parse.")
     }
@@ -70,9 +65,9 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
                         // If quotativeAdjunct is true, case-scope needs default values like CTX or MNO to be shown, and we want to ignore them
                         state.quotativeAdjunct || ignoreDefault,
                         // This is fine because if quotativeAdjunct is false that means isLastFormativeVerbal is non-null
-                        /* !state.quotativeAdjunct && state.isLastFormativeVerbal!!,
+                        *//* !state.quotativeAdjunct && state.isLastFormativeVerbal!!,
                         modularForcedStress,
-                        sentenceParsingState = state */
+                        sentenceParsingState = state *//*
                 )
                 if (mod.startsWith("\u0000")) {
                     return errorList("**Parsing error**: ${mod.drop(1)}")
@@ -121,27 +116,19 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
         result += "$CONCATENATIVE_END "
     }
     return result
-}
+}*/
+
+
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    val stress = s.splitGroups().findStress()
-
-    val initialGroups = s.splitGroups().toList()
-    if (initialGroups.isEmpty()) {
-        return error("Empty word")
+    if ('-' in s) {
+        return s.split('-').joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
     }
 
-    var sentencePrefix = true
+    val stress = s.splitGroups().findStress()
 
-    val groups = when {
-        initialGroups.size in 5..6 && initialGroups.take(4) == listOf("ç", "ë", "h","ë") -> initialGroups.drop(3) // Single-affix adjunct, degree 4
-        initialGroups.size >= 4 && initialGroups[0] == "ç" && initialGroups[1] == "ë" -> initialGroups.drop(2)
-        initialGroups[0] == "ç" && initialGroups[1].isVowel() -> initialGroups.drop(1)
-        initialGroups[0] == "çw" -> listOf("w") + initialGroups.drop(1)
-        initialGroups[0] == "çç" -> listOf("y") + initialGroups.drop(1)
-        else -> initialGroups.also { sentencePrefix = false }
-    }.toTypedArray()
+    val (groups, sentencePrefix) = stripSentencePrefix(s.defaultForm().splitGroups()) ?: return error("Empty word")
 
     val ssgloss = when (precision) {
         0 -> "[.]-"
@@ -164,32 +151,30 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         }
         (groups[0].isVowel() || groups[0] in setOf("w", "y"))
                 && groups.all { it.isVowel() || it in CN_CONSONANTS } -> {
-            parseModular(groups, precision, ignoreDefault)
+            parseModular(groups, precision, ignoreDefault, stress)
         }
         groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
                 || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION -> {
-            parseCombinationPRA(groups, precision, ignoreDefault)
+            parseCombinationPRA(groups, precision, ignoreDefault, stress)
         }
         groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
                 || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
-            parseAffixual(groups, precision, ignoreDefault)
+            parseAffixual(groups, precision, ignoreDefault, stress)
         }
         groups.size >= 5 && groups[0].isConsonant() && groups[2].removePrefix("'") in CC_CONSONANTS
                 || groups.size >= 6 && (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
-            parseAffixualScoping(groups, precision, ignoreDefault)
+            parseAffixualScoping(groups, precision, ignoreDefault, stress)
         }
         groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
-            parsePRA(groups, precision, ignoreDefault)
+            parsePRA(groups, precision, ignoreDefault, stress)
         }
 
-        else -> parseFormative(groups, precision, ignoreDefault)
+        else -> parseFormative(groups, precision, ignoreDefault, stress)
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
+fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
 
-    val stress = groups.takeWhile { it != "-" }.toTypedArray().findStress().let { if (it == -1) 0 else it }
     var index = 0
 
     val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
@@ -318,7 +303,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBePraShortcut = true
 
-    val marksMood = (stress == 0)
+    val marksMood = (stress == 0) || (stress == -1)
 
     val slotVIII: Slot? = when {
         cnInVI -> {
@@ -335,7 +320,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val slotIX : Precision = if (concatenation == null) {
         when (stress) {
-            0 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
+            0, -1 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
             1, 2 -> Case.byVowel(vcVk) ?: return error("Unknown Vc form $vcVk")
             else -> return error("Unknown stress: $stress from ultimate")
         }
@@ -355,27 +340,16 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     }
     index++
 
-    val cyMarksMood = (stress == 0) || (stress == 2 && slotVIII != null)
+    val cyMarksMood = (stress == 0) || (stress == -1) || (stress == 2 && slotVIII != null)
 
     val slotX = if (concatenation == null && index < groups.size) {
         parseCbCy(groups[index], cyMarksMood)
     } else null
 
-    val parentFormative = if (groups.getOrNull(index) == "-") {
-        if (concatenation != null) {
-            parseFormative(groups.drop(index+1).toTypedArray(), precision, ignoreDefault)
-        } else return error("Non-concatenated formative hyphenated")
-
-    } else null
-
     val slotList: List<Precision> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX, slotX)
 
-    val parsedFormative : String = slotList.glossSlots(precision, ignoreDefault)
-
-    return if (parentFormative != null) {
-        "$parsedFormative $parentFormative"
-    } else parsedFormative
+    return slotList.glossSlots(precision, ignoreDefault)
 
 }
 
@@ -397,8 +371,8 @@ fun parseAffixVr(vr: String): Slot? {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
-    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
+
     var index = 0
 
     val slot1 = when (groups[0]) {
@@ -429,8 +403,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
 
 }
 
-fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sentenceParsingState: SentenceParsingState? = null) : String {
-    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
     val essence = (if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL).toString(precision, ignoreDefault)
     val c1 = groups
             .takeWhile { it !in setOf("w", "y") }
@@ -476,8 +449,7 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sent
 fun parseCombinationPRA(groups: Array<String>,
                         precision: Int,
                         ignoreDefault: Boolean,
-                        sentenceParsingState: SentenceParsingState? = null): String {
-    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+                        stress: Int): String {
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     var index = 0
 
@@ -533,8 +505,7 @@ fun parseCombinationPRA(groups: Array<String>,
 fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,
                          ignoreDefault: Boolean,
-                         sentenceParsingState: SentenceParsingState? = null): String {
-    val stress = groups.findStress().let { if (it == -1) 1 else it }
+                         stress: Int): String {
     val concatOnly = if (stress == 0) PrecisionString("{concatenated formative only}","{concat.}") else null
     var index = 0
     if (groups[0] == "ë") index++
@@ -573,8 +544,7 @@ fun parseAffixualScoping(groups: Array<String>,
 fun parseAffixual(groups: Array<String>,
                   precision: Int,
                   ignoreDefault: Boolean,
-                  sentenceParsingState: SentenceParsingState? = null) : String {
-    val stress = groups.findStress().let { if (it == -1) 1 else it }
+                  stress: Int) : String {
     val concatOnly = if (stress == 0) PrecisionString("{concatenated formative only}", "{concat.}") else null
 
     if (groups.size < 2) return error("Affixual adjunct too short: ${groups.size}")

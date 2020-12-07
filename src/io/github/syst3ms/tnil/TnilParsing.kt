@@ -565,3 +565,15 @@ fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignore
     return listOf(type, case).glossSlots(precision, ignoreDefault)
 
 }
+
+fun stripSentencePrefix(groups: Array<String>) : Pair<Array<String>, Boolean>? {
+    return when {
+        groups.isEmpty() -> return null
+        groups.size in 5..6 && groups.take(4).joinToString("") == "çëhë" -> groups.drop(3) // Single-affix adjunct, degree 4
+        groups.size >= 4 && groups[0] == "ç" && groups[1] == "ë" -> groups.drop(2)
+        groups[0] == "ç" && groups[1].isVowel() -> groups.drop(1)
+        groups[0] == "çw" -> listOf("w") + groups.drop(1)
+        groups[0] == "çç" -> listOf("y") + groups.drop(1)
+        else -> return groups to false
+    }.toTypedArray() to true
+}

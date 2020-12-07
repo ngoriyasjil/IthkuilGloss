@@ -11,7 +11,7 @@ class TestTest {
   @Test
   fun poemTest() {
     val glosses = mapOf(
-      "hlamröé-uçtļořë" to "S1-**mr**-PCR S3-**çtļ**-DYN/CSV-RPV-STM",
+      "hlamröé-uçtļořë" to "S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM",
       "khe" to "Obv/DET-ABS",
       "adnilo'o" to "S1-**dn**-OBJ-UTL",
       "yeilaišeu" to "S2/RPV-**l**-**š**/1₂-ATT",
