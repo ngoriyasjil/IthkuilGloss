@@ -294,20 +294,23 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     if (!cnInVI) {
         while (true) {
-            if (index+1 >= groups.size || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
+            if (index+1 >= groups.size
+                || groups[index+1] in CN_CONSONANTS
+                || groups[index+1] == "-")
                 break
-            }
 
             val (vx, glottalVowel) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
 
             val glottalCs = groups[index+1].startsWith("'")
 
+            if (glottalVowel || glottalCs) {
+                if (shortcut != null) vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
+                else if (groups.lastIndex == index+1) break
+                else return error("Unexpected glottal stop in slot VII")
+            }
+
             vxCsAffixes.add(Affix(vx, groups[index+1].removePrefix("'")))
             index += 2
-
-            if (glottalVowel || glottalCs) {
-                vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
-            }
         }
     }
 
