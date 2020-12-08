@@ -170,8 +170,8 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
                 || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
             parseAffixual(groups, precision, ignoreDefault)
         }
-        groups.size >= 5 && groups[0].isConsonant() && groups[2].removePrefix("'") in CC_CONSONANTS
-                || groups.size >= 6 && (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
+        groups.size >= 5 && groups[0].isConsonant() && groups[2]in CZ_CONSONANTS
+                || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> {
             parseAffixualScoping(groups, precision, ignoreDefault)
         }
         groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {

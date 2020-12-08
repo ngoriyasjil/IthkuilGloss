@@ -78,6 +78,7 @@ val CN_CONSONANTS = setOf(
         "w", "y", "hw", "hlw", "hly", "hnw", "hny"
 )
 
+val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "'hl", "'hl")
 
 val ITHKUIL_CHARS = setOf(
         "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",

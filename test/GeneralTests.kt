@@ -31,4 +31,9 @@ class TestTest {
     mapOf("alarfu'ul" to "S1-**l**-**rf**/9₁").glossTest()
   }
 
+  @Test
+  fun wordTypeTest() {
+    mapOf("muyüs" to "ma-IND-DAT-2m").glossTest()
+  }
+
 }
