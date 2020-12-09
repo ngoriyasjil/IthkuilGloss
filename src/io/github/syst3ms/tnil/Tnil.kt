@@ -174,7 +174,8 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
                 || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> {
             parseAffixualScoping(groups, precision, ignoreDefault)
         }
-        groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
+        (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
+            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
             parsePRA(groups, precision, ignoreDefault)
         }
 
