@@ -1,5 +1,17 @@
 ### To-Do list
 
+**v0.18.0**
+
+- Bias & Cy eliminated
+- Glottal stop in Vv for more than one slot V affix
+- Ca gemination simplified
+- RCP valence value changed
+- Initial h- for degree 4 affixual adjuncts
+- Degree zero added to Cs roots
+- New Mood/Case-Scope adjunct form, Phrasal adjunct changed)
+- More personal reference shortcuts
+- Satiative Bias changed
+
  **General to-dos**
  
  - ~~Create "Slot" class and make "stem used" marking sensible~~
