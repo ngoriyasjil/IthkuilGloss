@@ -33,21 +33,38 @@ infix fun String.eq(s: String): Boolean = if ("/" in this) {
     this.defaultForm() == s.defaultForm()
 }
 
-fun String.defaultForm() = this.replace("á", "a")
-        .replace("â", "ä")
-        .replace("é", "e")
-        .replace("ê", "ë")
-        .replace("[ìíı]".toRegex(), "i")
-        .replace("ó", "o")
-        .replace("ô", "ö")
-        .replace("[úù]".toRegex(), "u")
-        .replace("û", "ü")
-        .replace("[ṭŧ]".toRegex(), "ţ")
-        .replace("[ḍđ]".toRegex(), "ḑ")
-        .replace("[łḷ]".toRegex(), "ļ")
-        .replace("ż", "ẓ")
-        .replace("ṇ", "ň")
-        .replace("ṛ", "ř")
+val ALLOGRAPHS = listOf(
+    "á" to "á",
+    "ä" to "ä", "â" to "â",
+    "é" to "é",
+    "ë|ë" to "ë", "ê" to "ê",
+    "[ìı]|ì" to "i", "í" to "í",
+    "ó" to "ó", "ö" to "ö", "ô" to "ô",
+    "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
+    "č" to "č",
+    "ç" to "ç", "[ṭŧ]|ţ|ṭ" to "ţ",
+    "[ḍđ]|ḍ|ḑ" to "ḑ",
+    "[łḷ]|ḷ|ļ" to "ļ",
+    "š" to "š",
+    "ž" to "ž",
+    "ż|ẓ" to "ẓ",
+    "ṇ|ň|ņ|ṇ" to "ň",
+    "ṛ|ř|ŗ|ṛ" to "ř",
+)
+
+val UNSTRESSED_FORMS = listOf(
+    "á" to "a", "â" to "ä",
+    "é" to "e", "ê" to "ë",
+    "í" to "i",
+    "ô" to "ö", "ó" to "o",
+    "û" to "ü", "ú" to "u"
+)
+
+fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
+        current, (allo, sub) -> current.replace(allo.toRegex(), sub)
+}
+
+fun String.defaultForm() = substituteAll(ALLOGRAPHS).substituteAll(UNSTRESSED_FORMS)
 
 
 fun Array<String>.findStress(): Int {

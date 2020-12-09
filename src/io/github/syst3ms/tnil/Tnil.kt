@@ -126,7 +126,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         return s.split('-').joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
     }
 
-    val stress = s.splitGroups().findStress()
+    val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
 
     val (groups, sentencePrefix) = stripSentencePrefix(s.defaultForm().splitGroups()) ?: return error("Empty word")
 
@@ -161,11 +161,12 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
                 || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
             parseAffixual(groups, precision, ignoreDefault, stress)
         }
-        groups.size >= 5 && groups[0].isConsonant() && groups[2].removePrefix("'") in CC_CONSONANTS
-                || groups.size >= 6 && (groups[0] == "ë") && (groups[3].removePrefix("'") in CC_CONSONANTS) -> {
+        groups.size >= 5 && groups[0].isConsonant() && groups[2]in CZ_CONSONANTS
+                || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> {
             parseAffixualScoping(groups, precision, ignoreDefault, stress)
         }
-        groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
+        (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
+            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
             parsePRA(groups, precision, ignoreDefault, stress)
         }
 

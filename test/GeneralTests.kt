@@ -44,7 +44,7 @@ class TestTest {
 
   @Test
   fun wordTypeTest() {
-    mapOf("muyüs" to "1s-IND-DAT-2s").glossTest()
+    mapOf("muyüs" to "ma-IND-DAT-2m").glossTest()
   }
 
 }
