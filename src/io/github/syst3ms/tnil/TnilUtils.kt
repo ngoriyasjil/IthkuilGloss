@@ -9,6 +9,8 @@ fun errorList(s: String) = listOf("\u0000", s)
 
 val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
 
+fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
+
 fun String.isVowel() = when (length) {
     1, 2 -> all { it.toString().defaultForm() in VOWELS }
     3 -> this[1] == '\'' && this[0].toString().defaultForm() in VOWELS && this[2].toString().defaultForm() in VOWELS
@@ -19,8 +21,9 @@ fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS 
 
 fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
 
-fun String.hasStress() = this.isVowel() && this.defaultForm() != this //Dangerous
+val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'ô', 'ó', 'û', 'ú')
 
+fun String.hasStress() = this[0] in STRESSED_VOWELS
 
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
@@ -32,65 +35,38 @@ infix fun String.eq(s: String): Boolean = if ("/" in this) {
     this.defaultForm() == s.defaultForm()
 }
 
-val ALLOGRAPHS = listOf(
-    "á" to "á",
-    "ä" to "ä", "â" to "â",
-    "é" to "é",
-    "ë|ë" to "ë", "ê" to "ê",
-    "[ìı]|ì" to "i", "í" to "í",
-    "ó" to "ó", "ö" to "ö", "ô" to "ô",
-    "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
-    "č" to "č",
-    "ç" to "ç", "[ṭŧ]|ţ|ṭ" to "ţ",
-    "[ḍđ]|ḍ|ḑ" to "ḑ",
-    "[łḷ]|ḷ|ļ" to "ļ",
-    "š" to "š",
-    "ž" to "ž",
-    "ż|ẓ" to "ẓ",
-    "ṇ|ň|ņ|ṇ" to "ň",
-    "ṛ|ř|ŗ|ṛ" to "ř",
-)
-
-val UNSTRESSED_FORMS = listOf(
-    "á" to "a", "â" to "ä",
-    "é" to "e", "ê" to "ë",
-    "í" to "i",
-    "ô" to "ö", "ó" to "o",
-    "û" to "ü", "ú" to "u"
-)
-
 fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
         current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
 
-fun String.defaultForm() = substituteAll(ALLOGRAPHS).substituteAll(UNSTRESSED_FORMS)
+fun String.defaultForm() = toLowerCase().substituteAll(ALLOGRAPHS).substituteAll(UNSTRESSED_FORMS)
 
 
 fun Array<String>.findStress(): Int {
-    val i = this.filter(String::isVowel)
-        .map { it.replace("[ìı]".toRegex(), "i").replace("ù", "u") }
+    val vowels = this.filter(String::isVowel)
         .flatMap {
             val (series, form) = seriesAndForm(it.defaultForm())
-            if (it.length == 2 && series != 2 && !(series == 3 && form == 5)) {
-                it.toCharArray().map(Char::toString)
-            } else {
+            if (series == 1 || series == 2 || (series == 3 && form == 5)) {
                 listOf(it)
+            } else {
+                it.toCharArray().map(Char::toString).filter { ch -> ch != "'" }
             }
         }
-        .reversed()
-        .indexOfFirst { it.hasStress() }
+    val stressIndex = vowels
+            .reversed()
+            .indexOfFirst { it.hasStress() }
     return when {
-        this.count(String::isVowel) == 1 -> -1
-        i == -1 -> 1
-        else -> i
+        vowels.size == 1 -> -1
+        stressIndex == -1 -> 1
+        else -> stressIndex
     }
 }
 
 fun String.splitGroups(): Array<String> {
     val groups = arrayListOf<String>()
     var chars = toCharArray()
-        .map(Char::toString)
-        .toList()
+            .map(Char::toString)
+            .toList()
     while (chars.isNotEmpty()) {
         val group = when {
             chars[0].defaultForm().isVowel() -> {
@@ -126,40 +102,40 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String
 
     while (index < s.length) {
         refList.add(
-            if (index + 1 < s.length && s.substring(index, index + 2) in BICONSONANTAL_PRS) {
-                parsePersonalReference(s.substring(index, index + 2)).also { index += 2 }
-                    ?: return null
-            } else parsePersonalReference(s.substring(index, index + 1)).also { index++ }
-                ?: return null
+                if (index + 1 < s.length && s.substring(index, index + 2) in BICONSONANTAL_PRS) {
+                    parsePersonalReference(s.substring(index, index + 2)).also { index += 2 }
+                            ?: return null
+                } else parsePersonalReference(s.substring(index, index + 1)).also { index++ }
+                        ?: return null
         )
     }
     return when (refList.size) {
         0 -> null
         1 -> refList[0].toString(precision, ignoreDefault)
         else -> refList
-            .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
-            { it.toString(precision, ignoreDefault) }
+                .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
+                { it.toString(precision, ignoreDefault) }
     }
 }
 
 
 fun parseAffixes(data: String): List<AffixData> = data
-    .lines()
-    .asSequence()
-    .drop(1)
-    .map { it.split("\t") }
-    .filter { it.size >= 11 }
-    .map { AffixData(it[0], it[1], it.subList(2, 11).toTypedArray()) }
-    .toList()
+        .lines()
+        .asSequence()
+        .drop(1)
+        .map    { it.split("\t") }
+        .filter { it.size >= 11 }
+        .map    { AffixData(it[0], it[1], it.subList(2, 11).toTypedArray()) }
+        .toList()
 
 fun parseRoots(data: String): List<RootData> = data
-    .lines()
-    .asSequence()
-    .drop(1)
-    .map { it.split("\t") }
-    .filter { it.size >= 5 }
-    .map { RootData(it[0], it.subList(1, 5)) }
-    .toList()
+        .lines()
+        .asSequence()
+        .drop(1)
+        .map    { it.split("\t") }
+        .filter { it.size >= 5 }
+        .map    { RootData(it[0], it.subList(1, 5)) }
+        .toList()
 
 data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) {
     override fun equals(other: Any?): Boolean {
@@ -182,16 +158,14 @@ data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) 
 
 data class RootData(val cr: String, val dsc: List<String>)
 
-class SentenceParsingState(
-    var carrier: Boolean = false,
-    var register: MutableList<Register> = mutableListOf(),
-    var quotativeAdjunct: Boolean = false,
-    var concatenative: Boolean = false,
-    stress: Int? = null,
-    var isLastFormativeVerbal: Boolean? = null,
-    var rtiAffixScope: String? = null
-) {
-    var forcedStress: Int? = stress
+class SentenceParsingState(var carrier: Boolean = false,
+                           var register: MutableList<Register> = mutableListOf(),
+                           var quotativeAdjunct: Boolean = false,
+                           var concatenative: Boolean = false,
+                           stress: Int? = null,
+                           var isLastFormativeVerbal : Boolean? = null,
+                           var rtiAffixScope: String? = null) {
+    var forcedStress : Int? = stress
         get() {
             val old = field
             forcedStress = null

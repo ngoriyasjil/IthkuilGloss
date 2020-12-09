@@ -21,6 +21,7 @@ const val AFFIX_UNKNOWN_VOWEL_MARKER = "@"
 const val AFFIX_UNKNOWN_CASE_MARKER = "&&"
 const val AFFIX_UNKNOWN_CA_MARKER = "^"
 const val RTI_AFFIX_CONSONANT = "lt"
+const val CONCATENATION_SEPARATOR = "—"
 
 val VOWEL_FORMS = listOf(
         "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
@@ -72,6 +73,34 @@ val CA_SUBSTITUTIONS = listOf(
         "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
         "c" to "ts", "tš" to "č", "ḑ" to "tţ")
 
+val ALLOGRAPHS = listOf(
+    "\u200B" to "",
+    "’" to "'",
+    "á" to "á",
+    "ä" to "ä", "â" to "â",
+    "é" to "é",
+    "ë|ë" to "ë", "ê" to "ê",
+    "[ìı]|ì" to "i", "í" to "í",
+    "ó" to "ó", "ö" to "ö", "ô" to "ô",
+    "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
+    "č" to "č",
+    "ç" to "ç", "[ṭŧ]|ţ|ṭ" to "ţ",
+    "[ḍđ]|ḍ|ḑ" to "ḑ",
+    "[łḷ]|ḷ|ļ" to "ļ",
+    "š" to "š",
+    "ž" to "ž",
+    "ż|ẓ" to "ẓ",
+    "ṇ|ň|ņ|ṇ" to "ň",
+    "ṛ|ř|ŗ|ṛ" to "ř",
+)
+
+val UNSTRESSED_FORMS = listOf(
+    "á" to "a", "â" to "ä",
+    "é" to "e", "ê" to "ë",
+    "í" to "i",
+    "ô" to "ö", "ó" to "o",
+    "û" to "ü", "ú" to "u"
+)
 
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
@@ -99,6 +128,18 @@ class Affix(private val vx: String,
 enum class Shortcut {
     Y_SHORTCUT,
     W_SHORTCUT;
+}
+
+enum class WordType {
+    FORMATIVE,
+    MODULAR_ADJUNCT,
+    AFFIXUAL_ADJUNCT,
+    AFFIXUAL_SCOPING_ADJUNCT,
+    PERSONAL_REFERENCE_ADJUNCT,
+    COMBINATION_PRA,
+    SUPPLETIVE_ADJUNCT,
+    REGISTER_ADJUNCT,
+    BIAS_ADJUNCT;
 }
 
 class PrecisionString(

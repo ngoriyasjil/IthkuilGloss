@@ -1,143 +1,50 @@
 package io.github.syst3ms.tnil
 
-import java.io.PrintWriter
-import java.io.StringWriter
+fun wordTypeOf(groups: Array<String>) : WordType = when {
+    groups.size == 1 && groups[0].isConsonant() ->  WordType.BIAS_ADJUNCT
 
-fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<String> {
-    if (s.isBlank()) {
-        return errorList("Nothing to parse.")
-    }
-    val words = s.toLowerCase().split("\\s+".toRegex())
-    val state = SentenceParsingState()
-    var currentlyCarrier = false
-    var modularIndex : Int? = null
-    var modularForcedStress : Int? = null
-    val result = arrayListOf<String>()
-    for ((i, word) in words.withIndex()) {
-        var toParse = word
-        if (!currentlyCarrier || !state.carrier) {
-            if (toParse.startsWith(LOW_TONE_MARKER)) { // Register end
-                toParse = toParse.drop(1)
-            } else if (toParse matches "'[aeoui]'".toRegex()) {
-                state.forcedStress = when (toParse[1]) {
-                    'a' -> -1
-                    'e' -> 0
-                    'o' -> 1
-                    'u' -> 2
-                    'i' -> 3
-                    else -> throw IllegalStateException()
-                }
-                continue
-            }
-        }
-        if (toParse.any { !it.toString().isConsonant() && !it.toString().isVowel() }) {
-            return errorList("**Parsing error**: '$word' contains non-Ithkuil characters")
-        }
-        try {
-            val res = parseWord(toParse, precision, ignoreDefault)
-            if (currentlyCarrier && state.carrier) {
-                result += if (word.startsWith(LOW_TONE_MARKER)) {
-                    currentlyCarrier = false
-                    state.carrier = false
-                    "${word.drop(1)} $CARRIER_END "
-                } else {
-                    "$word "
-                }
-                continue
-            } else if (res == MODULAR_PLACEHOLDER) { // Modular adjunct
-                modularIndex = i
-                modularForcedStress = state.forcedStress
-                continue
-            } else if (res.startsWith("\u0000")) {
-                return errorList("**Parsing error**: ${res.drop(1)}")
-            } else if (word.startsWith(LOW_TONE_MARKER)) {
-                if (state.register.isEmpty())
-                    return errorList("*Syntax error*: low tone can't mark the end of non-default register, since no such register is active.")
-                val reg = state.register.removeAt(state.register.lastIndex)
-                result += if (reg == Register.DISCURSIVE) {
-                    "$res $DISCURSIVE_END "
-                } else {
-                    "$res $REGISTER_END "
-                }
-                continue
-            } else if ((state.isLastFormativeVerbal != null || state.quotativeAdjunct) && modularIndex != null) {
-                // Now we can know the stress of the formative and finally parse the adjunct properly
-                val mod = parseModular(
-                        words[modularIndex].splitGroups(),
-                        precision,
-                        // If quotativeAdjunct is true, case-scope needs default values like CTX or MNO to be shown, and we want to ignore them
-                        state.quotativeAdjunct || ignoreDefault,
-                        // This is fine because if quotativeAdjunct is false that means isLastFormativeVerbal is non-null
-                        /* !state.quotativeAdjunct && state.isLastFormativeVerbal!!,
-                        modularForcedStress,
-                        sentenceParsingState = state */
-                )
-                if (mod.startsWith("\u0000")) {
-                    return errorList("**Parsing error**: ${mod.drop(1)}")
-                }
-                result.add(modularIndex, "$mod ")
-                state.quotativeAdjunct = false
-                modularIndex = null
-                modularForcedStress = null
-            }
-            currentlyCarrier = state.carrier
-            result += res + if (state.carrier && !res.endsWith(CARRIER_START)) {
-                " $CARRIER_START"
-            } else {
-                " "
-            }
-        } catch (e: Exception) {
-            logger.error("{}", e)
-            return if (precision < 3) {
-                errorList("A severe exception occurred during sentence parsing. We are unable to give more information. " +
-                        "For a more thorough (but technical) description of the error, please use debug mode.")
-            } else {
-                val sw = StringWriter()
-                e.printStackTrace(PrintWriter(sw))
-                val stacktrace = sw.toString()
-                        .split("\n")
-                        .take(10)
-                        .joinToString("\n")
-                errorList(stacktrace)
-            }
-        }
-    }
-    if (modularIndex != null && modularForcedStress != null) {
-        return errorList("A modular adjunct needs an adjacent formative. If you want to parse the adjunct by itself, use ??gloss, ??short or ??full.")
-    }
-    if (currentlyCarrier && state.carrier) {
-        result += "$CARRIER_END "
-    }
-    for (reg in state.register.asReversed()) {
-        result += if (reg == Register.DISCURSIVE) {
-            "$DISCURSIVE_END "
-        } else {
-            "$REGISTER_END "
-        }
-    }
-    if (state.concatenative) {
-        result += "$CONCATENATIVE_END "
-    }
-    return result
+    groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> WordType.SUPPLETIVE_ADJUNCT
+
+    groups[0] == "h" && groups.size == 2 -> WordType.REGISTER_ADJUNCT
+
+    (groups[0].isVowel() || groups[0] in setOf("w", "y"))
+            && groups.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
+
+    groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
+            || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
+    -> WordType.COMBINATION_PRA
+
+    groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
+            || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> WordType.AFFIXUAL_ADJUNCT
+
+    groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
+            || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> WordType.AFFIXUAL_SCOPING_ADJUNCT
+
+    (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
+            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true
+    -> WordType.PERSONAL_REFERENCE_ADJUNCT
+
+    else -> WordType.FORMATIVE
 }
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    val initialGroups = s.substituteAll(ALLOGRAPHS).splitGroups().toList()
-    if (initialGroups.isEmpty()) {
-        return error("Empty word")
+    val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
+    if (nonIthkuil.isNotEmpty()) {
+        return error(
+            "Non-ithkuil characters detected: " +
+                    nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
+                    if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
+        )
     }
 
-    var sentencePrefix = true
+    if ('-' in s) {
+        return s.split('-').joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
+    }
 
-    val groups = when {
-        initialGroups.size in 5..6 && initialGroups.take(4) == listOf("ç", "ë", "h","ë") -> initialGroups.drop(3) // Single-affix adjunct, degree 4
-        initialGroups.size >= 4 && initialGroups[0] == "ç" && initialGroups[1] == "ë" -> initialGroups.drop(2)
-        initialGroups[0] == "ç" && initialGroups[1].isVowel() -> initialGroups.drop(1)
-        initialGroups[0] == "çw" -> listOf("w") + initialGroups.drop(1)
-        initialGroups[0] == "çç" -> listOf("y") + initialGroups.drop(1)
-        else -> initialGroups.also { sentencePrefix = false }
-    }.toTypedArray()
+    val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
+
+    val (groups, sentencePrefix) = stripSentencePrefix(s.defaultForm().splitGroups()) ?: return error("Empty word")
 
     val ssgloss = when (precision) {
         0 -> "[.]-"
@@ -146,46 +53,33 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         else -> ""
     }
 
-    return (if (sentencePrefix) ssgloss else "") +  when {
-        groups.size == 1 && groups[0].isConsonant() ->  {
-            Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
-        }
-        groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> {
+    return (if (sentencePrefix) ssgloss else "") +  when (wordTypeOf(groups)) {
+        WordType.BIAS_ADJUNCT -> Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
+
+        WordType.SUPPLETIVE_ADJUNCT -> {
             val v = groups[1]
             parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault)
         }
-        groups[0] == "h" && groups.size == 2 -> {
+        WordType.REGISTER_ADJUNCT -> {
             val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
             return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
         }
-        (groups[0].isVowel() || groups[0] in setOf("w", "y"))
-                && groups.all { it.isVowel() || it in CN_CONSONANTS } -> {
-            parseModular(groups, precision, ignoreDefault)
-        }
-        groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION -> {
-            parseCombinationPRA(groups, precision, ignoreDefault)
-        }
-        groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
-                || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
-            parseAffixual(groups, precision, ignoreDefault)
-        }
-        groups.size >= 5 && groups[0].isConsonant() && groups[2]in CZ_CONSONANTS
-                || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> {
-            parseAffixualScoping(groups, precision, ignoreDefault)
-        }
-        (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
-            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
-            parsePRA(groups, precision, ignoreDefault)
-        }
+        WordType.MODULAR_ADJUNCT -> parseModular(groups, precision, ignoreDefault, stress)
 
-        else -> parseFormative(groups, precision, ignoreDefault)
+        WordType.COMBINATION_PRA -> parseCombinationPRA(groups, precision, ignoreDefault, stress)
+
+        WordType.AFFIXUAL_ADJUNCT -> parseAffixual(groups, precision, ignoreDefault, stress)
+
+        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseAffixualScoping(groups, precision, ignoreDefault, stress)
+
+        WordType.PERSONAL_REFERENCE_ADJUNCT -> parsePRA(groups, precision, ignoreDefault, stress)
+
+        WordType.FORMATIVE -> parseFormative(groups, precision, ignoreDefault, stress)
     }
 }
 
-fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
+fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
 
-    val stress = groups.takeWhile { it != "-" }.toTypedArray().findStress().let { if (it == -1) 0 else it }
     var index = 0
 
     val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
@@ -295,29 +189,26 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     if (!cnInVI) {
         while (true) {
-            if (index+1 >= groups.size
-                || groups[index+1] in CN_CONSONANTS
-                || groups[index+1] == "-")
+            if (index+1 >= groups.size || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
                 break
+            }
 
             val (vx, glottalVowel) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
 
             val glottalCs = groups[index+1].startsWith("'")
 
-            if (glottalVowel || glottalCs) {
-                if (shortcut != null) vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
-                else if (groups.lastIndex == index+1) break
-                else return error("Unexpected glottal stop in slot VII")
-            }
-
             vxCsAffixes.add(Affix(vx, groups[index+1].removePrefix("'")))
             index += 2
+
+            if (glottalVowel || glottalCs) {
+                vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
+            }
         }
     }
 
     if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBePraShortcut = true
 
-    val marksMood = (stress == 0)
+    val marksMood = (stress == 0) || (stress == -1)
 
     val slotVIII: Slot? = when {
         cnInVI -> {
@@ -334,7 +225,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val slotIX : Precision = if (concatenation == null) {
         when (stress) {
-            0 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
+            0, -1 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
             1, 2 -> Case.byVowel(vcVk) ?: return error("Unknown Vc form $vcVk")
             else -> return error("Unknown stress: $stress from ultimate")
         }
@@ -354,27 +245,16 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     }
     index++
 
-    val cyMarksMood = (stress == 0) || (stress == 2 && slotVIII != null)
+    val cyMarksMood = (stress == 0) || (stress == -1) || (stress == 2 && slotVIII != null)
 
     val slotX = if (concatenation == null && index < groups.size) {
         parseCbCy(groups[index], cyMarksMood)
     } else null
 
-    val parentFormative = if (groups.getOrNull(index) == "-") {
-        if (concatenation != null) {
-            parseFormative(groups.drop(index+1).toTypedArray(), precision, ignoreDefault)
-        } else return error("Non-concatenated formative hyphenated")
-
-    } else null
-
     val slotList: List<Precision> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX, slotX)
 
-    val parsedFormative : String = slotList.glossSlots(precision, ignoreDefault)
-
-    return if (parentFormative != null) {
-        "$parsedFormative $parentFormative"
-    } else parsedFormative
+    return slotList.glossSlots(precision, ignoreDefault)
 
 }
 
@@ -395,8 +275,9 @@ fun parseAffixVr(vr: String): Slot? {
     return Slot(degree, specification)
 }
 
-fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) : String {
-    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+@Suppress("UNCHECKED_CAST")
+fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
+
     var index = 0
 
     val slot1 = when (groups[0]) {
@@ -418,7 +299,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
 
     val slot5 = when {
         midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return error("Unknown aspect: ${groups[index]}")
-        stress == 1 -> parseVnCn(groups[index], "h", marksMood = false) ?: return error("Unknown non-aspect Vn: ${groups[index]}")
+        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true) ?: return error("Unknown non-aspect Vn: ${groups[index]}")
         stress == 0 -> parseVh(groups[index]) ?: return error("Unknown Vh: ${groups[index]}")
         else -> return error("Unknown stress on modular adjunct: $stress from ultimate")
     }
@@ -427,8 +308,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean) 
 
 }
 
-fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sentenceParsingState: SentenceParsingState? = null) : String {
-    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
     val essence = (if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL).toString(precision, ignoreDefault)
     val c1 = groups
             .takeWhile { it !in setOf("w", "y") }
@@ -470,11 +350,11 @@ fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, sent
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 fun parseCombinationPRA(groups: Array<String>,
                         precision: Int,
                         ignoreDefault: Boolean,
-                        sentenceParsingState: SentenceParsingState? = null): String {
-    val stress =  groups.findStress().let { if (it != -1) it else 1 }
+                        stress: Int): String {
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     var index = 0
 
@@ -483,7 +363,7 @@ fun parseCombinationPRA(groups: Array<String>,
     val ref = PrecisionString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
     index++
 
-    val caseA: Case = Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
+    val caseA = Case.byVowel(groups[index]) ?: "Unknown case: ${groups[index]}"
     index++
 
     val specification = when(groups[index]) {
@@ -516,17 +396,21 @@ fun parseCombinationPRA(groups: Array<String>,
         else -> Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
     }
 
-    val slotList: List<Precision> = listOfNotNull(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
+    val slotList = listOfNotNull(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
 
-    return slotList.glossSlots(precision, ignoreDefault)
+    return slotList.map {
+        if (it is List<*>) {
+            (it as List<Precision>).glossSlots(precision, ignoreDefault) // Wacky casting, beware.
+        } else (it as Precision).toString(precision, ignoreDefault) }
+            .filter { it.isNotEmpty() }
+            .joinToString(SLOT_SEPARATOR)
 
 }
 
 fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,
                          ignoreDefault: Boolean,
-                         sentenceParsingState: SentenceParsingState? = null): String {
-    val stress = groups.findStress().let { if (it == -1) 1 else it }
+                         stress: Int): String {
     val concatOnly = if (stress == 0) PrecisionString("{concatenated formative only}","{concat.}") else null
     var index = 0
     if (groups[0] == "ë") index++
@@ -565,8 +449,7 @@ fun parseAffixualScoping(groups: Array<String>,
 fun parseAffixual(groups: Array<String>,
                   precision: Int,
                   ignoreDefault: Boolean,
-                  sentenceParsingState: SentenceParsingState? = null) : String {
-    val stress = groups.findStress().let { if (it == -1) 1 else it }
+                  stress: Int) : String {
     val concatOnly = if (stress == 0) PrecisionString("{concatenated formative only}", "{concat.}") else null
 
     if (groups.size < 2) return error("Affixual adjunct too short: ${groups.size}")

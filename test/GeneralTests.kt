@@ -11,7 +11,7 @@ class TestTest {
   @Test
   fun poemTest() {
     val glosses = mapOf(
-      "hlamröé-uçtļořë" to "S1-**mr**-PCR S3-**çtļ**-DYN/CSV-RPV-STM",
+      "hlamröé-uçtļořë" to "S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM",
       "khe" to "Obv/DET-ABS",
       "adnilo'o" to "S1-**dn**-OBJ-UTL",
       "yeilaišeu" to "S2/RPV-**l**-**š**/1₂-ATT",
@@ -29,6 +29,18 @@ class TestTest {
   @Test
   fun slotVTest() {
     mapOf("alarfu'ul" to "S1-**l**-**rf**/9₁").glossTest()
+  }
+
+  @Test
+  fun stressTest() {
+    assertEquals(-1, "a".splitGroups().findStress())
+    assertEquals(1, "ala".splitGroups().findStress())
+    assertEquals(0, "alá".splitGroups().findStress())
+    assertEquals(1, "lìala".splitGroups().findStress(), "lìala")
+    assertEquals(1, "ua".splitGroups().findStress(), "ua")
+    assertEquals(-1, "ëu".splitGroups().findStress())
+    assertEquals(0, "alái".splitGroups().findStress())
+    assertEquals(2, "ála'a".splitGroups().findStress())
   }
 
   @Test

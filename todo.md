@@ -10,4 +10,10 @@
  - ~~Rewrite parseAffixual and parseAffixualScoping~~
  - Add in Vk glottalization
  - Help testing with "glossesTo" infix function
- - Separate determining the type of a word into a separate function (for testability)
+ - ~~Separate determining the type of a word into a separate function (for testability)~~
+ - Create an actual error type instead of mucking about with null characters
+
+**Ideas**
+
+- External Juncture checker
+- Pronunciation guide
