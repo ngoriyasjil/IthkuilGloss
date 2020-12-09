@@ -75,8 +75,6 @@ fun respond(content: String) : String? {
     }
 }
 
-fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
-
 fun sentenceGloss(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
     val glossPairs = words.map { word ->
 
@@ -104,7 +102,7 @@ fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): Str
         .map { word ->
 
         val gloss = try {
-            parseWord(word.stripPunctuation(), precision, ignoreDefault)
+            parseWord(word, precision, ignoreDefault)
         } catch (ex: Exception) {
             logger.error("{}", ex)
             if (precision < 3) {

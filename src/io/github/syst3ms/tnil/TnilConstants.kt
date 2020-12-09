@@ -73,6 +73,34 @@ val CA_SUBSTITUTIONS = listOf(
         "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
         "c" to "ts", "tš" to "č", "ḑ" to "tţ")
 
+val ALLOGRAPHS = listOf(
+    "\u200B" to "",
+    "’" to "'",
+    "á" to "á",
+    "ä" to "ä", "â" to "â",
+    "é" to "é",
+    "ë|ë" to "ë", "ê" to "ê",
+    "[ìı]|ì" to "i", "í" to "í",
+    "ó" to "ó", "ö" to "ö", "ô" to "ô",
+    "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
+    "č" to "č",
+    "ç" to "ç", "[ṭŧ]|ţ|ṭ" to "ţ",
+    "[ḍđ]|ḍ|ḑ" to "ḑ",
+    "[łḷ]|ḷ|ļ" to "ļ",
+    "š" to "š",
+    "ž" to "ž",
+    "ż|ẓ" to "ẓ",
+    "ṇ|ň|ņ|ṇ" to "ň",
+    "ṛ|ř|ŗ|ṛ" to "ř",
+)
+
+val UNSTRESSED_FORMS = listOf(
+    "á" to "a", "â" to "ä",
+    "é" to "e", "ê" to "ë",
+    "í" to "i",
+    "ô" to "ö", "ó" to "o",
+    "û" to "ü", "ú" to "u"
+)
 
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",

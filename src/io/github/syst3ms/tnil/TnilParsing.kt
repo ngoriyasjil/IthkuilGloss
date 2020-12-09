@@ -1,7 +1,5 @@
 package io.github.syst3ms.tnil
 
-import net.dv8tion.jda.api.utils.MarkdownUtil
-
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it eq v }) {
         -1 -> Pair(-1, -1)
@@ -9,7 +7,9 @@ fun seriesAndForm(v: String) : Pair<Int, Int> {
     }
 }
 
-fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) VOWEL_FORMS.getOrNull(9 * (series-1) + (form-1)) else null
+fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) {
+    VOWEL_FORMS.getOrNull(9 * (series-1) + (form-1))
+}  else null
 
 fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
     if (!v.isVowel()) return null
@@ -35,7 +35,7 @@ fun glottalVowel(v: String) : Pair<String, Boolean>? {
 }
 
 fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
-    val root = rootData.find { it.cr == c.defaultForm() } ?: return MarkdownUtil.bold(c.defaultForm()) to false
+    val root = rootData.find { it.cr == c.defaultForm() } ?: return "**${c.defaultForm()}**" to false
     return if (precision > 0) {
         var stemUsed = false
         val d = when (val stemDsc = root.dsc[stem]) {

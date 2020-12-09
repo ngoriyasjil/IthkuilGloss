@@ -40,6 +40,7 @@ class TestTest {
     assertEquals(1, "ua".splitGroups().findStress(), "ua")
     assertEquals(-1, "ëu".splitGroups().findStress())
     assertEquals(0, "alái".splitGroups().findStress())
+    assertEquals(2, "ála'a".splitGroups().findStress())
   }
 
   @Test

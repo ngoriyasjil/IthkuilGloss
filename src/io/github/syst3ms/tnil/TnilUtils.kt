@@ -9,6 +9,8 @@ fun errorList(s: String) = listOf("\u0000", s)
 
 val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
 
+fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
+
 fun String.isVowel() = when (length) {
     1, 2 -> all { it.toString().defaultForm() in VOWELS }
     3 -> this[1] == '\'' && this[0].toString().defaultForm() in VOWELS && this[2].toString().defaultForm() in VOWELS
@@ -33,35 +35,6 @@ infix fun String.eq(s: String): Boolean = if ("/" in this) {
     this.defaultForm() == s.defaultForm()
 }
 
-val ALLOGRAPHS = listOf(
-    "\u200B" to "",
-    "’" to "'",
-    "á" to "á",
-    "ä" to "ä", "â" to "â",
-    "é" to "é",
-    "ë|ë" to "ë", "ê" to "ê",
-    "[ìı]|ì" to "i", "í" to "í",
-    "ó" to "ó", "ö" to "ö", "ô" to "ô",
-    "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
-    "č" to "č",
-    "ç" to "ç", "[ṭŧ]|ţ|ṭ" to "ţ",
-    "[ḍđ]|ḍ|ḑ" to "ḑ",
-    "[łḷ]|ḷ|ļ" to "ļ",
-    "š" to "š",
-    "ž" to "ž",
-    "ż|ẓ" to "ẓ",
-    "ṇ|ň|ņ|ṇ" to "ň",
-    "ṛ|ř|ŗ|ṛ" to "ř",
-)
-
-val UNSTRESSED_FORMS = listOf(
-    "á" to "a", "â" to "ä",
-    "é" to "e", "ê" to "ë",
-    "í" to "i",
-    "ô" to "ö", "ó" to "o",
-    "û" to "ü", "ú" to "u"
-)
-
 fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
         current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
@@ -73,10 +46,10 @@ fun Array<String>.findStress(): Int {
     val vowels = this.filter(String::isVowel)
         .flatMap {
             val (series, form) = seriesAndForm(it.defaultForm())
-            if (series == 2 || (series == 3 && form == 5)) {
+            if (series == 1 || series == 2 || (series == 3 && form == 5)) {
                 listOf(it)
             } else {
-                it.toCharArray().map(Char::toString)
+                it.toCharArray().map(Char::toString).filter { ch -> ch != "'" }
             }
         }
     val stressIndex = vowels

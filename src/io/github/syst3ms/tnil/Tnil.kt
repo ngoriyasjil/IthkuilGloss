@@ -417,7 +417,7 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
 
     val slot5 = when {
         midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return error("Unknown aspect: ${groups[index]}")
-        stress == 1 -> parseVnCn(groups[index], "h", marksMood = false) ?: return error("Unknown non-aspect Vn: ${groups[index]}")
+        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true) ?: return error("Unknown non-aspect Vn: ${groups[index]}")
         stress == 0 -> parseVh(groups[index]) ?: return error("Unknown Vh: ${groups[index]}")
         else -> return error("Unknown stress on modular adjunct: $stress from ultimate")
     }
