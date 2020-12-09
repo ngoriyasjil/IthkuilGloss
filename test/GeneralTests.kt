@@ -42,4 +42,9 @@ class TestTest {
     assertEquals(0, "alái".splitGroups().findStress())
   }
 
+  @Test
+  fun wordTypeTest() {
+    mapOf("muyüs" to "1s-IND-DAT-2s").glossTest()
+  }
+
 }
