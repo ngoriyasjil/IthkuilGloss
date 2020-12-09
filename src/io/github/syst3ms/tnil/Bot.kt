@@ -22,7 +22,7 @@ fun loadResources() {
     rootData = parseRoots(URL("https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303").readText())
 }
 
-fun parsePrecision(request: String) = when {
+fun requestPrecision(request: String) = when {
     request.contains("short") -> 0
     request.contains("full")  -> 2
     request.contains("debug") -> 3
@@ -33,7 +33,7 @@ fun respond(content: String) : String? {
     var request = content.split("\\s+".toRegex())[0]
     val ignoreDefault = !request.startsWith("??")
     request = request.removePrefix("??").removePrefix("?")
-    val precision = parsePrecision(request)
+    val precision = requestPrecision(request)
 
     when(request) {
 
@@ -72,7 +72,9 @@ fun respond(content: String) : String? {
     }
 }
 
-private fun wordByWord(content: String, prec: Int, ignoreDefault: Boolean): String {
+
+
+private fun wordByWord(content: String, precision: Int, ignoreDefault: Boolean): String {
     val words = content.split("[\\s.;,:?!]+".toRegex()).filter(String::isNotBlank).drop(1)
     val glosses = arrayListOf<String>()
     for (word in words) {
@@ -88,16 +90,16 @@ private fun wordByWord(content: String, prec: Int, ignoreDefault: Boolean): Stri
                 glosses += error(
                     "Non-ithkuil characters detected: " +
                             nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
-                            if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
+                            if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) "You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
                 )
                 continue
             }
         }
         val res = try {
-            parseWord(w, prec, ignoreDefault)
+            parseWord(w, precision, ignoreDefault)
         } catch (ex: Exception) {
             logger.error("{}", ex)
-            if (prec < 3) {
+            if (precision < 3) {
                 error("A severe exception occurred during sentence parsing. Please contact the maintainers.")
 
             } else {

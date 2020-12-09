@@ -34,6 +34,7 @@ infix fun String.eq(s: String): Boolean = if ("/" in this) {
 }
 
 val ALLOGRAPHS = listOf(
+    "’" to "'",
     "á" to "á",
     "ä" to "ä", "â" to "â",
     "é" to "é",
