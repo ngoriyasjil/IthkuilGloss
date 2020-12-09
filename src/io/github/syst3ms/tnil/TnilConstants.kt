@@ -102,6 +102,18 @@ enum class Shortcut {
     W_SHORTCUT;
 }
 
+enum class WordType {
+    FORMATIVE,
+    MODULAR_ADJUNCT,
+    AFFIXUAL_ADJUNCT,
+    AFFIXUAL_SCOPING_ADJUNCT,
+    PERSONAL_REFERENCE_ADJUNCT,
+    COMBINATION_PRA,
+    SUPPLETIVE_ADJUNCT,
+    REGISTER_ADJUNCT,
+    BIAS_ADJUNCT;
+}
+
 class PrecisionString(
     private val full: String,
     private val short: String = full,

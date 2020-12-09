@@ -118,7 +118,32 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
     return result
 }*/
 
+fun wordTypeOf(groups: Array<String>) : WordType = when {
+    groups.size == 1 && groups[0].isConsonant() ->  WordType.BIAS_ADJUNCT
 
+    groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> WordType.SUPPLETIVE_ADJUNCT
+
+    groups[0] == "h" && groups.size == 2 -> WordType.REGISTER_ADJUNCT
+
+    (groups[0].isVowel() || groups[0] in setOf("w", "y"))
+            && groups.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
+
+    groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
+            || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
+    -> WordType.COMBINATION_PRA
+
+    groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
+            || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> WordType.AFFIXUAL_ADJUNCT
+
+    groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
+            || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> WordType.AFFIXUAL_SCOPING_ADJUNCT
+
+    (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
+            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true
+    -> WordType.PERSONAL_REFERENCE_ADJUNCT
+
+    else -> WordType.FORMATIVE
+}
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
@@ -137,40 +162,28 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         else -> ""
     }
 
-    return (if (sentencePrefix) ssgloss else "") +  when {
-        groups.size == 1 && groups[0].isConsonant() ->  {
-            Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
-        }
-        groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> {
+    return (if (sentencePrefix) ssgloss else "") +  when (wordTypeOf(groups)) {
+        WordType.BIAS_ADJUNCT -> Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
+
+        WordType.SUPPLETIVE_ADJUNCT -> {
             val v = groups[1]
             parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault)
         }
-        groups[0] == "h" && groups.size == 2 -> {
+        WordType.REGISTER_ADJUNCT -> {
             val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
             return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
         }
-        (groups[0].isVowel() || groups[0] in setOf("w", "y"))
-                && groups.all { it.isVowel() || it in CN_CONSONANTS } -> {
-            parseModular(groups, precision, ignoreDefault, stress)
-        }
-        groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
-                || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION -> {
-            parseCombinationPRA(groups, precision, ignoreDefault, stress)
-        }
-        groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
-                || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> {
-            parseAffixual(groups, precision, ignoreDefault, stress)
-        }
-        groups.size >= 5 && groups[0].isConsonant() && groups[2]in CZ_CONSONANTS
-                || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> {
-            parseAffixualScoping(groups, precision, ignoreDefault, stress)
-        }
-        (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
-            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true -> {
-            parsePRA(groups, precision, ignoreDefault, stress)
-        }
+        WordType.MODULAR_ADJUNCT -> parseModular(groups, precision, ignoreDefault, stress)
 
-        else -> parseFormative(groups, precision, ignoreDefault, stress)
+        WordType.COMBINATION_PRA -> parseCombinationPRA(groups, precision, ignoreDefault, stress)
+
+        WordType.AFFIXUAL_ADJUNCT -> parseAffixual(groups, precision, ignoreDefault, stress)
+
+        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseAffixualScoping(groups, precision, ignoreDefault, stress)
+
+        WordType.PERSONAL_REFERENCE_ADJUNCT -> parsePRA(groups, precision, ignoreDefault, stress)
+
+        WordType.FORMATIVE -> parseFormative(groups, precision, ignoreDefault, stress)
     }
 }
 
