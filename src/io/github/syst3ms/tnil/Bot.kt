@@ -30,16 +30,19 @@ fun requestPrecision(request: String) = when {
 }
 
 fun respond(content: String) : String? {
-    var request = content.split("\\s+".toRegex())[0]
+    val words = content.split("\\s+".toRegex())
+    var request = words[0]
     val ignoreDefault = !request.startsWith("??")
     request = request.removePrefix("??").removePrefix("?")
     val precision = requestPrecision(request)
 
+
+
     when(request) {
 
-        "gloss", "short", "full", "!debug" -> return wordByWord(content, precision, ignoreDefault)
+        "gloss", "short", "full", "!debug" -> return wordByWord(words.drop(1), precision, ignoreDefault)
 
-        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(content, request, precision, ignoreDefault)
+        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(words.drop(1), precision, ignoreDefault)
 
         "!stop" -> exitProcess(0)
 
@@ -72,36 +75,40 @@ fun respond(content: String) : String? {
     }
 }
 
+fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
 
+fun sentenceGloss(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
+    val glossPairs = words.map { word ->
 
-private fun wordByWord(content: String, precision: Int, ignoreDefault: Boolean): String {
-    val words = content.split("[\\s.;,:?!]+".toRegex()).filter(String::isNotBlank).drop(1)
-    val glosses = arrayListOf<String>()
-    for (word in words) {
-        var w = word.toLowerCase().replace("’", "'").replace("\u200b", "")
-        if (w.startsWith("_") || w.startsWith("/")) {
-            w = w.substring(1)
-        } else {
+        val gloss = try {
+            val parse = parseWord(word.stripPunctuation(), precision, ignoreDefault)
+            if (parse.startsWith("\u0000")) null
+            else parse
 
-            val nonIthkuil = w.defaultForm().filter {
-                it.toString().defaultForm() !in ITHKUIL_CHARS
-            }
-            if (nonIthkuil.isNotEmpty()) {
-                glosses += error(
-                    "Non-ithkuil characters detected: " +
-                            nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
-                            if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) "You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
-                )
-                continue
-            }
+        } catch (ex: Exception) {
+            logger.error("{}", ex)
+            null
         }
-        val res = try {
-            parseWord(w, precision, ignoreDefault)
+        word to gloss
+    }.map { (word, gloss) ->
+        gloss?.withZeroWidthSpaces() ?: "**$word**"
+    }
+
+    return "__Gloss__:\n" +
+            glossPairs.joinToString(" ")
+}
+
+fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
+    val glossPairs = words
+        .map(String::stripPunctuation)
+        .map { word ->
+
+        val gloss = try {
+            parseWord(word.stripPunctuation(), precision, ignoreDefault)
         } catch (ex: Exception) {
             logger.error("{}", ex)
             if (precision < 3) {
-                error("A severe exception occurred during sentence parsing. Please contact the maintainers.")
-
+                error("A severe exception occurred. Please contact the maintainers.")
             } else {
                 val sw = StringWriter()
                 ex.printStackTrace(PrintWriter(sw))
@@ -111,51 +118,19 @@ private fun wordByWord(content: String, precision: Int, ignoreDefault: Boolean):
                     .joinToString("\n")
                 error(stacktrace)
             }
-        }
-        glosses += res.trim()
-    }
-    val newMessage = glosses.mapIndexed { i, s ->
-        "**${words[i]}**: " + if (s.startsWith("\u0000")) {
-            "*${s.drop(1)}*"
-        } else {
-            s
-        }
-    }.joinToString("\n", "__Gloss:__\n") + "\n"
 
-    return newMessage.withZeroWidthSpaces()
-}
+        }
+        word to gloss
+    }.map { (word, gloss) ->
 
-private fun sentenceGloss(content: String, request: String, prec: Int, ignoreDefault: Boolean): String {
-    val sentences = content.split("\\s*\\.\\s*".toRegex())
-        .asSequence()
-        .filter(String::isNotBlank)
-        .mapIndexed { i, s ->
-            if (i == 0) {
-                s.drop(request.length + 2)
-            } else {
-                s
-            }
-        }
-        .map { parseSentence(it.replace("’", "'"), prec, ignoreDefault) }
-        .map {
-            if (it[0] == "\u0000") {
-                it[0] + it[1]
-            } else {
-                it.joinToString("    ")
-            }
-        }
-        .reduce { acc, s ->
-            when {
-                acc.startsWith("\u0000") -> acc
-                s.startsWith("\u0000") -> s
-                else -> "$acc  //  $s"
-            }
-        }
-    val newMessage = "__Gloss:__\n" + if (sentences.startsWith("\u0000")) {
-        "*${sentences.drop(1)}*"
-    } else {
-        sentences
+        if (gloss.startsWith("\u0000"))
+            word to "*${gloss.drop(1)}*"
+        else
+            word to gloss.withZeroWidthSpaces()
     }
-    return newMessage.withZeroWidthSpaces()
+
+    return "__Gloss__:\n" +
+            glossPairs.joinToString("\n") { (word, gloss) -> "**$word:** $gloss" }
+
 }
 

@@ -147,6 +147,15 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
+    val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
+    if (nonIthkuil.isNotEmpty()) {
+        return error(
+            "Non-ithkuil characters detected: " +
+                    nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
+                    if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
+        )
+    }
+
     if ('-' in s) {
         return s.split('-').joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
     }
