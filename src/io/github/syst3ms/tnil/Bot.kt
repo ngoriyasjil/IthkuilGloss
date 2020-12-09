@@ -81,7 +81,7 @@ private fun wordByWord(content: String, prec: Int, ignoreDefault: Boolean): Stri
             w = w.substring(1)
         } else {
 
-            val nonIthkuil = w.filter {
+            val nonIthkuil = w.defaultForm().filter {
                 it.toString().defaultForm() !in ITHKUIL_CHARS
             }
             if (nonIthkuil.isNotEmpty()) {

@@ -123,7 +123,7 @@ fun parseSentence(s: String, precision: Int, ignoreDefault: Boolean): List<Strin
 
 fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
 
-    val initialGroups = s.splitGroups().toList()
+    val initialGroups = s.substituteAll(ALLOGRAPHS).splitGroups().toList()
     if (initialGroups.isEmpty()) {
         return error("Empty word")
     }

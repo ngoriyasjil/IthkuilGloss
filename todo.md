@@ -9,3 +9,5 @@
  - Implement suppletive adjunct forms into PRAs (potentially eliminate them as a distinct class?)
  - ~~Rewrite parseAffixual and parseAffixualScoping~~
  - Add in Vk glottalization
+ - Help testing with "glossesTo" infix function
+ - Separate determining the type of a word into a separate function (for testability)
