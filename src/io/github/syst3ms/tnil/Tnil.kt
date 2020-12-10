@@ -39,7 +39,9 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     }
 
     if ('-' in s) {
-        return s.split('-').joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
+        return s.split('-').takeIf { it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE } }
+        ?.joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
+            ?: return error("Non-formatives hyphenated")
     }
 
     val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
@@ -94,9 +96,11 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         }
     } else null
 
-    val vv = if (index == 0 && groups[0].isConsonant()) "a" else {
-        groups[index].also { index++ }
-    }.defaultForm()
+    val (vv, slotVFilled) = if (index == 0 && groups[0].isConsonant()) {
+        "a" to false
+    } else {
+        unGlottalVowel(groups[index])?.also { index++ } ?: return error("Unknown Vv vowel: ${groups[index]}")
+    }
 
     var rootMode = "root"
 
@@ -159,11 +163,15 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             csVxAffixes.add(Affix(vx, groups[index]))
             indexV += 2
 
+            if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
+
             if (glottal && (groups.lastIndex >= indexV)) break
         }
         index = indexV
 
     }
+
+    if (slotVFilled && csVxAffixes.size < 2) return error("Unexpectedly few slot V affixes")
 
     if (csVxAffixes.size == 1) csVxAffixes[0].canBePraShortcut = true
 
@@ -202,6 +210,9 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
             if (glottalVowel || glottalCs) {
                 vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
+
+                if (slotVFilled && vxCsAffixes.size < 2) return error("Unexpectedly few slot V affixes")
+                else if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
             }
         }
     }
@@ -245,14 +256,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     }
     index++
 
-    val cyMarksMood = (stress == 0) || (stress == -1) || (stress == 2 && slotVIII != null)
-
-    val slotX = if (concatenation == null && index < groups.size) {
-        parseCbCy(groups[index], cyMarksMood)
-    } else null
-
     val slotList: List<Precision> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
-            csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX, slotX)
+            csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX)
 
     return slotList.glossSlots(precision, ignoreDefault)
 
@@ -275,7 +280,6 @@ fun parseAffixVr(vr: String): Slot? {
     return Slot(degree, specification)
 }
 
-@Suppress("UNCHECKED_CAST")
 fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
 
     var index = 0

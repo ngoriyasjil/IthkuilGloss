@@ -549,7 +549,7 @@ enum class Bias(override val short: String, val cb: String) : NoDefault {
     IRONIC("IRO", "mmž"),
     PRESUMPTIVE("PSM", "nnţ"),
     GRATIFICATIVE("GRT", "mmh"),
-    SATIATIVE("SAT", "ff"),
+    SATIATIVE("SAT", "ļţ"),
     PERPLEXIVE("PPX", "llh"),
     CONTEMPLATIVE("CTV", "gvv"),
     PROPITIOUS("PPT", "mll"),
