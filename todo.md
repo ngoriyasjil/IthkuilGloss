@@ -4,7 +4,7 @@
 
 - ~~Bias & Cy eliminated~~
 - ~~Glottal stop in Vv for more than one slot V affix~~
-- Ca gemination simplified
+- ~~Ca gemination simplified~~
 - RCP valence value changed
 - Initial h- for degree 4 affixual adjuncts
 - Degree zero added to Cs roots
@@ -23,7 +23,7 @@
     - Move stress parsing from individual word types to general word level
     - Reimplement Mood/Case-Scope distinction in modular adjuncts
  - ~~Rewrite parseAffixual and parseAffixualScoping~~
- - Help testing with "glossesTo" infix function
+ - ~~Help testing with "glossesTo" infix function~~
  - ~~Separate determining the type of a word into a separate function (for testability)~~
  - Create an actual error type instead of mucking about with null characters
 

@@ -14,7 +14,7 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
             || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
     -> WordType.COMBINATION_PRA
 
-    groups.size in 2..3 && groups[1].isConsonant() && !groups[1].isModular()
+    groups.size in 2..3 && groups[1].isConsonant() && groups[1].isModular()
             || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> WordType.AFFIXUAL_ADJUNCT
 
     groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
@@ -150,22 +150,24 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     if (shortcut == null) {
         var indexV = index
         while (true) {
-            if (indexV + 1 > groups.lastIndex || groups[indexV] in CN_CONSONANTS || groups[indexV] == "-") {
+            if (groups.getOrNull(indexV)?.isGeminateCa() == true) {
+                break
+            } else if (indexV + 1 > groups.lastIndex || groups[indexV] in CN_CONSONANTS || groups[indexV] == "-") {
                 csVxAffixes.clear()
                 indexV = index
                 break
-            } else if (groups[indexV].isGlottalCa()) {
-                break
             }
 
-            val (vx, glottal) = unGlottalVowel(groups[indexV+1]) ?: return error("Unknown vowelform: ${groups[indexV+1]} (slot V)")
+            val vx = groups[indexV + 1]
 
-            csVxAffixes.add(Affix(vx, groups[index]))
+            if (!vx.isVowel()) return error("Unknown vowelform: $vx")
+
+            if (vx.length == 3 && vx[1] == '\'' && indexV + 1 != groups.lastIndex) return error("Unexpected glottal stop in slot V")
+
+            csVxAffixes.add(Affix(cs = groups[indexV], vx = vx))
             indexV += 2
 
             if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
-
-            if (glottal && (groups.lastIndex >= indexV)) break
         }
         index = indexV
 
@@ -179,10 +181,10 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     var cnInVI = false
 
     val slotVI = if (shortcut == null) {
-        val ca = if (groups.getOrNull(index)?.isGlottalCa()
+        val ca = if (groups.getOrNull(index)?.isGeminateCa()
                         ?: return error("Formative ended before Ca")) {
             if (csVxAffixes.isNotEmpty()) {
-                groups[index].unGlottalCa()
+                groups[index].unGeminateCa()
             } else return error("Unexpected glottal Ca: ${groups[index]}")
         } else groups[index]
 
@@ -255,6 +257,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         }
     }
     index++
+
+    if (groups.lastIndex >= index) return error("Formative continued unexpectedly: ${groups[index]}")
 
     val slotList: List<Precision> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX)

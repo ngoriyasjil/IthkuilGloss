@@ -11,10 +11,12 @@ val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
 
 fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
 
-fun String.isVowel() = when (length) {
-    1, 2 -> all { it.toString().defaultForm() in VOWELS }
-    3 -> this[1] == '\'' && this[0].toString().defaultForm() in VOWELS && this[2].toString().defaultForm() in VOWELS
-    else -> false
+fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
+    when (length) {
+        1, 2 -> all { it.toString() in VOWELS }
+        3 -> this[1] == '\'' && this[0].toString() in VOWELS && this[2].toString() in VOWELS
+        else -> false
+    }
 }
 
 fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }

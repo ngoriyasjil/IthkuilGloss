@@ -402,22 +402,27 @@ fun parsePersonalReference(s: String) : Slot? {
 }
 
 
-fun String.isGlottalCa(): Boolean = when {
-    startsWith("'") -> true
-    length == 2 && this[0] == this[1] && (this[0] in STOPS || this[0] in AFFRICATES)  -> true
-    length > 2 && this[1] == this[2] && this[0] in setOf('p', 't', 'k') && this[1] in FRICATIVES -> true
-    length > 2 && this[0] == this[1] && this[0] in setOf('r','l') union NASALS union FRICATIVES union AFFRICATES -> true
+val UNGEMINATE_MAP = mapOf(
+    "bd" to "pt", "bg" to "pk", "gd" to "kt", "gb" to "kp", "dg" to "tk", "db" to "tp",
+    "bzm" to "pm", "bzn" to "pn", "gzm" to "km", "gzn" to "kn",  "ẓm" to "tm", "ẓn" to "tn",
+    "bžm" to "bm", "bžn" to "bn", "gžm" to "gm", "gžn" to "gn",  "jm" to "dm", "jn" to "dn",
+)
+
+fun String.isGeminateCa(): Boolean = when {
+    withIndex().any { (index, ch) ->  ch == getOrNull(index + 1) } -> true
+    length > 1 && this[0] in setOf('ẓ', 'j') -> true
+    this in UNGEMINATE_MAP.keys -> true
     else -> false
 }
 
 
-
-fun String.unGlottalCa(): String = when {
-    startsWith("'") -> this.drop(1)
-    length == 2 && this[0] == this[1] && (this[0] in STOPS || this[0] in AFFRICATES)  -> this.drop(1)
-    length > 2 && this[1] == this[2] && this[0] in setOf('p', 't', 'k') && this[1] in FRICATIVES -> this[0] + this.drop(2)
-    this in UNGLOTTAL_MAP.keys -> UNGLOTTAL_MAP[this] ?: this
-    length > 2 && this[0] == this[1] && this[0] in setOf('r','l') union NASALS union FRICATIVES union AFFRICATES -> this.drop(1)
+fun String.unGeminateCa(): String = when {
+    this in UNGEMINATE_MAP.keys -> UNGEMINATE_MAP[this] ?: this
+    length > 1 && this[0]  == 'ẓ' -> replaceFirst('ẓ','c')
+    length > 1 && this[0] == 'j' -> replaceFirst('j','č')
+    withIndex().any { (index, letter) ->  letter == getOrNull(index + 1) } -> mapIndexed {
+            index, letter -> if (letter == getOrNull(index + 1)) "" else letter
+    }.joinToString("")
     else -> this
 }
 
