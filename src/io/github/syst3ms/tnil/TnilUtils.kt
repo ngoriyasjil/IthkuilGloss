@@ -21,8 +21,6 @@ fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
 
 fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
 
-fun String.isModular() = this matches "'?([wy]|h(?:lw)?.*)".toRegex()
-
 val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'ô', 'ó', 'û', 'ú')
 
 fun String.hasStress() = this[0] in STRESSED_VOWELS

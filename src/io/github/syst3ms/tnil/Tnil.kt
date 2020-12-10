@@ -14,8 +14,8 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
             || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
     -> WordType.COMBINATION_PRA
 
-    groups.size in 2..3 && groups[1].isConsonant() && groups[1].isModular()
-            || groups.size in 4..5 && groups[1] == "y" && !groups[3].isModular() -> WordType.AFFIXUAL_ADJUNCT
+    groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS
+            || groups.size in 4..5 && groups[1] == "y" && groups[3] !in CN_CONSONANTS -> WordType.AFFIXUAL_ADJUNCT
 
     groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
             || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> WordType.AFFIXUAL_SCOPING_ADJUNCT
