@@ -15,7 +15,7 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     -> WordType.COMBINATION_PRA
 
     groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS
-            || groups.size in 4..5 && groups[1] == "y" && groups[3] !in CN_CONSONANTS -> WordType.AFFIXUAL_ADJUNCT
+            || groups.size in 3..4 && groups[0] == "h" && groups[1] == "ë" -> WordType.AFFIXUAL_ADJUNCT
 
     groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
             || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> WordType.AFFIXUAL_SCOPING_ADJUNCT
@@ -39,14 +39,19 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     }
 
     if ('-' in s) {
-        return s.split('-').takeIf { it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE } }
-        ?.joinToString(CONCATENATION_SEPARATOR) { parseWord(it, precision, ignoreDefault) }
+        return s.split('-')
+            .takeIf {
+                it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE }
+            }
+            ?.joinToString(CONCATENATION_SEPARATOR) {
+                parseWord(it, precision, ignoreDefault)
+            }
             ?: return error("Non-formatives hyphenated")
     }
 
     val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
 
-    val (groups, sentencePrefix) = stripSentencePrefix(s.defaultForm().splitGroups()) ?: return error("Empty word")
+    val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return error("Empty word")
 
     val ssgloss = when (precision) {
         0 -> "[.]-"
@@ -458,12 +463,22 @@ fun parseAffixual(groups: Array<String>,
                   precision: Int,
                   ignoreDefault: Boolean,
                   stress: Int) : String {
-    val concatOnly = if (stress == 0) PrecisionString("{concatenated formative only}", "{concat.}") else null
+    val concatOnly = if (stress == 0)
+        PrecisionString("{concatenated formative only}", "{concat.}")
+    else null
 
     if (groups.size < 2) return error("Affixual adjunct too short: ${groups.size}")
 
-    val affix = Affix(groups[0], groups[1])
-    val scope = affixAdjunctScope(groups.getOrNull(2), ignoreDefault)
+    var index = 0
+
+    when {
+        groups[0] == "h" && groups[1] == "ë" -> index++
+        groups[0] == "h" && groups[1] != "ë" -> return error("Non-degree 4 affixual adjuncts prefixed with h")
+        groups[0] == "ë" -> return error("Degree 4 affixual adjunct not prefixed with h")
+    }
+
+    val affix = Affix(groups[index], groups[index+1])
+    val scope = affixAdjunctScope(groups.getOrNull(index+2), ignoreDefault)
 
     return listOfNotNull(affix, scope, concatOnly).glossSlots(precision, ignoreDefault)
 

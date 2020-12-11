@@ -5,12 +5,18 @@
 - ~~Bias & Cy eliminated~~
 - ~~Glottal stop in Vv for more than one slot V affix~~
 - ~~Ca gemination simplified~~
-- RCP valence value changed
-- Initial h- for degree 4 affixual adjuncts
+- ~~RCP valence value changed~~
+- ~~Initial h- for degree 4 affixual adjuncts~~
 - Degree zero added to Cs roots
 - New Mood/Case-Scope adjunct form, Phrasal adjunct changed
 - More personal reference shortcuts
 - ~~Satiative Bias changed~~
+
+**v0.18.1**
+
+- Series 5-8 removed
+- Vc glottal stop can be moved to anywhere in the word after slot II
+- Case affix values changed
 
  **General to-dos**
 
@@ -32,3 +38,4 @@
 
 - External Juncture checker
 - Pronunciation guide
+- Explicit case-accessor definitions

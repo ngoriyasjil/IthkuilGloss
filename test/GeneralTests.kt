@@ -6,6 +6,8 @@ infix fun String.glossesTo(gloss: String) = assertEquals(gloss, parseWord(this, 
 
 infix fun String.hasStress(stress: Int) = assertEquals(stress, splitGroups().findStress(), this)
 
+infix fun String.mustBe(s: String) = assertEquals(s, this, this)
+
 class TestTest {
 
   @Test
@@ -37,6 +39,30 @@ class TestTest {
   @Test
   fun wordTypeTest() {
     "muyüs" glossesTo "ma-IND-DAT-2m"
+  }
+
+  @Test
+  fun affixualAdjunctTest() {
+    "hën" glossesTo "**n**/4₁"
+    "hëní" glossesTo "**n**/4₁-{VIISub}-{concat.}"
+  }
+
+  @Test
+  fun caUnGeminationTest() {
+    "pp".unGeminateCa() mustBe "p"
+    "ggw".unGeminateCa() mustBe "gw"
+    "mmtw".unGeminateCa() mustBe "mtw"
+    "tççkl".unGeminateCa() mustBe "tçkl"
+    "ẓw".unGeminateCa() mustBe "cw"
+    "jtw".unGeminateCa() mustBe "čtw"
+    "gd".unGeminateCa() mustBe "kt"
+    "jn".unGeminateCa() mustBe "dn"
+  }
+
+  @Test
+  fun vnCnTest() {
+    "aiha" glossesTo "RCP"
+    "ëha" glossesTo error("Unknown VnCn: ëh")
   }
 
 }

@@ -308,8 +308,8 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
 
     val vnValue: Precision = if (pattern == 1) {
         when (series) {
-            1 -> Valence.byForm(form)
-            2 -> Phase.byForm(form)
+            1 -> if (form != 4) Valence.byForm(form) else return null
+            2 -> if (form != 1) Phase.byForm(form) else Valence.RECIPROCAL
             3 -> EffectAndPerson.byForm(form)
             4 -> Level.byForm(form)
             else -> return null
@@ -571,14 +571,13 @@ fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignore
 
 }
 
-fun stripSentencePrefix(groups: Array<String>) : Pair<Array<String>, Boolean>? {
+fun Array<String>.stripSentencePrefix(): Pair<Array<String>, Boolean>? {
     return when {
-        groups.isEmpty() -> return null
-        groups.size in 5..6 && groups.take(4).joinToString("") == "çëhë" -> groups.drop(3) // Single-affix adjunct, degree 4
-        groups.size >= 4 && groups[0] == "ç" && groups[1] == "ë" -> groups.drop(2)
-        groups[0] == "ç" && groups[1].isVowel() -> groups.drop(1)
-        groups[0] == "çw" -> listOf("w") + groups.drop(1)
-        groups[0] == "çç" -> listOf("y") + groups.drop(1)
-        else -> return groups to false
+        isEmpty() -> return null
+        size >= 4 && this[0] == "ç" && this[1] == "ë" -> drop(2)
+        this[0] == "ç" && this[1].isVowel() -> drop(1)
+        this[0] == "çw" -> listOf("w") + drop(1)
+        this[0] == "çç" -> listOf("y") + drop(1)
+        else -> return this to false
     }.toTypedArray() to true
 }
