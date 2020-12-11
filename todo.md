@@ -7,7 +7,7 @@
 - ~~Ca gemination simplified~~
 - ~~RCP valence value changed~~
 - ~~Initial h- for degree 4 affixual adjuncts~~
-- Degree zero added to Cs roots
+- ~~Degree zero added to Cs roots~~
 - New Mood/Case-Scope adjunct form, Phrasal adjunct changed
 - More personal reference shortcuts
 - ~~Satiative Bias changed~~

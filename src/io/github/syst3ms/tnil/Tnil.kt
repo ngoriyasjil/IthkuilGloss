@@ -128,7 +128,10 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             rootGloss
         }
         "affix" -> {
-            val vx = bySeriesAndForm(1, seriesAndForm(groups[index+1]).second) ?: return error("Unknown Cs-root Vr value: ${groups[index+1]}")
+            val vx = bySeriesAndForm(1, seriesAndForm(groups[index+1]).second)
+                ?: if (groups[index+1] in setOf("üa", "üe", "üo", "üö")) { "üa" }
+                else
+                    return error("Unknown Cs-root Vr value: ${groups[index+1]}")
             parseAffix(groups[index], vx, precision, ignoreDefault, noType = true)
         }
         "reference" -> {
@@ -274,7 +277,20 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
 fun parseAffixVr(vr: String): Slot? {
     val (series, form) = seriesAndForm(vr)
-    if (form !in 1..9) return null
+        .let {
+            if (it == Pair(-1,-1)) {
+                val zeroSeries = when (vr) {
+                    "üa" -> 1
+                    "üe" -> 2
+                    "üo" -> 3
+                    "üö" -> 4
+                    else -> return null
+                }
+                 zeroSeries to 0
+            } else it
+        }
+
+    if (form !in 0..9) return null
 
     val degree = PrecisionString("degree $form", "D$form")
 

@@ -65,4 +65,9 @@ class TestTest {
     "ëha" glossesTo error("Unknown VnCn: ëh")
   }
 
+  @Test
+  fun csRootTest() {
+    "öëgüöl" glossesTo "CPT/DYN-**g**/0-D0/OBJ"
+  }
+
 }
