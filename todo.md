@@ -16,7 +16,7 @@
 
 - Series 5-8 removed
 - Vc glottal stop can be moved to anywhere in the word after slot II
-- Case affix values changed
+- ~~Case affix values changed~~
 
 **Language to-dos**
 

@@ -69,26 +69,21 @@ fun parseAffix(cs: String, vx: String,
 
     if (cs in CASE_AFFIXES) {
         val vc = when (cs) {
-            "ll", "lw", "sw", "zw", "šw" -> vx
-            "rr", "ly", "sy", "zy", "šy" -> glottalVowel(vx)?.first ?: return "(Unknown vowel: $vx)"
+            "sw", "zw", "šw", "žw", "lw" -> vx
+            "sy", "zy", "šy", "žy", "ly" -> glottalVowel(vx)?.first ?: return "(Unknown vowel: $vx)"
             else -> return "(Unknown case affix form)"
         }
 
-        val s = if (precision > 1) when (cs) {
-            "ll", "rr", "lw", "ly" -> "case accessor:"
-            "sw", "sy", "zw", "zy" -> "inverse accessor:"
-            "šw", "šy" -> "case-stacking:"
-            else -> return "(Unknown case affix form)"
-        } else when (cs) {
-            "ll", "rr", "lw", "ly" -> "acc:"
-            "sw", "sy", "zw", "zy" -> "ia:"
-            "šw", "šy" -> ""
+        val s = when (cs) {
+            "sw", "sy", "zw", "zy" -> if (precision > 1) "case accessor:" else "acc:"
+            "šw", "šy", "žw", "žy" -> if (precision > 1) "inverse accessor:" else "ia:"
+            "lw", "ly" -> if (precision > 1) "case-stacking:" else ""
             else -> return "(Unknown case affix form)"
         }
 
         val type = when (cs) {
-            "ll", "rr", "sw", "sy" -> "\u2081"
-            "lw", "ly", "zw", "zy" -> "\u2082"
+            "sw", "sy", "šw", "šy" -> "\u2081"
+            "zw", "zy", "žw", "žy" -> "\u2082"
             else -> ""
         }
 
