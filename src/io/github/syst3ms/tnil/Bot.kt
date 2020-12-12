@@ -106,7 +106,7 @@ fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): Str
         } catch (ex: Exception) {
             logger.error("{}", ex)
             if (precision < 3) {
-                error("A severe exception occurred. Please contact the maintainers.")
+                Error("A severe exception occurred. Please contact the maintainers.")
             } else {
                 val sw = StringWriter()
                 ex.printStackTrace(PrintWriter(sw))
@@ -114,7 +114,7 @@ fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): Str
                     .split("\n")
                     .take(10)
                     .joinToString("\n")
-                error(stacktrace)
+                Error(stacktrace)
             }
 
         }

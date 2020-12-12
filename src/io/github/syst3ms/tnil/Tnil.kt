@@ -29,11 +29,11 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     else -> WordType.FORMATIVE
 }
 
-fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
+fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : GlossOutcome {
 
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
-        return error(
+        return Error(
             "Non-ithkuil characters detected: " +
                     nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
                     if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
@@ -48,12 +48,12 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
             ?.joinToString(CONCATENATION_SEPARATOR) {
                 parseWord(it, precision, ignoreDefault)
             }
-            ?: return error("Non-formatives hyphenated")
+            ?: return Error("Non-formatives hyphenated")
     }
 
     val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
 
-    val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return error("Empty word")
+    val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
     val ssgloss = when (precision) {
         0 -> "[.]-"
@@ -62,8 +62,8 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         else -> ""
     }
 
-    return (if (sentencePrefix) ssgloss else "") +  when (wordTypeOf(groups)) {
-        WordType.BIAS_ADJUNCT -> Bias.byGroup(groups[0])?.toString(precision) ?: error("Unknown bias: ${groups[0]}")
+    return (if (sentencePrefix) ssgloss else "") + when (wordTypeOf(groups)) {
+        WordType.BIAS_ADJUNCT -> Bias.byGroup(groups[0])?.toString(precision) ?: Error("Unknown bias: ${groups[0]}")
 
         WordType.SUPPLETIVE_ADJUNCT -> {
             val v = groups[1]
@@ -73,7 +73,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
         WordType.MOOD_CASESCOPE_ADJUNCT -> parseMoodCaseScopeAdjunct(groups[1], precision)
 
         WordType.REGISTER_ADJUNCT -> {
-            val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
+            val (register, initial) = Register.byVowel(groups.last()) ?: return Error("Unknown register adjunct: $s")
             return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
         }
         WordType.MODULAR_ADJUNCT -> parseModular(groups, precision, ignoreDefault, stress)
@@ -90,7 +90,7 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
     }
 }
 
-fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
+fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : GlossOutcome {
 
     var index = 0
 
@@ -109,7 +109,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     val (vv, slotVFilled) = if (index == 0 && groups[0].isConsonant()) {
         "a" to false
     } else {
-        unGlottalVowel(groups[index])?.also { index++ } ?: return error("Unknown Vv vowel: ${groups[index]}")
+        unGlottalVowel(groups[index])?.also { index++ } ?: return Error("Unknown Vv vowel: ${groups[index]}")
     }
 
     var rootMode = "root"
@@ -118,44 +118,42 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         when (vv) {
             "ëi", "eë", "ëu", "öë" -> {
                 rootMode = "affix"
-                if (shortcut != null) return error("Shortcuts can't be used with a Cs-root")
+                if (shortcut != null) return Error("Shortcuts can't be used with a Cs-root")
             }
             "eä", "öä" -> rootMode = "reference"
         }
-        parseSpecialVv(vv, shortcut) ?: return error("Unknown Vv value: $vv")
-    } else parseVv(vv, shortcut) ?: return error("Unknown Vv value: $vv")
+        parseSpecialVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
+    } else parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
 
-    val root = when (rootMode) {
+    val root : Glossable = when (rootMode) {
         "root" -> {
-            val stem = slotII.getStem() ?: return error("No stem found: $vv")
-            val (rootGloss, stemUsed) = parseRoot(groups[index], precision, stem)
-            if (stemUsed) slotII.stemUsed = true
-            rootGloss
+            val stem = slotII.getStem() ?: return Error("No stem found: $vv")
+            Root(groups[index], stem).also { slotII.stemAvailable = it.hasStem }
         }
         "affix" -> {
-            val vx = bySeriesAndForm(1, seriesAndForm(groups[index+1]).second)
-                ?: if (groups[index+1] in setOf("üa", "üe", "üo", "üö")) { "üa" }
-                else
-                    return error("Unknown Cs-root Vr value: ${groups[index+1]}")
-            parseAffix(groups[index], vx, precision, ignoreDefault, noType = true)
+            val vx = bySeriesAndForm(1, seriesAndForm(groups[index + 1]).second)
+                ?: if (groups[index + 1] in setOf("üa", "üe", "üo", "üö")) {
+                    "üa"
+                } else
+                    return Error("Unknown Cs-root Vr value: ${groups[index + 1]}")
+            Affix(groups[index], vx, noType = true)
         }
         "reference" -> {
-            (parseFullReferent(groups[index], precision, ignoreDefault) ?: "**${groups[index]}**")
+            parseFullReferent(groups[index], precision, ignoreDefault) ?: return Error("Unknown personal reference cluster: ${groups[index]}")
         }
-        else -> return error("Unable to parse root: ${groups[index]}, $rootMode")
+        else -> return Error("Unable to parse root: ${groups[index]}, $rootMode")
     }
     index++
 
-
-
     val vr = if (shortcut != null) "a" else {
-        groups.getOrNull(index).also { index++ } ?: return error("Formative ended unexpectedly: ${groups.joinToString("")}")
+        groups.getOrNull(index).also { index++ }
+            ?: return Error("Formative ended unexpectedly: ${groups.joinToString("")}")
     }
 
     val slotIV = when (rootMode) {
-        "root", "reference" -> parseVr(vr) ?: return error("Unknown Vr value: $vr")
-        "affix" -> parseAffixVr(vr) ?: return error("Unknown Cs-root Vr value: $vr")
-        else -> return error("A bug has occured: Unknown rootmode: $rootMode")
+        "root", "reference" -> parseVr(vr) ?: return Error("Unknown Vr value: $vr")
+        "affix" -> parseAffixVr(vr) ?: return Error("Unknown Cs-root Vr value: $vr")
+        else -> return Error("A bug has occured: Unknown rootmode: $rootMode")
     }
 
     val csVxAffixes: MutableList<Affix> = mutableListOf()
@@ -173,9 +171,9 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
             val vx = groups[indexV + 1]
 
-            if (!vx.isVowel()) return error("Unknown vowelform: $vx")
+            if (!vx.isVowel()) return Error("Unknown vowelform: $vx")
 
-            if (vx.length == 3 && vx[1] == '\'' && indexV + 1 != groups.lastIndex) return error("Unexpected glottal stop in slot V")
+            if (vx.length == 3 && vx[1] == '\'' && indexV + 1 != groups.lastIndex) return Error("Unexpected glottal stop in slot V")
 
             csVxAffixes.add(Affix(cs = groups[indexV], vx = vx))
             indexV += 2
@@ -187,8 +185,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     }
 
-    if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
-    if (slotVFilled && csVxAffixes.size < 2) return error("Unexpectedly few slot V affixes")
+    if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+    if (slotVFilled && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
 
     if (csVxAffixes.size == 1) csVxAffixes[0].canBePraShortcut = true
 
@@ -197,14 +195,15 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val slotVI = if (shortcut == null) {
         val ca = if (groups.getOrNull(index)?.isGeminateCa()
-                        ?: return error("Formative ended before Ca")) {
+                ?: return Error("Formative ended before Ca")
+        ) {
             if (csVxAffixes.isNotEmpty()) {
                 groups[index].unGeminateCa()
-            } else return error("Unexpected glottal Ca: ${groups[index]}")
+            } else return Error("Unexpected glottal Ca: ${groups[index]}")
         } else groups[index]
 
         if (ca !in setOf("hl", "hr", "hm", "hn", "hň")) {
-            parseCa(ca).also { index++ } ?: return error("Unknown Ca value: $ca")
+            parseCa(ca).also { index++ } ?: return Error("Unknown Ca value: $ca")
         } else {
             parseCa("l")!!.also{ cnInVI = true }
         }
@@ -218,7 +217,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
                 break
             }
 
-            val (vx, glottalVowel) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
+            val (vx, glottalVowel) = unGlottalVowel(groups[index])
+                ?: return Error("Unknown vowelform: ${groups[index]} (slot VII)")
 
             val glottalCs = groups[index+1].startsWith("'")
 
@@ -228,8 +228,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             if (glottalVowel || glottalCs) {
                 vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
 
-                if (slotVFilled && vxCsAffixes.size < 2) return error("Unexpectedly few slot V affixes")
-                else if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
+                if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+                else if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
             }
         }
     }
@@ -240,10 +240,12 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val slotVIII: Slot? = when {
         cnInVI -> {
-            parseVnCn("a", groups[index], marksMood).also { index++ } ?: return error("Unknown Cn value in Ca: ${groups[index]}")
+            parseVnCn("a", groups[index], marksMood).also { index++ }
+                ?: return Error("Unknown Cn value in Ca: ${groups[index]}")
         }
         groups.getOrNull(index+1) in CN_CONSONANTS -> {
-            parseVnCn(groups[index], groups[index+1], marksMood).also { index += 2 } ?: return error("Unknown VnCn value: ${groups[index] + groups[index+1]}")
+            parseVnCn(groups[index], groups[index + 1], marksMood).also { index += 2 }
+                ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
         else -> null
     }
@@ -253,32 +255,32 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val slotIX : Glossable = if (concatenation == null) {
         when (stress) {
-            0, -1 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
-            1, 2 -> Case.byVowel(vcVk) ?: return error("Unknown Vc form $vcVk")
-            else -> return error("Unknown stress: $stress from ultimate")
+            0, -1 -> parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
+            1, 2 -> Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
+            else -> return Error("Unknown stress: $stress from ultimate")
         }
     } else {
         when (stress) {
-            1 -> Case.byVowel(vcVk) ?: return error("Unknown Vf form $vcVk (penultimate stress)")
+            1 -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
             0 -> {
                 val glottalified = when (vcVk.length) {
                     1 -> "$vcVk'$vcVk"
                     2 -> "${vcVk[0]}'${vcVk[1]}"
-                    else -> return error("Vf form is too long: $vcVk")
+                    else -> return Error("Vf form is too long: $vcVk")
                 }
-                Case.byVowel(glottalified) ?: return error("Unknown Vf form $vcVk (ultimate stress)")
+                Case.byVowel(glottalified) ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
             }
-            else -> return error("Unknown stress for concatenated formative: $stress from ultimate")
+            else -> return Error("Unknown stress for concatenated formative: $stress from ultimate")
         }
     }
     index++
 
-    if (groups.lastIndex >= index) return error("Formative continued unexpectedly: ${groups[index]}")
+    if (groups.lastIndex >= index) return Error("Formative continued unexpectedly: ${groups[index]}")
 
     val slotList: List<Glossable> = listOfNotNull(relation, concatenation, slotII, GlossString(root), slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX)
 
-    return slotList.glossSlots(precision, ignoreDefault)
+    return Gloss(*slotList.toTypedArray())
 
 }
 
@@ -327,17 +329,21 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
     val midSlotList : MutableList<Slot> = mutableListOf()
 
     while (groups.size > index + 2) {
-        midSlotList.add(parseVnCn(groups[index], groups[index+1], false) ?: return error("Unknown VnCn: ${groups[index]}${groups[index+1]}"))
+        midSlotList.add(
+            parseVnCn(groups[index], groups[index + 1], false)
+                ?: return Error("Unknown VnCn: ${groups[index]}${groups[index + 1]}")
+        )
         index += 2
     }
 
-    if (midSlotList.size > 3) return error("Too many (>3) middle slots in modular adjunct: ${midSlotList.size}")
+    if (midSlotList.size > 3) return Error("Too many (>3) middle slots in modular adjunct: ${midSlotList.size}")
 
     val slot5 = when {
-        midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return error("Unknown aspect: ${groups[index]}")
-        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true) ?: return error("Unknown non-aspect Vn: ${groups[index]}")
-        stress == 0 -> parseVh(groups[index]) ?: return error("Unknown Vh: ${groups[index]}")
-        else -> return error("Unknown stress on modular adjunct: $stress from ultimate")
+        midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return Error("Unknown aspect: ${groups[index]}")
+        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true)
+            ?: return Error("Unknown non-aspect Vn: ${groups[index]}")
+        stress == 0 -> parseVh(groups[index]) ?: return Error("Unknown Vh: ${groups[index]}")
+        else -> return Error("Unknown stress on modular adjunct: $stress from ultimate")
     }
 
     return listOfNotNull(slot1, *midSlotList.toTypedArray(), slot5).glossSlots(precision, ignoreDefault)
@@ -347,40 +353,45 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
 fun parsePRA(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : String {
     val essence = (if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL).toString(precision, ignoreDefault)
     val c1 = groups
-            .takeWhile { it !in setOf("w", "y") }
-            .filter { it != "ë"}
-            .dropLast(1)
-            .takeIf { it.size <= 6 }
-            ?.joinToString("") ?: return error("Too many (>3) initial ë-separated consonants")
-    val refA = parseFullReferent(c1, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c1")
+        .takeWhile { it !in setOf("w", "y") }
+        .filter { it != "ë" }
+        .dropLast(1)
+        .takeIf { it.size <= 6 }
+        ?.joinToString("") ?: return Error("Too many (>3) initial ë-separated consonants")
+    val refA =
+        parseFullReferent(c1, precision, ignoreDefault) ?: return Error("Unknown personal reference cluster: $c1")
     var index = (groups
             .indexOfFirst { it in setOf("w", "y") }
             .takeIf { it != -1 } ?: groups.size) - 1
 
-    val caseA = Case.byVowel(groups[index])?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
+    val caseA = Case.byVowel(groups[index])?.toString(precision, ignoreDefault)
+        ?: return Error("Unknown case: ${groups[index]}")
     index++
 
     when {
         groups.getOrNull(index) in setOf("w", "y") -> {
             index++
             val vc2 = groups.getOrNull(index) ?: return "PRA ended unexpectedly"
-            val caseB = Case.byVowel(vc2)?.toString(precision, ignoreDefault) ?: return error("Unknown case: ${groups[index]}")
+            val caseB =
+                Case.byVowel(vc2)?.toString(precision, ignoreDefault) ?: return Error("Unknown case: ${groups[index]}")
             index++
 
             val c2 = groups.getOrNull(index)
             val refB = if (c2 != null) {
-                parseFullReferent(c2, precision, ignoreDefault) ?: return error("Unknown personal reference cluster: $c2")
+                parseFullReferent(c2, precision, ignoreDefault)
+                    ?: return Error("Unknown personal reference cluster: $c2")
             } else null
 
             index++
             if (groups.getOrNull(index) == "ë") index++
 
-            if (groups.size > index) return error("PRA is too long")
+            if (groups.size > index) return Error("PRA is too long")
 
-            return listOfNotNull(refA, caseA, caseB, refB, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
+            return listOfNotNull(refA, caseA, caseB, refB, essence).filter { it.isNotEmpty() }
+                .joinToString(SLOT_SEPARATOR)
 
         }
-        groups.size > index+1 -> return error("PRA is too long")
+        groups.size > index + 1 -> return Error("PRA is too long")
 
         else -> return listOfNotNull(refA, caseA, essence).filter { it.isNotEmpty() }.joinToString(SLOT_SEPARATOR)
     }
@@ -396,18 +407,20 @@ fun parseCombinationPRA(groups: Array<String>,
 
     if (groups[0] == "ë") index++
 
-    val ref = GlossString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
+    val ref = GlossString(
+        parseFullReferent(groups[index], precision, ignoreDefault) ?: return Error("Unknown referent: ${groups[index]}")
+    )
     index++
 
     val caseA = Case.byVowel(groups[index]) ?: "Unknown case: ${groups[index]}"
     index++
 
-    val specification = when(groups[index]) {
+    val specification = when (groups[index]) {
         "x" -> Specification.BASIC
         "xx" -> Specification.CONTENTIAL
         "lx" -> Specification.CONSTITUTIVE
         "rx" -> Specification.OBJECTIVE
-        else -> return error("Unknown combination PRA specification: ${groups[index]}")
+        else -> return Error("Unknown combination PRA specification: ${groups[index]}")
     }
     index++
 
@@ -417,7 +430,8 @@ fun parseCombinationPRA(groups: Array<String>,
             break
         }
 
-        val (vx, glottal) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]} (slot VII)")
+        val (vx, glottal) = unGlottalVowel(groups[index])
+            ?: return Error("Unknown vowelform: ${groups[index]} (slot VII)")
 
         if (glottal) return "Unexpected glottal stop"
 
@@ -429,7 +443,7 @@ fun parseCombinationPRA(groups: Array<String>,
     val caseB = when (groups.getOrNull(index)?.defaultForm()) {
         "a", null -> null
         "üa" -> Case.THEMATIC
-        else -> Case.byVowel(groups[index]) ?: return error("Unknown case: ${groups[index]}")
+        else -> Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")
     }
 
     val slotList = listOfNotNull(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
@@ -452,7 +466,7 @@ fun parseAffixualScoping(groups: Array<String>,
     if (groups[0] == "ë") index++
     val firstAffix = Affix(groups[index+1], groups[index])
     index += 2
-    val scopeOfFirst = affixAdjunctScope(groups[index], ignoreDefault) ?: return error("Unknown Cz: ${groups[index]}")
+    val scopeOfFirst = affixAdjunctScope(groups[index], ignoreDefault) ?: return Error("Unknown Cz: ${groups[index]}")
     index++
 
     val vxCsAffixes : MutableList<Glossable> = mutableListOf()
@@ -460,20 +474,20 @@ fun parseAffixualScoping(groups: Array<String>,
     while (true) {
         if (index+1 > groups.lastIndex) break
 
-        val (vx, glottal) = unGlottalVowel(groups[index]) ?: return error("Unknown vowelform: ${groups[index]}")
+        val (vx, glottal) = unGlottalVowel(groups[index]) ?: return Error("Unknown vowelform: ${groups[index]}")
 
-       if (glottal) return error("Unexpected glottal stop in affixual scoping adjunct")
+        if (glottal) return Error("Unexpected glottal stop in affixual scoping adjunct")
 
         vxCsAffixes.add(Affix(vx, groups[index+1]))
         index += 2
     }
 
-    if (vxCsAffixes.isEmpty()) return error("Only one affix found in affixual scoping adjunct")
+    if (vxCsAffixes.isEmpty()) return Error("Only one affix found in affixual scoping adjunct")
 
     val vz = groups.getOrNull(index)
 
     val scopeOfRest = if (vz != null) {
-        affixAdjunctScope(vz, scopingAdjunctVowel = true) ?: return error("Unknown Vz: $vz")
+        affixAdjunctScope(vz, scopingAdjunctVowel = true) ?: return Error("Unknown Vz: $vz")
     } else null
 
     return listOfNotNull(firstAffix, scopeOfFirst, *vxCsAffixes.toTypedArray(), scopeOfRest, concatOnly)
@@ -490,14 +504,14 @@ fun parseAffixual(groups: Array<String>,
         GlossString("{concatenated formative only}", "{concat.}")
     else null
 
-    if (groups.size < 2) return error("Affixual adjunct too short: ${groups.size}")
+    if (groups.size < 2) return Error("Affixual adjunct too short: ${groups.size}")
 
     var index = 0
 
     when {
         groups[0] == "h" && groups[1] == "ë" -> index++
-        groups[0] == "h" && groups[1] != "ë" -> return error("Non-degree 4 affixual adjuncts prefixed with h")
-        groups[0] == "ë" -> return error("Degree 4 affixual adjunct not prefixed with h")
+        groups[0] == "h" && groups[1] != "ë" -> return Error("Non-degree 4 affixual adjuncts prefixed with h")
+        groups[0] == "ë" -> return Error("Degree 4 affixual adjunct not prefixed with h")
     }
 
     val affix = Affix(groups[index], groups[index+1])

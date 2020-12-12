@@ -1,5 +1,23 @@
 package io.github.syst3ms.tnil
 
+sealed class GlossOutcome
+class Error(message: String) : GlossOutcome()
+class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(), Glossable {
+    val size: Int
+        get() = slots.size
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return slots
+            .filterNotNull()
+            .map {
+                it.toString(precision, ignorable && ignoreDefault)
+            }
+            .filter(String::isNotEmpty)
+            .joinToString(SLOT_SEPARATOR)
+    }
+}
+
+
 interface Glossable {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
 }
@@ -23,7 +41,7 @@ interface NoDefault : Category {
 
 class Slot(private vararg val values: Glossable?) : Glossable {
 
-    var stemUsed = false
+    var stemAvailable = false
 
     val size: Int
         get() = values.size
@@ -33,7 +51,7 @@ class Slot(private vararg val values: Glossable?) : Glossable {
             .filterNotNull()
             .map {
                 val gloss = it.toString(precision, ignoreDefault)
-                if (stemUsed && it is Stem) "__${gloss}__" else gloss
+                if (stemAvailable && it is Stem && precision > 0) "__${gloss}__" else gloss
             }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
@@ -44,8 +62,19 @@ class Slot(private vararg val values: Glossable?) : Glossable {
     }
 }
 
-fun List<Glossable>.glossSlots(precision: Int, ignoreDefault: Boolean = false) : String {
-    return map{ it.toString(precision, ignoreDefault) }
-        .filter(String::isNotEmpty)
-        .joinToString(SLOT_SEPARATOR)
+class GlossString(
+    private val full: String,
+    private val normal: String = full,
+    private val short: String = normal,
+    private val ignorable: Boolean = false
+) : Glossable {
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return when {
+            ignorable && ignoreDefault -> ""
+            precision == 0 -> short
+            precision < 2 -> normal
+            else -> full
+        }
+    }
 }

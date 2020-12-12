@@ -59,11 +59,11 @@ class TestTest {
     "jn".unGeminateCa() mustBe "dn"
   }
 
-  @Test
-  fun vnCnTest() {
-    "aiha" glossesTo "RCP"
-    "ëha" glossesTo error("Unknown VnCn: ëh")
-  }
+    @Test
+    fun vnCnTest() {
+        "aiha" glossesTo "RCP"
+        "ëha" glossesTo Error("Unknown VnCn: ëh")
+    }
 
   @Test
   fun csRootTest() {

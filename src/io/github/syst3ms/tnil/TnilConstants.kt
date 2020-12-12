@@ -146,20 +146,7 @@ enum class WordType {
     MOOD_CASESCOPE_ADJUNCT;
 }
 
-class GlossString(
-    private val full: String,
-    private val short: String = full,
-    private val ignorable: Boolean = false
-) : Glossable {
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
-        return when {
-            ignorable && ignoreDefault -> ""
-            precision < 2 -> short
-            else -> full
-        }
-    }
-}
 
 enum class Concatenation(override val short: String) : Category {
     TYPE_ONE("T1"),

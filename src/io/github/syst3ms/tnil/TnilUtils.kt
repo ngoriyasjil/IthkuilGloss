@@ -3,8 +3,6 @@ package io.github.syst3ms.tnil
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
 
-fun error(s: String) = "\u0000" + s
-
 fun errorList(s: String) = listOf("\u0000", s)
 
 val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
@@ -96,7 +94,19 @@ fun String.splitGroups(): Array<String> {
 
 val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
 
-fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String? {
+class PersonalReferent(private vararg val referents: Slot) : Glossable {
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return when (referents.size) {
+            0 -> ""
+            1 -> referents[0].toString(precision, ignoreDefault)
+            else -> referents
+                .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
+                { it.toString(precision, ignoreDefault) }
+    }
+
+}
+
+fun parseFullReferent(s: String): PersonalReferent? {
     val refList = mutableListOf<Slot>()
     var index = 0
 
@@ -111,10 +121,7 @@ fun parseFullReferent(s: String, precision: Int, ignoreDefault: Boolean): String
     }
     return when (refList.size) {
         0 -> null
-        1 -> refList[0].toString(precision, ignoreDefault)
-        else -> refList
-                .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
-                { it.toString(precision, ignoreDefault) }
+        else -> PersonalReferent(*refList.toTypedArray())
     }
 }
 
@@ -156,7 +163,7 @@ data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) 
     }
 }
 
-data class RootData(val cr: String, val dsc: List<String>)
+data class RootData(val cr: String, val descriptions: List<String>)
 
 class SentenceParsingState(var carrier: Boolean = false,
                            var register: MutableList<Register> = mutableListOf(),

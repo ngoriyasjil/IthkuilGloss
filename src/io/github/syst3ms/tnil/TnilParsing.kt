@@ -34,22 +34,23 @@ fun glottalVowel(v: String) : Pair<String, Boolean>? {
     }
 }
 
-fun parseRoot(c: String, precision: Int, stem: Int = 0): Pair<String, Boolean> {
-    val root = rootData.find { it.cr == c.defaultForm() } ?: return "**${c.defaultForm()}**" to false
-    return if (precision > 0) {
-        var stemUsed = false
-        val d = when (val stemDsc = root.dsc[stem]) {
-            "" -> root.dsc[0]
-            else -> {
-                stemUsed = true
-                stemDsc
-            }
-        }
+class Root(private val c: String, private val stem: Int) : Glossable {
 
-        "'$d'" to stemUsed
-    } else {
-        "'${root.dsc[0]}'" to false
+
+    private val rootEntry = rootData.find { it.cr == c.defaultForm() }
+
+    val hasStem : Boolean = rootEntry?.descriptions?.get(stem) != ""
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        val root = rootEntry ?: return "**$c**"
+
+        val description = when (val stemDsc = root.descriptions[stem]) {
+            "" -> root.descriptions[0]
+            else -> stemDsc
+        }
+        return "'$description'"
     }
+
 }
 
 fun parseAffix(cs: String, vx: String,
@@ -550,7 +551,7 @@ fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): GlossSt
     return scope?.let { GlossString(it, ignorable = default) }
 }
 
-fun parseMoodCaseScopeAdjunct(v: String, precision: Int) : String {
+fun parseMoodCaseScopeAdjunct(v: String) : GlossOutcome {
     val value : Glossable = when (v) {
         "a" -> Mood.FACTUAL
         "e" -> Mood.SUBJUNCTIVE
@@ -564,25 +565,25 @@ fun parseMoodCaseScopeAdjunct(v: String, precision: Int) : String {
         "ëi" -> CaseScope.QUALIFIER
         "oi" -> CaseScope.PRECEDENT
         "ui" -> CaseScope.SUCCESSIVE
-        else -> return error("Unknown Mood/Case-Scope adjunct vowel: $v")
+        else -> return Error("Unknown Mood/Case-Scope adjunct vowel: $v")
     }
 
-    return value.toString(precision, ignoreDefault = false)
+    return Gloss(value, ignorable = false)
 }
 
-fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String {
+fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : GlossOutcome {
 
-    val type = when(typeC.defaultForm()) {
+    val type = when (typeC.defaultForm()) {
         "hl" -> GlossString("[carrier]", "[CAR]")
         "hm" -> GlossString("[quotative]", "[QUO]")
         "hn" -> GlossString("[naming]", "[NAM]")
         "hň" -> GlossString("[phrasal]", "[PHR]")
-        else -> return error("Unknown suppletive adjunct consonant: $typeC")
+        else -> return Error("Unknown suppletive adjunct consonant: $typeC")
     }
 
-    val case = Case.byVowel(caseV.defaultForm()) ?: return error("Unknown case: $caseV")
+    val case = Case.byVowel(caseV.defaultForm()) ?: return Error("Unknown case: $caseV")
 
-    return listOf(type, case).glossSlots(precision, ignoreDefault)
+    return Gloss(type, case)
 
 }
 
