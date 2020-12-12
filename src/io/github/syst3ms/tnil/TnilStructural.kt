@@ -1,10 +1,10 @@
 package io.github.syst3ms.tnil
 
-interface Precision {
+interface Glossable {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String
 }
 
-interface Category : Precision {
+interface Category : Glossable {
     val ordinal: Int
     val name: String
     val short: String
@@ -21,7 +21,7 @@ interface NoDefault : Category {
         super.toString(precision, false)
 }
 
-class Slot(private vararg val values: Precision?) : Precision {
+class Slot(private vararg val values: Glossable?) : Glossable {
 
     var stemUsed = false
 
@@ -44,7 +44,7 @@ class Slot(private vararg val values: Precision?) : Precision {
     }
 }
 
-fun List<Precision>.glossSlots(precision: Int, ignoreDefault: Boolean = false) : String {
+fun List<Glossable>.glossSlots(precision: Int, ignoreDefault: Boolean = false) : String {
     return map{ it.toString(precision, ignoreDefault) }
         .filter(String::isNotEmpty)
         .joinToString(SLOT_SEPARATOR)

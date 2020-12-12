@@ -210,7 +210,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         }
     } else null
 
-    val vxCsAffixes : MutableList<Precision> = mutableListOf()
+    val vxCsAffixes : MutableList<Glossable> = mutableListOf()
 
     if (!cnInVI) {
         while (true) {
@@ -226,7 +226,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             index += 2
 
             if (glottalVowel || glottalCs) {
-                vxCsAffixes.add(PrecisionString("{end of slot V}", "{Ca}"))
+                vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
 
                 if (slotVFilled && vxCsAffixes.size < 2) return error("Unexpectedly few slot V affixes")
                 else if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
@@ -251,7 +251,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     val vcVk = groups.getOrNull(index) ?: "a"
 
-    val slotIX : Precision = if (concatenation == null) {
+    val slotIX : Glossable = if (concatenation == null) {
         when (stress) {
             0, -1 -> parseVk(vcVk) ?: return error("Unknown Vk form $vcVk")
             1, 2 -> Case.byVowel(vcVk) ?: return error("Unknown Vc form $vcVk")
@@ -275,7 +275,7 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
 
     if (groups.lastIndex >= index) return error("Formative continued unexpectedly: ${groups[index]}")
 
-    val slotList: List<Precision> = listOfNotNull(relation, concatenation, slotII, PrecisionString(root), slotIV) +
+    val slotList: List<Glossable> = listOfNotNull(relation, concatenation, slotII, GlossString(root), slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX)
 
     return slotList.glossSlots(precision, ignoreDefault)
@@ -299,7 +299,7 @@ fun parseAffixVr(vr: String): Slot? {
 
     if (form !in 0..9) return null
 
-    val degree = PrecisionString("degree $form", "D$form")
+    val degree = GlossString("degree $form", "D$form")
 
     val specification = when (series) {
         1 -> Specification.BASIC
@@ -317,8 +317,8 @@ fun parseModular(groups: Array<String>, precision: Int, ignoreDefault: Boolean, 
     var index = 0
 
     val slot1 = when (groups[0]) {
-        "w" -> PrecisionString("{parent formative only}", "{parent}")
-        "y" -> PrecisionString("{concatenated formative only}", "{concat.}")
+        "w" -> GlossString("{parent formative only}", "{parent}")
+        "y" -> GlossString("{concatenated formative only}", "{concat.}")
         else -> null
     }
 
@@ -396,7 +396,7 @@ fun parseCombinationPRA(groups: Array<String>,
 
     if (groups[0] == "ë") index++
 
-    val ref = PrecisionString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
+    val ref = GlossString(parseFullReferent(groups[index], precision, ignoreDefault) ?: return error("Unknown referent: ${groups[index]}"))
     index++
 
     val caseA = Case.byVowel(groups[index]) ?: "Unknown case: ${groups[index]}"
@@ -411,7 +411,7 @@ fun parseCombinationPRA(groups: Array<String>,
     }
     index++
 
-    val vxCsAffixes : MutableList<Precision> = mutableListOf()
+    val vxCsAffixes : MutableList<Glossable> = mutableListOf()
     while (true) {
         if (index+1 >= groups.size || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
             break
@@ -436,8 +436,8 @@ fun parseCombinationPRA(groups: Array<String>,
 
     return slotList.map {
         if (it is List<*>) {
-            (it as List<Precision>).glossSlots(precision, ignoreDefault) // Wacky casting, beware.
-        } else (it as Precision).toString(precision, ignoreDefault) }
+            (it as List<Glossable>).glossSlots(precision, ignoreDefault) // Wacky casting, beware.
+        } else (it as Glossable).toString(precision, ignoreDefault) }
             .filter { it.isNotEmpty() }
             .joinToString(SLOT_SEPARATOR)
 
@@ -447,7 +447,7 @@ fun parseAffixualScoping(groups: Array<String>,
                          precision: Int,
                          ignoreDefault: Boolean,
                          stress: Int): String {
-    val concatOnly = if (stress == 0) PrecisionString("{concatenated formative only}","{concat.}") else null
+    val concatOnly = if (stress == 0) GlossString("{concatenated formative only}","{concat.}") else null
     var index = 0
     if (groups[0] == "ë") index++
     val firstAffix = Affix(groups[index+1], groups[index])
@@ -455,7 +455,7 @@ fun parseAffixualScoping(groups: Array<String>,
     val scopeOfFirst = affixAdjunctScope(groups[index], ignoreDefault) ?: return error("Unknown Cz: ${groups[index]}")
     index++
 
-    val vxCsAffixes : MutableList<Precision> = mutableListOf()
+    val vxCsAffixes : MutableList<Glossable> = mutableListOf()
 
     while (true) {
         if (index+1 > groups.lastIndex) break
@@ -487,7 +487,7 @@ fun parseAffixual(groups: Array<String>,
                   ignoreDefault: Boolean,
                   stress: Int) : String {
     val concatOnly = if (stress == 0)
-        PrecisionString("{concatenated formative only}", "{concat.}")
+        GlossString("{concatenated formative only}", "{concat.}")
     else null
 
     if (groups.size < 2) return error("Affixual adjunct too short: ${groups.size}")

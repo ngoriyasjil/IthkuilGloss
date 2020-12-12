@@ -122,7 +122,7 @@ val ITHKUIL_CHARS = setOf(
 class Affix(private val vx: String,
             private val cs : String,
             var canBePraShortcut: Boolean = false,
-            private val noType: Boolean = false) : Precision { //Definitely not final
+            private val noType: Boolean = false) : Glossable { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
             = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
@@ -146,11 +146,11 @@ enum class WordType {
     MOOD_CASESCOPE_ADJUNCT;
 }
 
-class PrecisionString(
+class GlossString(
     private val full: String,
     private val short: String = full,
     private val ignorable: Boolean = false
-) : Precision {
+) : Glossable {
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String {
         return when {
@@ -292,7 +292,7 @@ enum class Phase(override val short: String) : Category {
 }
 
 
-class EffectAndPerson(private val person: String?, private val effect: Effect) : Precision {
+class EffectAndPerson(private val person: String?, private val effect: Effect) : Glossable {
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String {
         return if (person != null) {

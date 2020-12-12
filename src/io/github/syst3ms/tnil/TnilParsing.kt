@@ -163,7 +163,7 @@ fun parseVv(v: String, shortcut: Shortcut?) : Slot? {
         else -> return null
     }
 
-    val additional : Precision
+    val additional : Glossable
 
     when (shortcut) {
         null -> {
@@ -225,11 +225,11 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
 
 }
 
-fun parseVh(vh: String) : PrecisionString? = when (vh.defaultForm()) {
-    "a" -> PrecisionString("{scope over formative}", "{form.}")
-    "e" -> PrecisionString("{scope over case/mood}", "{mood}")
-    "i", "u" -> PrecisionString("{scope over formative, but not adjacent adjuncts}", "{under adj.}")
-    "o" -> PrecisionString("{scope over formative and adjacent adjuncts}", "{over adj.}")
+fun parseVh(vh: String) : GlossString? = when (vh.defaultForm()) {
+    "a" -> GlossString("{scope over formative}", "{form.}")
+    "e" -> GlossString("{scope over case/mood}", "{mood}")
+    "i", "u" -> GlossString("{scope over formative, but not adjacent adjuncts}", "{under adj.}")
+    "o" -> GlossString("{scope over formative and adjacent adjuncts}", "{over adj.}")
     else -> null
 }
 
@@ -301,7 +301,7 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
 
     val (series, form) = seriesAndForm(vn)
 
-    val vnValue: Precision = if (pattern == 1) {
+    val vnValue: Glossable = if (pattern == 1) {
         when (series) {
             1 -> if (form != 4) Valence.byForm(form) else return null
             2 -> if (form != 1) Phase.byForm(form) else Valence.RECIPROCAL
@@ -313,7 +313,7 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
         Aspect.byVowel(vn) ?: return null
     }
 
-    val cnValue: Precision = if (marksMood) {
+    val cnValue: Glossable = if (marksMood) {
         when (cn) {
             "h", "w", "y" -> Mood.FACTUAL
             "hl", "hw" -> Mood.SUBJUNCTIVE
@@ -339,7 +339,7 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
 
 }
 
-fun parseCbCy(s: String, marksMood: Boolean): Precision? {
+fun parseCbCy(s: String, marksMood: Boolean): Glossable? {
     val c = s.removePrefix("'")
     val bias = Bias.byGroup(c)
     val cyValue = if (bias == null) {
@@ -533,7 +533,7 @@ fun parseCa(s: String) : Slot? {
 }
 
 
-fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): PrecisionString? {
+fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): GlossString? {
     val scope = when (s?.defaultForm()) {
         null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
         "h", "a" -> "{VDom}"
@@ -547,11 +547,11 @@ fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): Precisi
     }
     val default = (scope == "{VDom}" && !scopingAdjunctVowel) || (scope == "{same}" && scopingAdjunctVowel)
 
-    return scope?.let { PrecisionString(it, ignorable = default) }
+    return scope?.let { GlossString(it, ignorable = default) }
 }
 
 fun parseMoodCaseScopeAdjunct(v: String, precision: Int) : String {
-    val value : Precision = when (v) {
+    val value : Glossable = when (v) {
         "a" -> Mood.FACTUAL
         "e" -> Mood.SUBJUNCTIVE
         "i" -> Mood.ASSUMPTIVE
@@ -573,10 +573,10 @@ fun parseMoodCaseScopeAdjunct(v: String, precision: Int) : String {
 fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String {
 
     val type = when(typeC.defaultForm()) {
-        "hl" -> PrecisionString("[carrier]", "[CAR]")
-        "hm" -> PrecisionString("[quotative]", "[QUO]")
-        "hn" -> PrecisionString("[naming]", "[NAM]")
-        "hň" -> PrecisionString("[phrasal]", "[PHR]")
+        "hl" -> GlossString("[carrier]", "[CAR]")
+        "hm" -> GlossString("[quotative]", "[QUO]")
+        "hn" -> GlossString("[naming]", "[NAM]")
+        "hň" -> GlossString("[phrasal]", "[PHR]")
         else -> return error("Unknown suppletive adjunct consonant: $typeC")
     }
 
