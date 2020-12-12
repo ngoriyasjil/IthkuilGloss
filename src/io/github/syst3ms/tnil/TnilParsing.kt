@@ -99,7 +99,7 @@ fun parseAffix(cs: String, vx: String,
 
     var (type, degree) = seriesAndForm(vx)
 
-    if (canBePraShortcut && type == 3) {
+    if (canBePraShortcut && type == 3 || type == 4) {
         return parsePraShortcut(cs, vx, precision) ?: "(Unknown PRA shortcut)"
     }
 

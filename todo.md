@@ -9,7 +9,7 @@
 - ~~Initial h- for degree 4 affixual adjuncts~~
 - ~~Degree zero added to Cs roots~~
 - ~~New Mood/Case-Scope adjunct form, Phrasal adjunct changed~~
-- More personal reference shortcuts
+- ~~More personal reference shortcuts~~
 - ~~Satiative Bias changed~~
 
 **v0.18.1**
@@ -35,6 +35,7 @@
  - ~~Separate determining the type of a word into a separate function (for testability)~~
  - Create an actual error type instead of mucking about with null characters
  - Move actual glossing (toString) two or so levels up in the hierarchy
+ - Rootmode should really not use strings...
 
 
 **Ideas**

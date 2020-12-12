@@ -612,19 +612,35 @@ enum class Referent(override val short: String) : NoDefault {
 
 fun parsePraShortcut(c: String, v: String, precision: Int): String? {
     val (series, form) = seriesAndForm(v)
-    if (series != 3) return null
-    val case = when (form) {
-        1 -> Case.POSSESSIVE
-        2 -> Case.PROPRIETIVE
-        3 -> Case.GENITIVE
-        4 -> Case.ATTRIBUTIVE
-        5 -> Case.PRODUCTIVE
-        6 -> Case.INTERPRETIVE
-        7 -> Case.ORIGINATIVE
-        8 -> Case.COMITATIVE
-        9 -> Case.CORRELATIVE
+    val case = when (series) {
+        3 -> when (form) {
+            1 -> Case.POSSESSIVE
+            2 -> Case.PROPRIETIVE
+            3 -> Case.GENITIVE
+            4 -> Case.ATTRIBUTIVE
+            5 -> Case.PRODUCTIVE
+            6 -> Case.INTERPRETIVE
+            7 -> Case.ORIGINATIVE
+            8 -> Case.INTERDEPENDENT
+            9 -> Case.PARTITIVE
+            else -> return null
+        }
+        4 -> when (form) {
+            1 -> Case.THEMATIC
+            2 -> Case.INSTRUMENTAL
+            3 -> Case.ABSOLUTIVE
+            4 -> Case.STIMULATIVE
+            5 -> Case.AFFECTIVE
+            6 -> Case.EFFECTUATIVE
+            7 -> Case.ERGATIVE
+            8 -> Case.DATIVE
+            9 -> Case.INDUCIVE
+            else -> return null
+        }
         else -> return null
     }
+
+
     val ref = parsePersonalReference(c)?.toString(precision) ?: return null
     return "($ref-${case.toString(precision)})"
 }

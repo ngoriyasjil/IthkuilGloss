@@ -180,12 +180,14 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
             csVxAffixes.add(Affix(cs = groups[indexV], vx = vx))
             indexV += 2
 
-            if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
+
         }
+
         index = indexV
 
     }
 
+    if (!slotVFilled && csVxAffixes.size >= 2) return error("Unexpectedly many slot V affixes")
     if (slotVFilled && csVxAffixes.size < 2) return error("Unexpectedly few slot V affixes")
 
     if (csVxAffixes.size == 1) csVxAffixes[0].canBePraShortcut = true
