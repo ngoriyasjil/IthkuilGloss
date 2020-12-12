@@ -139,7 +139,8 @@ enum class WordType {
     COMBINATION_PRA,
     SUPPLETIVE_ADJUNCT,
     REGISTER_ADJUNCT,
-    BIAS_ADJUNCT;
+    BIAS_ADJUNCT,
+    MOOD_CASESCOPE_ADJUNCT;
 }
 
 class PrecisionString(

@@ -3,7 +3,9 @@ package io.github.syst3ms.tnil
 fun wordTypeOf(groups: Array<String>) : WordType = when {
     groups.size == 1 && groups[0].isConsonant() ->  WordType.BIAS_ADJUNCT
 
-    groups[0] in setOf("hl", "hm", "hn", "hr") && (groups.size == 2) -> WordType.SUPPLETIVE_ADJUNCT
+    groups[0] in setOf("hl", "hm", "hn", "hň") && (groups.size == 2) -> WordType.SUPPLETIVE_ADJUNCT
+
+    groups[0] == "hr" && (groups.size == 2) -> WordType.MOOD_CASESCOPE_ADJUNCT
 
     groups[0] == "h" && groups.size == 2 -> WordType.REGISTER_ADJUNCT
 
@@ -67,6 +69,9 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : String {
             val v = groups[1]
             parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault)
         }
+
+        WordType.MOOD_CASESCOPE_ADJUNCT -> parseMoodCaseScopeAdjunct(groups[1], precision)
+
         WordType.REGISTER_ADJUNCT -> {
             val (register, initial) = Register.byVowel(groups.last()) ?: return error("Unknown register adjunct: $s")
             return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"

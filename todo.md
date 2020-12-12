@@ -8,7 +8,7 @@
 - ~~RCP valence value changed~~
 - ~~Initial h- for degree 4 affixual adjuncts~~
 - ~~Degree zero added to Cs roots~~
-- New Mood/Case-Scope adjunct form, Phrasal adjunct changed
+- ~~New Mood/Case-Scope adjunct form, Phrasal adjunct changed~~
 - More personal reference shortcuts
 - ~~Satiative Bias changed~~
 
@@ -18,12 +18,14 @@
 - Vc glottal stop can be moved to anywhere in the word after slot II
 - Case affix values changed
 
- **General to-dos**
+**Language to-dos**
 
 - Implement absolute level
 - Add in Vk glottalization
 - Implement suppletive adjunct forms into PRAs (potentially eliminate them as a distinct class?)
  
+**Code to-dos**
+
  - ~~Create "Slot" class and make "stem used" marking sensible~~
  - Re-write sentence parsing
     - Move stress parsing from individual word types to general word level
@@ -32,6 +34,7 @@
  - ~~Help testing with "glossesTo" infix function~~
  - ~~Separate determining the type of a word into a separate function (for testability)~~
  - Create an actual error type instead of mucking about with null characters
+ - Move actual glossing (toString) two or so levels up in the hierarchy
 
 
 **Ideas**

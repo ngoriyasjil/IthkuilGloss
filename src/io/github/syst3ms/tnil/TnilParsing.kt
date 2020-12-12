@@ -555,13 +555,33 @@ fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): Precisi
     return scope?.let { PrecisionString(it, ignorable = default) }
 }
 
+fun parseMoodCaseScopeAdjunct(v: String, precision: Int) : String {
+    val value : Precision = when (v) {
+        "a" -> Mood.FACTUAL
+        "e" -> Mood.SUBJUNCTIVE
+        "i" -> Mood.ASSUMPTIVE
+        "ö" -> Mood.SPECULATIVE
+        "o" -> Mood.COUNTERFACTIVE
+        "u" -> Mood.HYPOTHETICAL
+        "ai" -> CaseScope.NATURAL
+        "ei" -> CaseScope.ANTECEDENT
+        "iu" -> CaseScope.SUBALTERN
+        "ëi" -> CaseScope.QUALIFIER
+        "oi" -> CaseScope.PRECEDENT
+        "ui" -> CaseScope.SUCCESSIVE
+        else -> return error("Unknown Mood/Case-Scope adjunct vowel: $v")
+    }
+
+    return value.toString(precision, ignoreDefault = false)
+}
+
 fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : String {
 
     val type = when(typeC.defaultForm()) {
         "hl" -> PrecisionString("[carrier]", "[CAR]")
         "hm" -> PrecisionString("[quotative]", "[QUO]")
         "hn" -> PrecisionString("[naming]", "[NAM]")
-        "hr" -> PrecisionString("[phrasal]", "[PHR]")
+        "hň" -> PrecisionString("[phrasal]", "[PHR]")
         else -> return error("Unknown suppletive adjunct consonant: $typeC")
     }
 
