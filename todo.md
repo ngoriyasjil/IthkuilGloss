@@ -33,9 +33,9 @@
  - ~~Rewrite parseAffixual and parseAffixualScoping~~
  - ~~Help testing with "glossesTo" infix function~~
  - ~~Separate determining the type of a word into a separate function (for testability)~~
- - Create an actual error type instead of mucking about with null characters
+ - ~~Create an actual error type instead of mucking about with null characters~~
  - Move actual glossing (toString) two or so levels up in the hierarchy
- - Rootmode should really not use strings...
+ - ~~Rootmode should really not use strings...~~
 
 
 **Ideas**

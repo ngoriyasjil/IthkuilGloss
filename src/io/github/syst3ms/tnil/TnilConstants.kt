@@ -128,11 +128,6 @@ class Affix(private val vx: String,
             = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
 }
 
-enum class Shortcut {
-    Y_SHORTCUT,
-    W_SHORTCUT;
-}
-
 enum class WordType {
     FORMATIVE,
     MODULAR_ADJUNCT,
@@ -146,7 +141,16 @@ enum class WordType {
     MOOD_CASESCOPE_ADJUNCT;
 }
 
+enum class RootMode {
+    ROOT,
+    AFFIX,
+    REFERENCE;
+}
 
+enum class Shortcut {
+    Y_SHORTCUT,
+    W_SHORTCUT;
+}
 
 enum class Concatenation(override val short: String) : Category {
     TYPE_ONE("T1"),

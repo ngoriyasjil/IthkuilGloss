@@ -112,36 +112,36 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
         unGlottalVowel(groups[index])?.also { index++ } ?: return Error("Unknown Vv vowel: ${groups[index]}")
     }
 
-    var rootMode = "root"
+    var rootMode = RootMode.ROOT
 
     val slotII = if (vv in SPECIAL_VV_VOWELS) {
         when (vv) {
             "ëi", "eë", "ëu", "öë" -> {
-                rootMode = "affix"
+                rootMode = RootMode.AFFIX
                 if (shortcut != null) return Error("Shortcuts can't be used with a Cs-root")
             }
-            "eä", "öä" -> rootMode = "reference"
+            "eä", "öä" -> rootMode = RootMode.REFERENCE
         }
         parseSpecialVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
     } else parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
 
     val root : Glossable = when (rootMode) {
-        "root" -> {
+        RootMode.ROOT -> {
             val stem = slotII.getStem() ?: return Error("No stem found: $vv")
             Root(groups[index], stem).also { slotII.stemAvailable = it.hasStem }
         }
-        "affix" -> {
+        RootMode.AFFIX -> {
             val vx = bySeriesAndForm(1, seriesAndForm(groups[index + 1]).second)
                 ?: if (groups[index + 1] in setOf("üa", "üe", "üo", "üö")) {
                     "üa"
                 } else
-                    return Error("Unknown Cs-root Vr value: ${groups[index + 1]}")
+                    return Error("Unknown Cs-root Vr value: ${groups[index+1]}")
             Affix(groups[index], vx, noType = true)
         }
-        "reference" -> {
-            parseFullReferent(groups[index], precision, ignoreDefault) ?: return Error("Unknown personal reference cluster: ${groups[index]}")
+        RootMode.REFERENCE -> {
+            parseFullReferent(groups[index]) ?: return Error("Unknown personal reference cluster: ${groups[index]}")
         }
-        else -> return Error("Unable to parse root: ${groups[index]}, $rootMode")
+
     }
     index++
 
@@ -151,9 +151,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     }
 
     val slotIV = when (rootMode) {
-        "root", "reference" -> parseVr(vr) ?: return Error("Unknown Vr value: $vr")
-        "affix" -> parseAffixVr(vr) ?: return Error("Unknown Cs-root Vr value: $vr")
-        else -> return Error("A bug has occured: Unknown rootmode: $rootMode")
+        RootMode.ROOT, RootMode.REFERENCE -> parseVr(vr) ?: return Error("Unknown Vr value: $vr")
+        RootMode.AFFIX -> parseAffixVr(vr) ?: return Error("Unknown Cs-root Vr value: $vr")
     }
 
     val csVxAffixes: MutableList<Affix> = mutableListOf()
@@ -283,6 +282,8 @@ fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean
     return Gloss(*slotList.toTypedArray())
 
 }
+
+
 
 fun parseAffixVr(vr: String): Slot? {
     val (series, form) = seriesAndForm(vr)

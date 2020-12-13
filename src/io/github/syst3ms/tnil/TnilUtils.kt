@@ -102,8 +102,8 @@ class PersonalReferent(private vararg val referents: Slot) : Glossable {
             else -> referents
                 .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
                 { it.toString(precision, ignoreDefault) }
+        }
     }
-
 }
 
 fun parseFullReferent(s: String): PersonalReferent? {
