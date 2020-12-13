@@ -279,7 +279,7 @@ enum class Phase(override val short: String) : Category {
     FLUCTUATIVE("FLC");
 
     companion object {
-        fun byForm(form: Int) = Valence.values()[form-1]
+        fun byForm(form: Int) = values()[form-1]
     }
 
 }
@@ -329,7 +329,7 @@ enum class Level(override val short: String) : NoDefault {
     SUBEQUATIVE("SUBEQUATIVE");
 
     companion object {
-        fun byForm(form: Int) = Valence.values()[form-1]
+        fun byForm(form: Int) = values()[form-1]
     }
 }
 

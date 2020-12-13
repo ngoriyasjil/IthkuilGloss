@@ -15,7 +15,7 @@ infix fun String.glossesTo(gloss: String) {
 infix fun String.givesError(error: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
-    is Error -> "${parse.message}" to this
+    is Error -> parse.message to this
     is Gloss -> null to parse.toString(1, true)
   }
 
@@ -77,11 +77,12 @@ class TestTest {
     "jn".unGeminateCa() mustBe "dn"
   }
 
-    @Test
-    fun vnCnTest() {
-        "aiha" glossesTo "RCP"
-        "ëha" givesError "Unknown VnCn: ëh"
-    }
+  @Test
+  fun vnCnTest() {
+    "auha" glossesTo "PCT"
+    "aiha" glossesTo "RCP"
+    "ëha" givesError "Unknown VnCn: ëh"
+  }
 
   @Test
   fun csRootTest() {
