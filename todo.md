@@ -30,3 +30,4 @@
 - External Juncture checker
 - Pronunciation guide
 - Explicit case-accessor definitions
+- Dynamic grammatical affixes?
