@@ -2,7 +2,25 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import io.github.syst3ms.tnil.*
 
-infix fun String.glossesTo(gloss: String) = assertEquals(gloss, parseWord(this, 1, true), this)
+infix fun String.glossesTo(gloss: String) {
+
+  val (result, message) = when (val parse = parseWord(this)) {
+    is Error -> null to "Error: ${parse.message}"
+    is Gloss -> parse.toString(1, true) to this
+  }
+
+  assertEquals(gloss, result, message)
+}
+
+infix fun String.givesError(error: String) {
+
+  val (result, message) = when (val parse = parseWord(this)) {
+    is Error -> "${parse.message}" to this
+    is Gloss -> null to parse.toString(1, true)
+  }
+
+  assertEquals(error, result, message)
+}
 
 infix fun String.hasStress(stress: Int) = assertEquals(stress, splitGroups().findStress(), this)
 
@@ -29,7 +47,7 @@ class TestTest {
     "a" hasStress -1
     "ala" hasStress 1
     "alá" hasStress 0
-    "lìala" hasStress 2
+    "lìala" hasStress 1
     "ua" hasStress 1
     "ëu" hasStress -1
     "alái" hasStress 0
@@ -62,7 +80,7 @@ class TestTest {
     @Test
     fun vnCnTest() {
         "aiha" glossesTo "RCP"
-        "ëha" glossesTo Error("Unknown VnCn: ëh")
+        "ëha" givesError "Unknown VnCn: ëh"
     }
 
   @Test

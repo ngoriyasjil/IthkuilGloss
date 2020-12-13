@@ -39,7 +39,7 @@ class Root(private val c: String, private val stem: Int) : Glossable {
 
     private val rootEntry = rootData.find { it.cr == c.defaultForm() }
 
-    val hasStem : Boolean = rootEntry?.descriptions?.get(stem) != ""
+    val hasStem : Boolean = rootEntry?.descriptions?.get(stem).isNullOrEmpty().not()
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String {
         val root = rootEntry ?: return "**$c**"
@@ -340,35 +340,6 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
 
 }
 
-fun parseCbCy(s: String, marksMood: Boolean): Glossable? {
-    val c = s.removePrefix("'")
-    val bias = Bias.byGroup(c)
-    val cyValue = if (bias == null) {
-        if (marksMood) {
-            when (c) {
-                "x" -> Mood.SUBJUNCTIVE
-                "rs" -> Mood.ASSUMPTIVE
-                "rš" -> Mood.SPECULATIVE
-                "rz" -> Mood.COUNTERFACTIVE
-                "rž" -> Mood.HYPOTHETICAL
-                else -> return null
-            }
-        } else {
-            when (c) {
-                "x" -> CaseScope.ANTECEDENT
-                "rs" -> CaseScope.SUBALTERN
-                "rš" -> CaseScope.QUALIFIER
-                "rz" -> CaseScope.PRECEDENT
-                "rž" -> CaseScope.SUCCESSIVE
-                else -> return null
-            }
-        }
-    } else null
-
-    return bias ?: cyValue
-
-}
-
 fun parsePersonalReference(s: String) : Slot? {
     val r = s.defaultForm()
     val referent = when (r) {
@@ -571,7 +542,7 @@ fun parseMoodCaseScopeAdjunct(v: String) : GlossOutcome {
     return Gloss(value, ignorable = false)
 }
 
-fun parseSuppletiveAdjuncts(typeC: String, caseV: String, precision: Int, ignoreDefault: Boolean) : GlossOutcome {
+fun parseSuppletiveAdjuncts(typeC: String, caseV: String) : GlossOutcome {
 
     val type = when (typeC.defaultForm()) {
         "hl" -> GlossString("[carrier]", "[CAR]")

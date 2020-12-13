@@ -1,7 +1,7 @@
 package io.github.syst3ms.tnil
 
 sealed class GlossOutcome
-class Error(message: String) : GlossOutcome()
+class Error(val message: String) : GlossOutcome()
 open class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(), Glossable {
     val size: Int
         get() = slots.size

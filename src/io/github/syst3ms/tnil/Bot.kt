@@ -77,19 +77,18 @@ fun respond(content: String) : String? {
 
 fun sentenceGloss(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
     val glossPairs = words.map { word ->
-
         val gloss = try {
-            val parse = parseWord(word.stripPunctuation(), precision, ignoreDefault)
-            if (parse.startsWith("\u0000")) null
-            else parse
-
+            when (val parse = parseWord(word.stripPunctuation())) {
+                is Error -> null
+                is Gloss -> parse
+            }
         } catch (ex: Exception) {
             logger.error("{}", ex)
             null
         }
         word to gloss
     }.map { (word, gloss) ->
-        gloss?.withZeroWidthSpaces() ?: "**$word**"
+        gloss?.toString(precision, ignoreDefault)?.withZeroWidthSpaces() ?: "**$word**"
     }
 
     return "__Gloss__:\n" +
@@ -102,7 +101,7 @@ fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): Str
         .map { word ->
 
         val gloss = try {
-            parseWord(word, precision, ignoreDefault)
+            parseWord(word)
         } catch (ex: Exception) {
             logger.error("{}", ex)
             if (precision < 3) {
@@ -120,11 +119,10 @@ fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): Str
         }
         word to gloss
     }.map { (word, gloss) ->
-
-        if (gloss.startsWith("\u0000"))
-            word to "*${gloss.drop(1)}*"
-        else
-            word to gloss.withZeroWidthSpaces()
+        word to when (gloss) {
+            is Error -> "*${gloss.message}*"
+            is Gloss -> gloss.toString(precision, ignoreDefault)
+        }
     }
 
     return "__Gloss__:\n" +
