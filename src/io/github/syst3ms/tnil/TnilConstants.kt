@@ -23,6 +23,8 @@ const val AFFIX_UNKNOWN_CA_MARKER = "^"
 const val RTI_AFFIX_CONSONANT = "lt"
 const val CONCATENATION_SEPARATOR = "—"
 
+val sentenceStartGloss = GlossString("[sentence start]", "[sentence:]", "[S]")
+
 val VOWEL_FORMS = listOf(
         "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
         "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
@@ -574,6 +576,16 @@ enum class Bias(override val short: String, val cb: String) : NoDefault {
     }
 }
 
+class RegisterAdjunct(private val register: Register, private val final: Boolean) : Glossable {
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return when (final) {
+            false -> "<${register.toString(precision, ignoreDefault)}>"
+            true -> "</${register.toString(precision, ignoreDefault)}>"
+        }
+    }
+
+}
+
 enum class Register(override val short: String, val initial: String, val final: String) : NoDefault {
     DISCURSIVE("DSV", "a", "ai"),
     PARENTHETICAL("PNT", "e", "ei"),
@@ -585,8 +597,8 @@ enum class Register(override val short: String, val initial: String, val final: 
 
     companion object {
         fun byVowel(v: String): Pair<Register, Boolean>? {
-            return values().find { it.initial eq v }?.let { it to true }
-                ?: values().find { it.final eq v }?.to(false)
+            return values().find { it.initial eq v }?.let { it to false }
+                ?: values().find { it.final eq v }?.to(true)
         }
     }
 }

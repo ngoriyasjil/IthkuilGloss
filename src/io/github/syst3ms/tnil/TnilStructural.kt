@@ -2,7 +2,7 @@ package io.github.syst3ms.tnil
 
 sealed class GlossOutcome
 class Error(message: String) : GlossOutcome()
-class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(), Glossable {
+open class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(), Glossable {
     val size: Int
         get() = slots.size
 
@@ -15,8 +15,9 @@ class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
     }
-}
 
+    fun addPrefix(prefix: Glossable?): Gloss = Gloss(prefix, *slots)
+}
 
 interface Glossable {
     fun toString(precision: Int, ignoreDefault: Boolean = false): String

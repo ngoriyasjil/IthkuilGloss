@@ -29,7 +29,35 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     else -> WordType.FORMATIVE
 }
 
-fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : GlossOutcome {
+class ConcatenationChain(private vararg val formatives: Gloss) : Gloss() {
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return formatives
+            .map {
+                it.toString(precision, ignoreDefault)
+            }
+            .filter(String::isNotEmpty)
+            .joinToString(CONCATENATION_SEPARATOR)
+    }
+}
+
+
+fun parseConcatenationChain(s: String) : GlossOutcome {
+    return s.split('-')
+        .takeIf {
+            it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE }
+        }.let { it ?: return Error("Non-formatives concatenated") }
+        .map { parseWord(it) }
+        .map {
+            when (it) {
+                is Gloss -> it
+                is Error -> return it
+            }
+        }.let { ConcatenationChain(*it.toTypedArray()) }
+
+}
+
+fun parseWord(s: String) : GlossOutcome {
 
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
@@ -41,56 +69,53 @@ fun parseWord(s: String, precision: Int, ignoreDefault: Boolean) : GlossOutcome 
     }
 
     if ('-' in s) {
-        return s.split('-')
-            .takeIf {
-                it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE }
-            }
-            ?.joinToString(CONCATENATION_SEPARATOR) {
-                parseWord(it, precision, ignoreDefault)
-            }
-            ?: return Error("Non-formatives hyphenated")
+        return parseConcatenationChain(s)
     }
 
     val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
 
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
-    val ssgloss = when (precision) {
-        0 -> "[.]-"
-        1 -> "[sentence:]-"
-        2, 3, 4 -> "[sentence start]-"
-        else -> ""
-    }
-
-    return (if (sentencePrefix) ssgloss else "") + when (wordTypeOf(groups)) {
-        WordType.BIAS_ADJUNCT -> Bias.byGroup(groups[0])?.toString(precision) ?: Error("Unknown bias: ${groups[0]}")
+    val result : GlossOutcome = when (wordTypeOf(groups)) {
+        WordType.BIAS_ADJUNCT -> Gloss(Bias.byGroup(groups[0]) ?:  return Error("Unknown bias: ${groups[0]}"))
 
         WordType.SUPPLETIVE_ADJUNCT -> {
             val v = groups[1]
-            parseSuppletiveAdjuncts(groups[0], v, precision, ignoreDefault)
+            parseSuppletiveAdjuncts(groups[0], v)
         }
 
-        WordType.MOOD_CASESCOPE_ADJUNCT -> parseMoodCaseScopeAdjunct(groups[1], precision)
+        WordType.MOOD_CASESCOPE_ADJUNCT -> parseMoodCaseScopeAdjunct(groups[1])
 
-        WordType.REGISTER_ADJUNCT -> {
-            val (register, initial) = Register.byVowel(groups.last()) ?: return Error("Unknown register adjunct: $s")
-            return "<" + (if (initial) "" else "/") + register.toString(precision, ignoreDefault) + ">"
-        }
-        WordType.MODULAR_ADJUNCT -> parseModular(groups, precision, ignoreDefault, stress)
+        WordType.REGISTER_ADJUNCT -> parseRegisterAdjunct(groups[1])
 
-        WordType.COMBINATION_PRA -> parseCombinationPRA(groups, precision, ignoreDefault, stress)
+        WordType.MODULAR_ADJUNCT -> parseModular(groups, stress)
 
-        WordType.AFFIXUAL_ADJUNCT -> parseAffixual(groups, precision, ignoreDefault, stress)
+        WordType.COMBINATION_PRA -> parseCombinationPRA(groups, stress)
 
-        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseAffixualScoping(groups, precision, ignoreDefault, stress)
+        WordType.AFFIXUAL_ADJUNCT -> parseAffixual(groups, stress)
 
-        WordType.PERSONAL_REFERENCE_ADJUNCT -> parsePRA(groups, precision, ignoreDefault, stress)
+        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseAffixualScoping(groups, stress)
 
-        WordType.FORMATIVE -> parseFormative(groups, precision, ignoreDefault, stress)
+        WordType.PERSONAL_REFERENCE_ADJUNCT -> parsePRA(groups, stress)
+
+        WordType.FORMATIVE -> parseFormative(groups, stress)
     }
+
+    return if (sentencePrefix) {
+        when (result) {
+            is Gloss -> result.addPrefix(sentenceStartGloss)
+            is Error -> result
+        }
+    } else result
+
 }
 
-fun parseFormative(groups: Array<String>, precision: Int, ignoreDefault: Boolean, stress: Int) : GlossOutcome {
+fun parseRegisterAdjunct(v: String): GlossOutcome {
+    val (register, final) = Register.byVowel(v) ?: return Error("Unknown register adjunct vowel: $v")
+    return Gloss(RegisterAdjunct(register, final))
+}
+
+fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
 
     var index = 0
 
