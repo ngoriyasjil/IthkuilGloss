@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection", "unused")
+@file:Suppress("SpellCheckingInspection")
 
 package io.github.syst3ms.tnil
 
@@ -8,19 +8,6 @@ const val REFERENT_SEPARATOR = "+"
 const val REFERENT_START = "["
 const val REFERENT_END = "]"
 const val CA_STACKING_VOWEL = "üä"
-const val LOW_TONE_MARKER = "_"
-const val CARRIER_START = "\""
-const val CARRIER_END = "\""
-const val REGISTER_START = "{"
-const val REGISTER_END = "}"
-const val DISCURSIVE_START = "«"
-const val DISCURSIVE_END = "»"
-const val MODULAR_PLACEHOLDER = "@@"
-const val CONCATENATIVE_END = "}}"
-const val AFFIX_UNKNOWN_VOWEL_MARKER = "@"
-const val AFFIX_UNKNOWN_CASE_MARKER = "&&"
-const val AFFIX_UNKNOWN_CA_MARKER = "^"
-const val RTI_AFFIX_CONSONANT = "lt"
 const val CONCATENATION_SEPARATOR = "—"
 
 val sentenceStartGloss = GlossString("[sentence start]", "[sentence:]", "[S]")
@@ -42,13 +29,8 @@ val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
     "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř", "'"
 )
-val FRICATIVES = setOf('f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', 'ř', 'h', 'ļ')
-val AFFRICATES = setOf('c', 'ẓ', 'č', 'j')
-val NASALS = setOf('m', 'n', 'ň')
-val STOPS = setOf('p', 'b', 't', 'd', 'k', 'g')
-val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")
 
-val INVALID_LEXICAL_CONSONANTS = listOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
+val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")
 
 val COMBINATION_PRA_SPECIFICATION = listOf("x", "xx", "lx", "rx")
 
@@ -56,18 +38,6 @@ val CASE_AFFIXES = setOf(
     "sw", "zw", "šw", "žw", "lw",
     "sy", "zy", "šy", "žy", "ly"
 )
-
-val UNGLOTTAL_MAP = mapOf(
-        "rrç" to "pk" , "llç" to "tk" , "řřţ" to "kt",
-        "rrt" to "pt" , "řřf" to "kp" , "llf" to "tp",
-        "llz" to "lpk", "lls" to "ltk", "llḑ" to "lkt",
-        "rrz" to "rpk", "rrs" to "rtk", "rrḑ" to "rkt",
-        "řřz" to "řpk", "řřs" to "řtk", "řřḑ" to "řkt",
-        "llž" to "lpt", "llš" to "lkp", "llv" to "ltp",
-        "rrž" to "rpt", "rrš" to "rkp", "rrv" to "rtp",
-        "řřž" to "řpt", "řřš" to "řkp", "řřv" to "řtp",
-        "vvm" to "bm" , "ḑḑm" to "dm" , "žžm" to "gm",
-        "vvn" to "bn" , "ḑḑn" to "dn" , "žžn" to "gn")
 
 val CA_SUBSTITUTIONS = listOf(
         "řd" to "řtt", "řg" to "řkk", "řb" to "řpp",
@@ -106,6 +76,8 @@ val UNSTRESSED_FORMS = listOf(
     "ô" to "ö", "ó" to "o",
     "û" to "ü", "ú" to "u"
 )
+
+val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
 
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
@@ -187,6 +159,9 @@ enum class Function(override val short: String) : Category {
     DYNAMIC("DYN");
 }
 
+
+
+@Suppress("unused")
 enum class Configuration(override val short: String) : Category {
     UNIPLEX("UNI"),
     DUPLEX_SIMILAR_SEPARATE("DSS"),
@@ -251,6 +226,7 @@ enum class Context(override val short: String) : Category {
     AMALGAMATIVE("AMG");
 }
 
+@Suppress("unused")
 enum class Valence(override val short: String) : Category {
     MONOACTIVE("MNO"),
     PARALLEL("PRL"),
@@ -267,6 +243,7 @@ enum class Valence(override val short: String) : Category {
     }
 }
 
+@Suppress("unused")
 enum class Phase(override val short: String) : Category {
     CONTEXTUAL("CTX"),
     PUNCTUAL("PCT"),
@@ -317,6 +294,7 @@ enum class Effect(override val short: String) : Category {
     DETRIMENTAL("DET");
 }
 
+@Suppress("unused")
 enum class Level(override val short: String) : NoDefault {
     EQUATIVE("EQU"),
     SURPASSIVE("SUR"),
@@ -333,6 +311,7 @@ enum class Level(override val short: String) : NoDefault {
     }
 }
 
+@Suppress("unused")
 enum class Aspect(override val short: String, val vn: String) : NoDefault {
     RETROSPECTIVE("RTR", "a"),
     PROSPECTIVE("PRS", "ä"),
@@ -376,36 +355,25 @@ enum class Aspect(override val short: String, val vn: String) : NoDefault {
     }
 }
 
-enum class Mood(override val short: String, val cn: String, val cy: String) : Category {
-    FACTUAL("FAC", "h/ç", ""),
-    SUBJUNCTIVE("SUB", "hl", "x"),
-    ASSUMPTIVE("ASM", "hr", "rs"),
-    SPECULATIVE("SPC", "hw", "rš"),
-    COUNTERFACTIVE("COU", "hm", "rz"),
-    HYPOTHETICAL("HYP", "hn", "rž");
-
-    companion object {
-        fun byCn(cn: String) = values().find { it.cn eq cn }
-
-        fun byCy(cy: String) = values().find { it.cy eq cy }
-    }
+enum class Mood(override val short: String) : Category {
+    FACTUAL("FAC"),
+    SUBJUNCTIVE("SUB"),
+    ASSUMPTIVE("ASM"),
+    SPECULATIVE("SPC"),
+    COUNTERFACTIVE("COU"),
+    HYPOTHETICAL("HYP");
 }
 
-enum class CaseScope(override val short: String, val cn: String, val cy: String) : Category {
-    NATURAL("CCN", "h/ç", ""),
-    ANTECEDENT("CCA", "hl", "x"),
-    SUBALTERN("CCS", "hr", "rs"),
-    QUALIFIER("CCQ", "hw", "rš"),
-    PRECEDENT("CCP", "hm", "rz"),
-    SUCCESSIVE("CCV", "hn", "rž");
-
-    companion object {
-        fun byCn(cn: String) = values().find { it.cn eq cn }
-
-        fun byCy(cy: String) = values().find { it.cy eq cy }
-    }
+enum class CaseScope(override val short: String) : Category {
+    NATURAL("CCN"),
+    ANTECEDENT("CCA"),
+    SUBALTERN("CCS"),
+    QUALIFIER("CCQ"),
+    PRECEDENT("CCP"),
+    SUCCESSIVE("CCV");
 }
 
+@Suppress("unused")
 enum class Case(override val short: String, val vc: String) : Category {
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
@@ -510,6 +478,7 @@ enum class Validation(override val short: String) : NoDefault {
     IMAGINARY("IMA");
 }
 
+@Suppress("unused")
 enum class Bias(override val short: String, val cb: String) : NoDefault {
     DOLOROUS("DOL", "řřx"),
     SKEPTICAL("SKP", "rnž"),
@@ -586,6 +555,7 @@ class RegisterAdjunct(private val register: Register, private val final: Boolean
 
 }
 
+@Suppress("unused")
 enum class Register(override val short: String, val initial: String, val final: String) : NoDefault {
     DISCURSIVE("DSV", "a", "ai"),
     PARENTHETICAL("PNT", "e", "ei"),

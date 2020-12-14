@@ -3,10 +3,6 @@ package io.github.syst3ms.tnil
 var affixData: List<AffixData> = emptyList()
 var rootData: List<RootData> = emptyList()
 
-fun errorList(s: String) = listOf("\u0000", s)
-
-val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
-
 fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
 
 fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
@@ -125,6 +121,7 @@ fun parseFullReferent(s: String): PersonalReferent? {
     }
 }
 
+data class AffixData(val cs: String, val abbr: String, val desc: List<String>)
 
 fun parseAffixes(data: String): List<AffixData> = data
         .lines()
@@ -132,8 +129,10 @@ fun parseAffixes(data: String): List<AffixData> = data
         .drop(1)
         .map    { it.split("\t") }
         .filter { it.size >= 11 }
-        .map    { AffixData(it[0], it[1], it.subList(2, 11).toTypedArray()) }
+        .map    { AffixData(it[0], it[1], it.subList(2, 11)) }
         .toList()
+
+data class RootData(val cr: String, val descriptions: List<String>)
 
 fun parseRoots(data: String): List<RootData> = data
         .lines()
@@ -144,38 +143,6 @@ fun parseRoots(data: String): List<RootData> = data
         .map    { RootData(it[0], it.subList(1, 5)) }
         .toList()
 
-data class AffixData(val cs: String, val abbr: String, val desc: Array<String>) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as AffixData
-        if (cs != other.cs) return false
-        if (abbr != other.abbr) return false
-        if (!desc.contentEquals(other.desc)) return false
-        return true
-    }
 
-    override fun hashCode(): Int {
-        var result = cs.hashCode()
-        result = 31 * result + abbr.hashCode()
-        result = 31 * result + desc.contentHashCode()
-        return result
-    }
-}
 
-data class RootData(val cr: String, val descriptions: List<String>)
 
-class SentenceParsingState(var carrier: Boolean = false,
-                           var register: MutableList<Register> = mutableListOf(),
-                           var quotativeAdjunct: Boolean = false,
-                           var concatenative: Boolean = false,
-                           stress: Int? = null,
-                           var isLastFormativeVerbal : Boolean? = null,
-                           var rtiAffixScope: String? = null) {
-    var forcedStress : Int? = stress
-        get() {
-            val old = field
-            forcedStress = null
-            return old
-        }
-}
