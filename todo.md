@@ -6,6 +6,18 @@
 - Vc glottal stop can be moved to anywhere in the word after slot II
 - ~~Case affix values changed~~
 
+**v0.18.2**
+
+- Referential shortcut cases changed
+- Cz forms changed
+
+**v0.18.3**
+
+- ï added (!!!)
+- Glottal stop shift limited
+- REF -> PRN (Pertinential)
+- Various renamings
+
 **Language to-dos**
 
 - Implement absolute level
@@ -14,16 +26,8 @@
  
 **Code to-dos**
 
- - ~~Create "Slot" class and make "stem used" marking sensible~~
  - Re-write sentence parsing
-    - Move stress parsing from individual word types to general word level
     - Reimplement Mood/Case-Scope distinction in modular adjuncts
- - ~~Rewrite parseAffixual and parseAffixualScoping~~
- - ~~Help testing with "glossesTo" infix function~~
- - ~~Separate determining the type of a word into a separate function (for testability)~~
- - ~~Create an actual error type instead of mucking about with null characters~~
- - ~~Move actual glossing (toString) two or so levels up in the hierarchy~~
- - ~~Rootmode should really not use strings...~~
 
 **Ideas**
 
