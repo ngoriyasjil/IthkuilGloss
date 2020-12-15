@@ -12,9 +12,9 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     (groups[0].isVowel() || groups[0] in setOf("w", "y"))
             && groups.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
 
-    groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_PRA_SPECIFICATION
-            || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_PRA_SPECIFICATION
-    -> WordType.COMBINATION_PRA
+    groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_REFERENTIAL_SPECIFICATION
+            || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_REFERENTIAL_SPECIFICATION
+    -> WordType.COMBINATION_REFERENTIAL
 
     groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS
             || groups.size in 3..4 && groups[0] == "h" && groups[1] == "ë" -> WordType.AFFIXUAL_ADJUNCT
@@ -24,7 +24,7 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
 
     (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()?.isVowel() == true )
             && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)?.all { it.isConsonant() || it == "ë" } == true
-    -> WordType.PERSONAL_REFERENCE_ADJUNCT
+    -> WordType.REFERENTIAL
 
     else -> WordType.FORMATIVE
 }
@@ -87,13 +87,13 @@ fun parseWord(s: String) : GlossOutcome {
 
         WordType.MODULAR_ADJUNCT -> parseModular(groups, stress)
 
-        WordType.COMBINATION_PRA -> parseCombinationPRA(groups, stress)
+        WordType.COMBINATION_REFERENTIAL -> parseCombinationReferential(groups, stress)
 
         WordType.AFFIXUAL_ADJUNCT -> parseAffixual(groups, stress)
 
-        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseAffixualScoping(groups, stress)
+        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix(groups, stress)
 
-        WordType.PERSONAL_REFERENCE_ADJUNCT -> parsePRA(groups, stress)
+        WordType.REFERENTIAL -> parseReferential(groups, stress)
 
         WordType.FORMATIVE -> parseFormative(groups, stress)
     }
@@ -209,7 +209,7 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
     if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
     if (slotVFilled && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
 
-    if (csVxAffixes.size == 1) csVxAffixes[0].canBePraShortcut = true
+    if (csVxAffixes.size == 1) csVxAffixes[0].canBeReferentialShortcut = true
 
 
     var cnInVI = false
@@ -255,7 +255,7 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
         }
     }
 
-    if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBePraShortcut = true
+    if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBeReferentialShortcut = true
 
     val marksMood = (stress == 0) || (stress == -1)
 
@@ -373,7 +373,7 @@ fun parseModular(groups: Array<String>, stress: Int) : GlossOutcome {
 
 }
 
-fun parsePRA(groups: Array<String>, stress: Int) : GlossOutcome {
+fun parseReferential(groups: Array<String>, stress: Int) : GlossOutcome {
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     val c1 = groups
         .takeWhile { it !in setOf("w", "y") }
@@ -393,7 +393,7 @@ fun parsePRA(groups: Array<String>, stress: Int) : GlossOutcome {
     when {
         groups.getOrNull(index) in setOf("w", "y") -> {
             index++
-            val vc2 = groups.getOrNull(index) ?: return Error("PRA ended unexpectedly")
+            val vc2 = groups.getOrNull(index) ?: return Error("Referential ended unexpectedly")
             val caseB =
                 Case.byVowel(vc2) ?: return Error("Unknown case: ${groups[index]}")
             index++
@@ -406,18 +406,18 @@ fun parsePRA(groups: Array<String>, stress: Int) : GlossOutcome {
             index++
             if (groups.getOrNull(index) == "ë") index++
 
-            if (groups.size > index) return Error("PRA is too long")
+            if (groups.size > index) return Error("Referential is too long")
 
             return Gloss(refA, caseA, caseB, refB, essence)
 
         }
-        groups.size > index + 1 -> return Error("PRA is too long")
+        groups.size > index + 1 -> return Error("Referential is too long")
 
         else -> return Gloss(refA, caseA, essence)
     }
 }
 
-fun parseCombinationPRA(groups: Array<String>, stress: Int): GlossOutcome {
+fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcome {
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     var index = 0
 
@@ -435,7 +435,7 @@ fun parseCombinationPRA(groups: Array<String>, stress: Int): GlossOutcome {
         "xx" -> Specification.CONTENTIAL
         "lx" -> Specification.CONSTITUTIVE
         "rx" -> Specification.OBJECTIVE
-        else -> return Error("Unknown combination PRA specification: ${groups[index]}")
+        else -> return Error("Unknown combination referential Specification: ${groups[index]}")
     }
     index++
 
@@ -465,7 +465,7 @@ fun parseCombinationPRA(groups: Array<String>, stress: Int): GlossOutcome {
 
 }
 
-fun parseAffixualScoping(groups: Array<String>, stress: Int): GlossOutcome {
+fun parseMultipleAffix(groups: Array<String>, stress: Int): GlossOutcome {
     val concatOnly = if (stress == 0) GlossString("{concatenated formative only}","{concat.}") else null
     var index = 0
     if (groups[0] == "ë") index++

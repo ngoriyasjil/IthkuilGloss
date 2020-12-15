@@ -32,7 +32,7 @@ val CONSONANTS = listOf(
 
 val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")
 
-val COMBINATION_PRA_SPECIFICATION = listOf("x", "xx", "lx", "rx")
+val COMBINATION_REFERENTIAL_SPECIFICATION = listOf("x", "xx", "lx", "rx")
 
 val CASE_AFFIXES = setOf(
     "sw", "zw", "šw", "žw", "lw",
@@ -96,11 +96,11 @@ val ITHKUIL_CHARS = setOf(
 
 class Affix(private val vx: String,
             private val cs : String,
-            var canBePraShortcut: Boolean = false,
+            var canBeReferentialShortcut: Boolean = false,
             private val noType: Boolean = false) : Glossable { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBePraShortcut, noType = noType)
+            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBeReferentialShortcut, noType = noType)
 }
 
 enum class WordType {
@@ -108,8 +108,8 @@ enum class WordType {
     MODULAR_ADJUNCT,
     AFFIXUAL_ADJUNCT,
     AFFIXUAL_SCOPING_ADJUNCT,
-    PERSONAL_REFERENCE_ADJUNCT,
-    COMBINATION_PRA,
+    REFERENTIAL,
+    COMBINATION_REFERENTIAL,
     SUPPLETIVE_ADJUNCT,
     REGISTER_ADJUNCT,
     BIAS_ADJUNCT,
@@ -416,7 +416,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     CONVERSIVE("CVS", "öa"),
     SITUATIVE("SIT", "oa"),
 
-    REFERENTIAL("REF", "a'a"),
+    PERTINENTIAL("PRN", "a'a"),
     ASSIMILATIVE("ASI", "ä'ä"),
     ESSIVE("ESS", "e'e"),
     CORRELATIVE("COR", "ï'ï"),

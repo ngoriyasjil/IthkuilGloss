@@ -15,13 +15,12 @@
 
 - ~~ï added (!!!)~~
 - Glottal stop shift limited
-- REF -> PRN (Pertinential)
-- Various renamings
+- ~~REF -> PRN (Pertinential)~~
+- ~~Various renamings~~
 
 **Language to-dos**
 
 - Implement absolute level
-- Add in Vk glottalization
 - Implement suppletive adjunct forms into PRAs (potentially eliminate them as a distinct class?)
  
 **Code to-dos**
