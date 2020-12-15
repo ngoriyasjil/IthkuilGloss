@@ -13,11 +13,11 @@ const val CONCATENATION_SEPARATOR = "—"
 val sentenceStartGloss = GlossString("[sentence start]", "[sentence:]", "[S]")
 
 val VOWEL_FORMS = listOf(
-        "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
+        "a", "ä", "e", "ï", "i", "ö", "o", "ü", "u",
         "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
         "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
         "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
-        "a'a", "ä'ä", "e'e", "ë'ë", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
+        "a'a", "ä'ä", "e'e", "ï'ï", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
         "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
         "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
         "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
@@ -54,7 +54,8 @@ val ALLOGRAPHS = listOf(
     "á" to "á",
     "ä" to "ä", "â" to "â",
     "é" to "é",
-    "ë|ë" to "ë", "ê" to "ê",
+    "ë" to "ë", "ê" to "ê",
+    "ï" to "ï", "î" to "ï",
     "[ìı]|ì" to "i", "í" to "í",
     "ó" to "ó", "ö" to "ö", "ô" to "ô",
     "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
@@ -77,7 +78,7 @@ val UNSTRESSED_FORMS = listOf(
     "û" to "ü", "ú" to "u"
 )
 
-val VOWELS = setOf("a", "ä", "e", "ë", "i", "ö", "o", "ü", "u")
+val VOWELS = setOf("a", "ä", "e", "ë", "i", "ï", "ö", "o", "ü", "u")
 
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
@@ -89,7 +90,7 @@ val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "'hl", "'hl")
 val ITHKUIL_CHARS = setOf(
         "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
         "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř",
-        "a", "ä", "e", "ë", "i", "u", "ü", "o", "ö",
+        "a", "ä", "e", "ë", "i", "ï", "u", "ü", "o", "ö",
         "'", "-"
 )
 
@@ -316,7 +317,7 @@ enum class Aspect(override val short: String, val vn: String) : NoDefault {
     RETROSPECTIVE("RTR", "a"),
     PROSPECTIVE("PRS", "ä"),
     HABITUAL("HAB", "e"),
-    PROGRESSIVE("PRG", "ë"),
+    PROGRESSIVE("PRG", "ï"),
     IMMINENT("IMM", "i"),
     PRECESSIVE("PCS", "ö"),
     REGULATIVE("REG", "o"),
@@ -378,7 +379,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
     ABSOLUTIVE("ABS", "e"),
-    STIMULATIVE("STM", "ë"),
+    STIMULATIVE("STM", "ï"),
     AFFECTIVE("AFF", "i"),
     EFFECTUATIVE("EFF", "ö"),
     ERGATIVE("ERG", "o"),
@@ -418,7 +419,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     REFERENTIAL("REF", "a'a"),
     ASSIMILATIVE("ASI", "ä'ä"),
     ESSIVE("ESS", "e'e"),
-    CORRELATIVE("COR", "ë'ë"),
+    CORRELATIVE("COR", "ï'ï"),
     COMPOSITIVE("CPS", "i'i"),
     COMITATIVE("COM", "ö'ö"),
     UTILITATIVE("UTL", "o'o"),
