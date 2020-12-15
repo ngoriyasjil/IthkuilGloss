@@ -170,8 +170,8 @@ fun parseVv(v: String, shortcut: Shortcut?) : Slot? {
         null -> {
             additional = when (series) {
                 1 -> Slot()
-                2 -> Affix("ë", "r", noType = true)
-                3 -> Affix("ë", "t", noType = true)
+                2 -> Affix("ï", "r", noType = true)
+                3 -> Affix("ï", "t", noType = true)
                 4 -> Affix("i", "t", noType = true)
                 else -> return null
             }
@@ -304,8 +304,8 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
 
     val vnValue: Glossable = if (pattern == 1) {
         when (series) {
-            1 -> if (form != 4) Valence.byForm(form) else return null
-            2 -> if (form != 1) Phase.byForm(form) else Valence.RECIPROCAL
+            1 -> Valence.byForm(form)
+            2 -> Phase.byForm(form)
             3 -> EffectAndPerson.byForm(form)
             4 -> Level.byForm(form)
             else -> return null

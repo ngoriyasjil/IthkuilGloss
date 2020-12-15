@@ -30,7 +30,7 @@ class TestTest {
 
   @Test
   fun poemTest() {
-    "hlamröé-uçtļořë" glossesTo "S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM"
+    "hlamröé-uçtļořï" glossesTo "S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM"
     "khe" glossesTo  "Obv/DET-ABS"
     "adnilo'o" glossesTo  "S1-**dn**-OBJ-UTL"
     "yeilaišeu" glossesTo  "S2/RPV-**l**-**š**/1₂-ATT"
@@ -61,8 +61,8 @@ class TestTest {
 
   @Test
   fun affixualAdjunctTest() {
-    "hën" glossesTo "**n**/4₁"
-    "hëní" glossesTo "**n**/4₁-{VIISub}-{concat.}"
+    "ïn" glossesTo "**n**/4₁"
+    "ïní" glossesTo "**n**/4₁-{VIISub}-{concat.}"
   }
 
   @Test
@@ -80,7 +80,8 @@ class TestTest {
   @Test
   fun vnCnTest() {
     "auha" glossesTo "PCT"
-    "aiha" glossesTo "RCP"
+    "ïha" glossesTo "RCP"
+    "aiha" glossesTo "CTX"
     "ëha" givesError "Unknown VnCn: ëh"
   }
 
@@ -88,5 +89,17 @@ class TestTest {
   fun csRootTest() {
     "öëgüöl" glossesTo "CPT/DYN-**g**/0-D0/OBJ"
   }
+
+  @Test
+  fun glottalShiftTest() {
+    "lala'a" glossesTo "S1-**l**-PRN"
+    "la'la" glossesTo "S1-**l**-PRN"
+    "wala'ana" glossesTo "S1-**l**-**n**/1₁-{Ca}"
+    "halala'a" givesError "Unexpected glottal stop in incorporated formative"
+    "a'lananalla'a" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-PRN"
+    "a'la'nanalla" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-PRN"
+    "a'la'nanalla'a" givesError "Too many glottal stops found"
+  }
+
 
 }

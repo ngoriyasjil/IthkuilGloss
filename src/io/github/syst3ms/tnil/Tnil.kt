@@ -112,7 +112,23 @@ fun parseRegisterAdjunct(v: String): GlossOutcome {
     return Gloss(RegisterAdjunct(register, final))
 }
 
-fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
+fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
+
+    val glottalIndices = igroups
+        .mapIndexed { index, group ->  if (group.contains('\'')) index else null }
+        .filterNotNull()
+
+    if (glottalIndices.size > 2) return Error("Too many glottal stops found")
+
+    val groups = igroups.map { group ->
+        if (group.contains('\'')) {
+            when {
+                group.isVowel() -> unGlottalVowel(group)?.first ?: group
+                group.startsWith('\'') && group.count { it == '\'' } == 1 -> group.drop(1)
+                else -> return Error("Unexpected glottal stop: $group")
+            }
+        } else group
+    }
 
     var index = 0
 
@@ -121,6 +137,8 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
         parseCc(groups[0])
     } else Pair(null, null)
 
+
+
     val relation = if (concatenation == null) {
         when (stress){
             2 -> Relation.FRAMED
@@ -128,11 +146,9 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
         }
     } else null
 
-    val (vv, slotVFilled) = if (index == 0 && groups[0].isConsonant()) {
-        "a" to false
-    } else {
-        unGlottalVowel(groups[index])?.also { index++ } ?: return Error("Unknown Vv vowel: ${groups[index]}")
-    }
+    val slotVFilled = groups[index].isVowel() && (index in glottalIndices || index+1 in glottalIndices)
+
+    val vv : String = if (index == 0 && groups[0].isConsonant()) "a" else groups[index].also { index++ }
 
     var rootMode = RootMode.ROOT
 
@@ -167,6 +183,12 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
     }
     index++
 
+    val caseGlottal = if (shortcut == null) {
+        glottalIndices.any { it in (index+1)..(groups.lastIndex) }
+    } else groups.last().isVowel() && groups.lastIndex in glottalIndices
+
+    if (concatenation != null && caseGlottal) return Error("Unexpected glottal stop in incorporated formative")
+
     val vr = if (shortcut != null) "a" else {
         groups.getOrNull(index).also { index++ }
             ?: return Error("Formative ended unexpectedly: ${groups.joinToString("")}")
@@ -193,8 +215,6 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
             val vx = groups[indexV + 1]
 
             if (!vx.isVowel()) return Error("Unknown vowelform: $vx")
-
-            if (vx.length == 3 && vx[1] == '\'' && indexV + 1 != groups.lastIndex) return Error("Unexpected glottal stop in slot V")
 
             csVxAffixes.add(Affix(cs = groups[indexV], vx = vx))
             indexV += 2
@@ -234,24 +254,24 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
 
     if (!cnInVI) {
         while (true) {
-            if (index+1 >= groups.size || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
+            if (index+1 > groups.lastIndex || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
                 break
             }
 
-            val (vx, glottalVowel) = unGlottalVowel(groups[index])
-                ?: return Error("Unknown vowelform: ${groups[index]} (slot VII)")
-
-            val glottalCs = groups[index+1].startsWith("'")
+            val vx = groups[index]
 
             vxCsAffixes.add(Affix(vx, groups[index+1].removePrefix("'")))
-            index += 2
 
-            if (glottalVowel || glottalCs) {
+
+            if (shortcut != null && (index in glottalIndices || index + 1 in glottalIndices)) {
                 vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
 
                 if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
                 else if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
             }
+
+            index += 2
+
         }
     }
 
@@ -271,8 +291,12 @@ fun parseFormative(groups: Array<String>, stress: Int) : GlossOutcome {
         else -> null
     }
 
+    val vcVk = (groups.getOrNull(index) ?: "a").let {
+        if (caseGlottal) {
+            glottalVowel(it)?.first ?: return Error("Unknown slot IX vowel: $it")
+        } else it
+    }
 
-    val vcVk = groups.getOrNull(index) ?: "a"
 
     val slotIX : Glossable = if (concatenation == null) {
         when (stress) {

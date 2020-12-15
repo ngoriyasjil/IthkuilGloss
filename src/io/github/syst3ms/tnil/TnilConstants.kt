@@ -245,7 +245,7 @@ enum class Valence(override val short: String) : Category {
 }
 
 @Suppress("unused")
-enum class Phase(override val short: String) : Category {
+enum class Phase(override val short: String) : NoDefault {
     CONTEXTUAL("CTX"),
     PUNCTUAL("PCT"),
     ITERATIVE("ITR"),
