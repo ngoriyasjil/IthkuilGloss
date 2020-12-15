@@ -1,11 +1,16 @@
 package io.github.syst3ms.tnil
 
+import java.io.FileNotFoundException
+
 
 fun main() {
 
-    println("Loading lexicon...")
-
-    respond("?!reload")
+    try {
+        loadResourcesLocal()
+    } catch (e: FileNotFoundException) {
+        println("Loading resources...")
+        loadResourcesOnline()
+    }
 
     do {
         print(">>> ")

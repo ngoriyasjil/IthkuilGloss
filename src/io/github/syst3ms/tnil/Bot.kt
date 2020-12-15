@@ -15,11 +15,32 @@ val logger = LoggerFactory.getLogger("tnilgloss")!!
 
 val leStart = System.currentTimeMillis()
 
-const val MORPHOPHONOLOGY_VERSION = "0.17.2"
+const val MORPHOPHONOLOGY_VERSION = "0.18.3"
 
-fun loadResources() {
-    affixData = parseAffixes(URL("https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516").readText())
-    rootData = parseRoots(URL("https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303").readText())
+const val AFFIXES_URL = "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516"
+const val ROOTS_URL = "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303"
+
+const val AFFIXES_PATH = "./resources/affixes.tsv"
+const val ROOTS_PATH = "./resources/roots.tsv"
+
+fun loadResourcesOnline() {
+    val affixes = URL(AFFIXES_URL).readText()
+    val roots = URL(ROOTS_URL).readText()
+
+
+    File(AFFIXES_PATH).writeText(affixes)
+    File(ROOTS_PATH).writeText(roots)
+
+    affixData = parseAffixes(affixes)
+    rootData = parseRoots(roots)
+}
+
+fun loadResourcesLocal() {
+    val affixes = File(AFFIXES_PATH).readText()
+    val roots = File(ROOTS_PATH).readText()
+
+    affixData = parseAffixes(affixes)
+    rootData = parseRoots(roots)
 }
 
 fun requestPrecision(request: String) = when {
@@ -48,13 +69,15 @@ fun respond(content: String) : String? {
 
         "!reload" -> {
             return try {
-                loadResources()
+                loadResourcesOnline()
                 "External resources successfully reloaded!"
             } catch(e: Exception) {
                 logger.error("{}", e)
                 "Error while reloading external resources…"
             }
         }
+
+
         "!status" -> {
             val git = ProcessBuilder("git", "log", "-1", "--oneline").start()
             val lastCommit = String(git.inputStream.readBytes())

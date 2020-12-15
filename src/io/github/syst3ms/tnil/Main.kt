@@ -12,7 +12,7 @@ fun main() {
     val tokenFile = File("./resources/token.txt")
     require(tokenFile.exists() && tokenFile.isFile) { "Can't find token file!" }
     val token = tokenFile.readLines()[0]
-    loadResources()
+    loadResourcesOnline()
     val jda = JDABuilder.createDefault(token)
         .setActivity(Activity.of(Activity.ActivityType.DEFAULT, "?help for info"))
         .addEventListeners(MessageListener())
