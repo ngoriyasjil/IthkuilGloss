@@ -8,12 +8,12 @@
 
 **v0.18.2**
 
-- Referential shortcut cases changed
-- Cz forms changed
+- ~~Referential shortcut cases changed~~
+- ~~Cz forms changed~~
 
 **v0.18.3**
 
-- ï added (!!!)
+- ~~ï added (!!!)~~
 - Glottal stop shift limited
 - REF -> PRN (Pertinential)
 - Various renamings

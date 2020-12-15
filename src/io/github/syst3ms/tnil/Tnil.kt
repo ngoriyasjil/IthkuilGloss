@@ -471,7 +471,7 @@ fun parseAffixualScoping(groups: Array<String>, stress: Int): GlossOutcome {
     if (groups[0] == "ë") index++
     val firstAffix = Affix(groups[index+1], groups[index])
     index += 2
-    val scopeOfFirst = affixAdjunctScope(groups[index]) ?: return Error("Unknown Cz: ${groups[index]}")
+    val scopeOfFirst = affixualAdjunctScope(groups[index]) ?: return Error("Unknown Cz: ${groups[index]}")
     index++
 
     val vxCsAffixes : MutableList<Glossable> = mutableListOf()
@@ -492,7 +492,7 @@ fun parseAffixualScoping(groups: Array<String>, stress: Int): GlossOutcome {
     val vz = groups.getOrNull(index)
 
     val scopeOfRest = if (vz != null) {
-        affixAdjunctScope(vz, scopingAdjunctVowel = true) ?: return Error("Unknown Vz: $vz")
+        affixualAdjunctScope(vz, isMultipleAdjunctVowel = true) ?: return Error("Unknown Vz: $vz")
     } else null
 
     return Gloss(firstAffix, scopeOfFirst, *vxCsAffixes.toTypedArray(), scopeOfRest, concatOnly)
@@ -516,7 +516,7 @@ fun parseAffixual(groups: Array<String>, stress: Int) : GlossOutcome {
     }
 
     val affix = Affix(groups[index], groups[index+1])
-    val scope = affixAdjunctScope(groups.getOrNull(index+2))
+    val scope = affixualAdjunctScope(groups.getOrNull(index+2))
 
     return Gloss(affix, scope, concatOnly)
 

@@ -85,7 +85,7 @@ val CN_CONSONANTS = setOf(
         "w", "y", "hw", "hlw", "hly", "hnw", "hny"
 )
 
-val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "'hl", "'hl")
+val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "hw", "'hw")
 
 val ITHKUIL_CHARS = setOf(
         "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
@@ -587,7 +587,7 @@ enum class Referent(override val short: String) : NoDefault {
     PROVISIONAL("PVS");
 }
 
-fun parsePraShortcut(c: String, v: String, precision: Int): String? {
+fun parseReferentialShortcut(c: String, v: String, precision: Int): String? {
     val (series, form) = seriesAndForm(v)
     val case = when (series) {
         3 -> when (form) {

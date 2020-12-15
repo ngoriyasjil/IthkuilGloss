@@ -96,7 +96,7 @@ fun parseAffix(cs: String, vx: String,
     var (type, degree) = seriesAndForm(vx)
 
     if (canBePraShortcut && type == 3 || type == 4) {
-        return parsePraShortcut(cs, vx, precision) ?: "(Unknown PRA shortcut)"
+        return parseReferentialShortcut(cs, vx, precision) ?: "(Unknown PRA shortcut)"
     }
 
     if (type == -1 && degree == -1) {
@@ -505,19 +505,19 @@ fun parseCa(s: String) : Slot? {
 }
 
 
-fun affixAdjunctScope(s: String?, scopingAdjunctVowel: Boolean = false): GlossString? {
+fun affixualAdjunctScope(s: String?, isMultipleAdjunctVowel: Boolean = false): GlossString? {
     val scope = when (s?.defaultForm()) {
-        null -> if (scopingAdjunctVowel) "{same}" else "{VDom}"
+        null -> if (isMultipleAdjunctVowel) "{same}" else "{VDom}"
         "h", "a" -> "{VDom}"
         "'h", "u" -> "{VSub}"
         "'w", "e" -> "{VIIDom}"
         "'y", "i" -> "{VIISub}"
-        "'hl", "o" -> "{formative}"
-        "'hr", "ö" -> "{adjacent}"
-        "ë" -> if (scopingAdjunctVowel) "{same}" else null
+        "hw", "o" -> "{formative}"
+        "'hw", "ö" -> "{adjacent}"
+        "ë" -> if (isMultipleAdjunctVowel) "{same}" else null
         else -> null
     }
-    val default = (scope == "{VDom}" && !scopingAdjunctVowel) || (scope == "{same}" && scopingAdjunctVowel)
+    val default = (scope == "{VDom}" && !isMultipleAdjunctVowel) || (scope == "{same}" && isMultipleAdjunctVowel)
 
     return scope?.let { GlossString(it, ignorable = default) }
 }
