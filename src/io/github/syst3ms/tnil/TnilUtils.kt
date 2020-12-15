@@ -1,7 +1,7 @@
 package io.github.syst3ms.tnil
 
-var affixData: List<AffixData> = emptyList()
-var rootData: List<RootData> = emptyList()
+var affixData: Map<String, AffixData> = emptyMap()
+var rootData: Map<String, RootData> = emptyMap()
 
 fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
 
@@ -121,27 +121,27 @@ fun parseFullReferent(s: String): PersonalReferent? {
     }
 }
 
-data class AffixData(val cs: String, val abbr: String, val desc: List<String>)
+data class AffixData(val abbr: String, val desc: List<String>)
 
-fun parseAffixes(data: String): List<AffixData> = data
+fun parseAffixes(data: String): Map<String, AffixData> = data
         .lines()
         .asSequence()
         .drop(1)
         .map    { it.split("\t") }
         .filter { it.size >= 11 }
-        .map    { AffixData(it[0], it[1], it.subList(2, 11)) }
-        .toList()
+        .map    { it[0] to AffixData(it[1], it.subList(2, 11)) }
+        .toMap()
 
-data class RootData(val cr: String, val descriptions: List<String>)
+data class RootData(val descriptions: List<String>)
 
-fun parseRoots(data: String): List<RootData> = data
+fun parseRoots(data: String): Map<String, RootData> = data
         .lines()
         .asSequence()
         .drop(1)
         .map    { it.split("\t") }
         .filter { it.size >= 5 }
-        .map    { RootData(it[0], it.subList(1, 5)) }
-        .toList()
+        .map    { it[0] to RootData(it.subList(1, 5)) }
+        .toMap()
 
 
 

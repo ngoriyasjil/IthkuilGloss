@@ -26,7 +26,7 @@ infix fun String.hasStress(stress: Int) = assertEquals(stress, splitGroups().fin
 
 infix fun String.mustBe(s: String) = assertEquals(s, this, this)
 
-class TestTest {
+class GeneralTests {
 
   @Test
   fun poemTest() {

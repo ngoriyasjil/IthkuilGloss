@@ -34,15 +34,14 @@ fun glottalVowel(v: String) : Pair<String, Boolean>? {
     }
 }
 
-class Root(private val c: String, private val stem: Int) : Glossable {
+class Root(private val cr: String, private val stem: Int) : Glossable {
 
-
-    private val rootEntry = rootData.find { it.cr == c.defaultForm() }
+    private val rootEntry = rootData[cr]
 
     val hasStem : Boolean = rootEntry?.descriptions?.get(stem).isNullOrEmpty().not()
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String {
-        val root = rootEntry ?: return "**$c**"
+        val root = rootEntry ?: return "**$cr**"
 
         val description = when (val stemDsc = root.descriptions[stem]) {
             "" -> root.descriptions[0]
@@ -109,7 +108,7 @@ fun parseAffix(cs: String, vx: String,
         }
     }
 
-    val aff = affixData.find { it.cs == cs }
+    val aff = affixData[cs]
 
     val affString = when {
         aff == null -> "**$cs**/$degree"

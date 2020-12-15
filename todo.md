@@ -10,6 +10,8 @@
  - Re-write sentence parsing
     - Reimplement Mood/Case-Scope distinction in modular adjuncts
  - Clean up glottal vowel uses
+ - ~~Make lexicon lookup a map instead of a list~~
+ - Structs everywhere
 
 **Ideas**
 
