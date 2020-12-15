@@ -10,7 +10,7 @@ const val REFERENT_END = "]"
 const val CA_STACKING_VOWEL = "üä"
 const val CONCATENATION_SEPARATOR = "—"
 
-val sentenceStartGloss = GlossString("[sentence start]", "[sentence:]", "[S]")
+val SENTENCE_START_GLOSS = GlossString("[sentence start]", "[sentence:]", "[S]")
 
 val VOWEL_FORMS = listOf(
         "a", "ä", "e", "ï", "i", "ö", "o", "ü", "u",
@@ -100,7 +100,7 @@ class Affix(private val vx: String,
             private val noType: Boolean = false) : Glossable { //Definitely not final
 
     override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs.defaultForm(), vx.defaultForm(), precision, ignoreDefault, canBePraShortcut = canBeReferentialShortcut, noType = noType)
+            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBeReferentialShortcut, noType = noType)
 }
 
 enum class WordType {
@@ -159,7 +159,6 @@ enum class Function(override val short: String) : Category {
     STATIVE("STA"),
     DYNAMIC("DYN");
 }
-
 
 
 @Suppress("unused")

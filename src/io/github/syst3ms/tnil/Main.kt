@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import java.io.File
@@ -24,49 +25,55 @@ class MessageListener : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.channelType != ChannelType.TEXT && event.channelType != ChannelType.PRIVATE)
             return
-        val chan = event.channel
-        val msg = event.message
-        val content = msg.contentRaw
+        val channel = event.channel
+        val message = event.message
+        val content = message.contentRaw
         if (!content.startsWith("?")) {
             return
         }
         if (event.channelType == ChannelType.TEXT && !event.textChannel.canTalk(event.guild.selfMember)) {
-            println("Can't talk in channel #" + chan.name)
+            println("Can't talk in channel #" + channel.name)
             return
         }
 
         if (content.startsWith("?help")) {
-            val helpMessage = File("./resources/help.md").readText().split("SPLITMESSAGEHERE")
-            val newMessage = MessageBuilder()
-                    .append(helpMessage[0])
-            val second = MessageBuilder()
-                    .append(helpMessage[1])
-            val auth = event.author
-            if (event.channelType == ChannelType.TEXT) {
-                auth.openPrivateChannel()
-                        .flatMap { it.sendMessage(newMessage.build()) }
-                        .flatMap { it.channel.sendMessage(second.build()) }
-                        .queue({
-                            chan.sendMessage("Help was sent your way, " + auth.asMention + "!").queue()
-                        }) { // Failure
-                            val m = second.append("\n")
-                                    .append("(Couldn't send the message in DMs, ${auth.asMention})")
-                                    .build()
-                            chan.sendMessage(newMessage.build())
-                                    .queue()
-                            chan.sendMessage(m)
-                                    .queue()
-                        }
-            } else {
-                chan.sendMessage(newMessage.build())
-                        .queue()
+            if (sendHelp(event, channel)) {
                 return
             }
         }
 
         val response = respond(content)
         if (response != null) {
-            chan.sendMessage(MessageBuilder(response).build()).queue()
+            channel.sendMessage(MessageBuilder(response).build()).queue()
         }
+    }
+
+    private fun sendHelp(event: MessageReceivedEvent, chan: MessageChannel): Boolean {
+        val helpMessage = File("./resources/help.md").readText().split("SPLITMESSAGEHERE")
+        val first = MessageBuilder().append(helpMessage[0])
+        val second = MessageBuilder().append(helpMessage[1])
+
+        val helpee = event.author
+        if (event.channelType == ChannelType.TEXT) {
+            helpee.openPrivateChannel()
+                .flatMap { it.sendMessage(first.build()) }
+                .flatMap { it.channel.sendMessage(second.build()) }
+                .queue({
+                    chan.sendMessage("Help was sent your way, ${helpee.asMention}!").queue()
+                }) { // Failure
+                    val m = second.append("\n")
+                        .append("(Couldn't send the message in DMs, ${helpee.asMention})")
+                        .build()
+                    chan.sendMessage(first.build())
+                        .queue()
+                    chan.sendMessage(m)
+                        .queue()
+                }
+        } else {
+            chan.sendMessage(first.build())
+                .queue()
+            return true
+        }
+        return false
     }
 }

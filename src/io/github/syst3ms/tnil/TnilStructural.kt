@@ -61,6 +61,18 @@ class Slot(private vararg val values: Glossable?) : Glossable {
     }
 }
 
+class ConcatenationChain(private vararg val formatives: Gloss) : Gloss() {
+
+    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+        return formatives
+            .map {
+                it.toString(precision, ignoreDefault)
+            }
+            .filter(String::isNotEmpty)
+            .joinToString(CONCATENATION_SEPARATOR)
+    }
+}
+
 class GlossString(
     private val full: String,
     private val normal: String = full,

@@ -1,4 +1,4 @@
-## **Help**
+**Help**
 
 Prefixes: 
   - **?**: commands used with this prefix won't write the default values of some grammatical categories.

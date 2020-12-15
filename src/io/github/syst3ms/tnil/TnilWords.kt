@@ -29,34 +29,6 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     else -> WordType.FORMATIVE
 }
 
-class ConcatenationChain(private vararg val formatives: Gloss) : Gloss() {
-
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
-        return formatives
-            .map {
-                it.toString(precision, ignoreDefault)
-            }
-            .filter(String::isNotEmpty)
-            .joinToString(CONCATENATION_SEPARATOR)
-    }
-}
-
-
-fun parseConcatenationChain(s: String) : GlossOutcome {
-    return s.split('-')
-        .takeIf {
-            it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE }
-        }.let { it ?: return Error("Non-formatives concatenated") }
-        .map { parseWord(it) }
-        .map {
-            when (it) {
-                is Gloss -> it
-                is Error -> return it
-            }
-        }.let { ConcatenationChain(*it.toTypedArray()) }
-
-}
-
 fun parseWord(s: String) : GlossOutcome {
 
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
@@ -100,10 +72,25 @@ fun parseWord(s: String) : GlossOutcome {
 
     return if (sentencePrefix) {
         when (result) {
-            is Gloss -> result.addPrefix(sentenceStartGloss)
+            is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
             is Error -> result
         }
     } else result
+
+}
+
+fun parseConcatenationChain(s: String) : GlossOutcome {
+    return s.split('-')
+        .takeIf {
+            it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE }
+        }.let { it ?: return Error("Non-formatives concatenated") }
+        .map { parseWord(it) }
+        .map {
+            when (it) {
+                is Gloss -> it
+                is Error -> return it
+            }
+        }.let { ConcatenationChain(*it.toTypedArray()) }
 
 }
 
@@ -327,38 +314,6 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
     return Gloss(*slotList.toTypedArray())
 
-}
-
-
-
-fun parseAffixVr(vr: String): Slot? {
-    val (series, form) = seriesAndForm(vr)
-        .let {
-            if (it == Pair(-1,-1)) {
-                val zeroSeries = when (vr) {
-                    "üa" -> 1
-                    "üe" -> 2
-                    "üo" -> 3
-                    "üö" -> 4
-                    else -> return null
-                }
-                 zeroSeries to 0
-            } else it
-        }
-
-    if (form !in 0..9) return null
-
-    val degree = GlossString("degree $form", "D$form")
-
-    val specification = when (series) {
-        1 -> Specification.BASIC
-        2 -> Specification.CONTENTIAL
-        3 -> Specification.CONSTITUTIVE
-        4 -> Specification.OBJECTIVE
-        else -> return null
-    }
-
-    return Slot(degree, specification)
 }
 
 fun parseModular(groups: Array<String>, stress: Int) : GlossOutcome {

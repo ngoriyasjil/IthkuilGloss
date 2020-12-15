@@ -57,8 +57,6 @@ fun respond(content: String) : String? {
     request = request.removePrefix("??").removePrefix("?")
     val precision = requestPrecision(request)
 
-
-
     when(request) {
 
         "gloss", "short", "full", "!debug" -> return wordByWord(words.drop(1), precision, ignoreDefault)

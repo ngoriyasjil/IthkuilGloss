@@ -225,6 +225,36 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
 
 }
 
+fun parseAffixVr(vr: String): Slot? {
+    val (series, form) = seriesAndForm(vr)
+        .let {
+            if (it == Pair(-1,-1)) {
+                val zeroSeries = when (vr) {
+                    "üa" -> 1
+                    "üe" -> 2
+                    "üo" -> 3
+                    "üö" -> 4
+                    else -> return null
+                }
+                zeroSeries to 0
+            } else it
+        }
+
+    if (form !in 0..9) return null
+
+    val degree = GlossString("degree $form", "D$form")
+
+    val specification = when (series) {
+        1 -> Specification.BASIC
+        2 -> Specification.CONTENTIAL
+        3 -> Specification.CONSTITUTIVE
+        4 -> Specification.OBJECTIVE
+        else -> return null
+    }
+
+    return Slot(degree, specification)
+}
+
 fun parseVh(vh: String) : GlossString? = when (vh.defaultForm()) {
     "a" -> GlossString("{scope over formative}", "{form.}")
     "e" -> GlossString("{scope over case/mood}", "{mood}")
