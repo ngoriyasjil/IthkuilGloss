@@ -171,7 +171,7 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
     index++
 
     val caseGlottal = if (shortcut == null) {
-        glottalIndices.any { it in (index+1)..(groups.lastIndex) }
+        glottalIndices.any { it in (index)..(groups.lastIndex) }
     } else groups.last().isVowel() && groups.lastIndex in glottalIndices
 
     if (concatenation != null && caseGlottal) return Error("Unexpected glottal stop in incorporated formative")
@@ -280,6 +280,7 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
     val vcVk = (groups.getOrNull(index) ?: "a").let {
         if (caseGlottal) {
+            if (groups.lastIndex < index) return Error("Unexpected glottal stop with elided Vc")
             glottalVowel(it)?.first ?: return Error("Unknown slot IX vowel: $it")
         } else it
     }
