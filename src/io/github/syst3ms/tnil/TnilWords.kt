@@ -211,10 +211,12 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
         index = indexV
 
+        if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+        if (slotVFilled && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+
     }
 
-    if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
-    if (slotVFilled && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+
 
     if (csVxAffixes.size == 1) csVxAffixes[0].canBeReferentialShortcut = true
 
