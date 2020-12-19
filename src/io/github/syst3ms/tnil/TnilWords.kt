@@ -241,6 +241,8 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
     val vxCsAffixes : MutableList<Glossable> = mutableListOf()
 
+    var hasSlotV = false
+
     if (!cnInVI) {
         while (true) {
             if (index+1 > groups.lastIndex || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
@@ -257,12 +259,18 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
                 if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
                 else if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+
+                hasSlotV = true
             }
 
             index += 2
 
         }
     }
+
+    if (shortcut != null && slotVFilled && !hasSlotV) return Error("Unexpectedly few slot V affixes")
+
+
 
     if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBeReferentialShortcut = true
 

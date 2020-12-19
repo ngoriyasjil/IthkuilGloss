@@ -40,6 +40,7 @@ class GeneralTests {
   @Test
   fun slotVTest() {
     "alarfull" glossesTo "S1-**l**-**rf**/9₁"
+    "wa'lena" givesError "Unexpectedly few slot V affixes"
   }
 
   @Test
