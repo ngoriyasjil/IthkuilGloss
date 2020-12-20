@@ -11,6 +11,7 @@ General commands (must be preceded by the proper prefix):
   - **s** or **sgloss**: gives a morphological analysis of the whole following sentence, with default precision
   - **sfull**: gives a morphological analysis of the whole following sentence, with strong precision
   - **sshort**: gives a morphological analysis of the whole following sentence, with weak precision
+  - **root**, **affix**: look up the definition of a root or affix in the respective document as used by the bot
 
 (Sentence parsing is currently not stable)
 

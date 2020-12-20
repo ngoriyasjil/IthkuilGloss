@@ -72,7 +72,7 @@ fun respond(content: String) : String? {
                     else    -> /* unreachable */ null
                 } ?: return "$lookup not found";
 
-                return "request **$consonantalForm**: $generalDescription\n" +
+                return "$request **$consonantalForm**: $generalDescription\n" +
                     details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
             }
             else -> return "gimme ONE thing"
