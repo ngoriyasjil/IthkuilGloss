@@ -4,10 +4,8 @@ name: default
 
 steps:
 - name: build
-  image: ubuntu
+  image: maven
   commands:
-  - apt update
-  - apt install -y maven
   - mvn package
 - name: docker
   image: plugins/docker
