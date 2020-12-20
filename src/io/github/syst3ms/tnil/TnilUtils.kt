@@ -17,7 +17,12 @@ fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS 
 
 val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'ô', 'ó', 'û', 'ú')
 
-fun String.hasStress() = this[0] in STRESSED_VOWELS
+fun String.hasStress() : Boolean? = when {
+    this.getOrNull(1) in STRESSED_VOWELS -> null
+    this[0] in STRESSED_VOWELS -> true
+    else -> false
+}
+
 
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
@@ -36,7 +41,7 @@ fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitut
 fun String.defaultForm() = toLowerCase().substituteAll(ALLOGRAPHS).substituteAll(UNSTRESSED_FORMS)
 
 
-fun Array<String>.findStress(): Int {
+fun Array<String>.findStress(): Int? {
     val vowels = this.filter(String::isVowel)
         .flatMap {
             val (series, form) = seriesAndForm(it.defaultForm())
@@ -46,12 +51,15 @@ fun Array<String>.findStress(): Int {
                 it.toCharArray().map(Char::toString).filter { ch -> ch != "'" }
             }
         }
+    if (vowels.size == 1) return -1
     val stressIndex = vowels
-            .reversed()
-            .indexOfFirst { it.hasStress() }
-    return when {
-        vowels.size == 1 -> -1
-        stressIndex == -1 -> 1
+        .reversed()
+        .map { it.hasStress() ?: return null }
+        .takeIf { list -> list.count { it } <= 1 }
+        ?.indexOfFirst { it }
+    return when (stressIndex) {
+        -1 -> 1
+        null -> null
         else -> stressIndex
     }
 }

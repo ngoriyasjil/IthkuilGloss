@@ -51,9 +51,9 @@ fun requestPrecision(request: String) = when {
 }
 
 fun respond(content: String) : String? {
-    var (request, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
-    val ignoreDefault = !request.startsWith("??")
-    request = request.removePrefix("??").removePrefix("?")
+    val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
+    val ignoreDefault = !fullRequest.startsWith("??")
+    val request = fullRequest.removePrefix("??").removePrefix("?")
     val precision = requestPrecision(request)
 
     when(request) {
@@ -109,7 +109,7 @@ fun respond(content: String) : String? {
 }
 
 fun sentenceGloss(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
-    val glossPairs = words.map { word ->
+    val glosses = words.map { word ->
         val gloss = try {
             when (val parse = parseWord(word.stripPunctuation())) {
                 is Error -> null
@@ -125,7 +125,7 @@ fun sentenceGloss(words: List<String>, precision: Int, ignoreDefault: Boolean): 
     }
 
     return "__Gloss__:\n" +
-            glossPairs.joinToString(" ")
+            glosses.joinToString(" ")
 }
 
 fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): String {

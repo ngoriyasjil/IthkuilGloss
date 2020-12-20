@@ -44,7 +44,7 @@ fun parseWord(s: String) : GlossOutcome {
         return parseConcatenationChain(s)
     }
 
-    val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress()
+    val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress() ?: return Error("Unknown stress")
 
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
