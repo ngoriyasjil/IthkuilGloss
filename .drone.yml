@@ -11,10 +11,10 @@ steps:
   image: plugins/docker
   settings:
     registry: ghcr.io
-    username: uakci
+    username: ngoriyasjil
     password:
       from_secret: registry_pass
-    repo: ghcr.io/uakci/tnilgloss
+    repo: ghcr.io/ngoriyasjil/tnilgloss
     tags: latest
   when:
     repo:
