@@ -51,21 +51,19 @@ fun requestPrecision(request: String) = when {
 }
 
 fun respond(content: String) : String? {
-    val wordses = content.split("\\s+".toRegex())
-    var request = wordses[0]
-    val words = wordses.drop(1)
+    var (request, args) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
     val ignoreDefault = !request.startsWith("??")
     request = request.removePrefix("??").removePrefix("?")
     val precision = requestPrecision(request)
 
     when(request) {
-        "gloss", "short", "full", "!debug" -> return wordByWord(words, precision, ignoreDefault)
+        "gloss", "short", "full", "!debug" -> return wordByWord(args, precision, ignoreDefault)
 
-        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(words, precision, ignoreDefault)
+        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(args, precision, ignoreDefault)
         
-        "root", "affix" -> when(words.size) {
+        "root", "affix" -> when(args.size) {
             1 -> {
-                val lookup = words[0].trim('-').toLowerCase()
+                val lookup = args[0].trim('-').toLowerCase()
                 val (consonantalForm, generalDescription, details) = when(request) {
                     "root"  ->  rootData.get(lookup)?.let {  root -> Triple("-$lookup-", root.descriptions[0], root.descriptions.drop(1)) }
                     "affix" -> affixData.get(lookup)?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
