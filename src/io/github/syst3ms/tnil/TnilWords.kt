@@ -224,9 +224,7 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
     var cnInVI = false
 
     val slotVI = if (shortcut == null) {
-        val ca = if (groups.getOrNull(index)?.isGeminateCa()
-                ?: return Error("Formative ended before Ca")
-        ) {
+        val ca = if (groups.getOrNull(index)?.isGeminateCa() ?: return Error("Formative ended before Ca")) {
             if (csVxAffixes.isNotEmpty()) {
                 groups[index].unGeminateCa()
             } else return Error("Unexpected glottal Ca: ${groups[index]}")
@@ -235,9 +233,11 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
         if (ca !in setOf("hl", "hr", "hm", "hn", "hň")) {
             parseCa(ca).also { index++ } ?: return Error("Unknown Ca value: $ca")
         } else {
-            parseCa("l")!!.also{ cnInVI = true }
+            parseCa("l")!!.also { cnInVI = true }
         }
     } else null
+
+    if (csVxAffixes.isNotEmpty()) slotVI?.default = "{Ca}"
 
     val vxCsAffixes : MutableList<Glossable> = mutableListOf()
 

@@ -41,6 +41,7 @@ interface NoDefault : Category {
 class Slot(private vararg val values: Glossable?) : Glossable {
 
     var stemAvailable = false
+    var default = ""
 
     val size: Int
         get() = values.size
@@ -54,6 +55,7 @@ class Slot(private vararg val values: Glossable?) : Glossable {
             }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
+            .let { if (it.isNotEmpty()) it else default }
     }
 
     fun getStem() : Int? {
