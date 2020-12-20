@@ -51,19 +51,19 @@ fun requestPrecision(request: String) = when {
 }
 
 fun respond(content: String) : String? {
-    var (request, args) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
+    var (request, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
     val ignoreDefault = !request.startsWith("??")
     request = request.removePrefix("??").removePrefix("?")
     val precision = requestPrecision(request)
 
     when(request) {
-        "gloss", "short", "full", "!debug" -> return wordByWord(args, precision, ignoreDefault)
+        "gloss", "short", "full", "!debug" -> return wordByWord(arguments, precision, ignoreDefault)
 
-        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(args, precision, ignoreDefault)
+        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(arguments, precision, ignoreDefault)
         
-        "root", "affix" -> when(args.size) {
+        "root", "affix" -> when(arguments.size) {
             1 -> {
-                val lookup = args[0].trim('-').toLowerCase()
+                val lookup = arguments[0].trim('-').toLowerCase()
                 val (consonantalForm, generalDescription, details) = when(request) {
                     "root"  ->  rootData.get(lookup)?.let {  root -> Triple("-$lookup-", root.descriptions[0], root.descriptions.drop(1)) }
                     "affix" -> affixData.get(lookup)?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
@@ -73,7 +73,7 @@ fun respond(content: String) : String? {
                 return "$request **$consonantalForm**: $generalDescription\n" +
                     details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
             }
-            else -> return "gimme ONE thing"
+            else -> return "*Please enter exactly one root or affix.*"
         }
 
         "!stop" -> exitProcess(0)
