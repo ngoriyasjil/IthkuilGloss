@@ -6,7 +6,7 @@ steps:
 - name: build
   image: maven
   commands:
-  - mvn package
+  - mvn package --batch-mode
 - name: docker
   image: plugins/docker
   settings:
