@@ -1,0 +1,31 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: build
+  image: ubuntu
+  commands:
+  - apt update
+  - apt install -y maven
+  - mvn package
+- name: docker
+  image: plugins/docker
+  settings:
+    registry: ghcr.io
+    username: uakci
+    password:
+      from_secret: registry_pass
+    repo: ghcr.io/uakci/tnilgloss
+    tags: latest
+  when:
+    repo:
+    - ngoriyasjil/TNILGloss
+- name: webhook
+  image: plugins/webhook
+  settings:
+    urls:
+      from_secret: webhook_url
+  when:
+    repo:
+    - ngoriyasjil/TNILGloss

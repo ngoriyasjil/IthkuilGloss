@@ -51,17 +51,32 @@ fun requestPrecision(request: String) = when {
 }
 
 fun respond(content: String) : String? {
-    val words = content.split("\\s+".toRegex())
-    var request = words[0]
+    val wordses = content.split("\\s+".toRegex())
+    var request = wordses[0]
+    val words = wordses.drop(1)
     val ignoreDefault = !request.startsWith("??")
     request = request.removePrefix("??").removePrefix("?")
     val precision = requestPrecision(request)
 
     when(request) {
+        "gloss", "short", "full", "!debug" -> return wordByWord(words, precision, ignoreDefault)
 
-        "gloss", "short", "full", "!debug" -> return wordByWord(words.drop(1), precision, ignoreDefault)
+        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(words, precision, ignoreDefault)
+        
+        "root", "affix" -> when(words.size) {
+            1 -> {
+                val lookup = words[0].trim('-').toLowerCase()
+                val (consonantalForm, generalDescription, details) = when(request) {
+                    "root"  ->  rootData.get(lookup)?.let {  root -> Triple("-$lookup-", root.descriptions[0], root.descriptions.drop(1)) }
+                    "affix" -> affixData.get(lookup)?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
+                    else    -> /* unreachable */ null
+                } ?: return "$lookup not found";
 
-        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(words.drop(1), precision, ignoreDefault)
+                return "request **$consonantalForm**: $generalDescription\n" +
+                    details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
+            }
+            else -> return "gimme ONE thing"
+        }
 
         "!stop" -> exitProcess(0)
 
@@ -74,7 +89,6 @@ fun respond(content: String) : String? {
                 "Error while reloading external resources…"
             }
         }
-
 
         "!status" -> {
             val git = ProcessBuilder("git", "log", "-1", "--oneline").start()
@@ -120,31 +134,29 @@ fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): Str
     val glossPairs = words
         .map(String::stripPunctuation)
         .map { word ->
-
-        val gloss = try {
-            parseWord(word)
-        } catch (ex: Exception) {
-            logger.error("{}", ex)
-            if (precision < 3) {
-                Error("A severe exception occurred. Please contact the maintainers.")
-            } else {
-                val sw = StringWriter()
-                ex.printStackTrace(PrintWriter(sw))
-                val stacktrace = sw.toString()
-                    .split("\n")
-                    .take(10)
-                    .joinToString("\n")
-                Error(stacktrace)
+            val gloss = try {
+                parseWord(word)
+            } catch (ex: Exception) {
+                logger.error("{}", ex)
+                if (precision < 3) {
+                    Error("A severe exception occurred. Please contact the maintainers.")
+                } else {
+                    val sw = StringWriter()
+                    ex.printStackTrace(PrintWriter(sw))
+                    val stacktrace = sw.toString()
+                        .split("\n")
+                        .take(10)
+                        .joinToString("\n")
+                    Error(stacktrace)
+                }
             }
-
+            word to gloss
+        }.map { (word, gloss) ->
+            word to when (gloss) {
+                is Error -> "*${gloss.message}*"
+                is Gloss -> gloss.toString(precision, ignoreDefault)
+            }
         }
-        word to gloss
-    }.map { (word, gloss) ->
-        word to when (gloss) {
-            is Error -> "*${gloss.message}*"
-            is Gloss -> gloss.toString(precision, ignoreDefault)
-        }
-    }
 
     return "__Gloss__:\n" +
             glossPairs.joinToString("\n") { (word, gloss) -> "**$word:** $gloss" }

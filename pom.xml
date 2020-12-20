@@ -4,7 +4,7 @@
 
   <groupId>io.github.syst3ms.tnil</groupId>
   <artifactId>tnilgloss</artifactId>
-  <version>0.1.0-0.17.1</version>
+  <version>0.1.0-0.18.3</version>
 
   <name>tnilgloss</name>
   <url>https://github.com/ngoriyasjil/TNILGloss</url>
@@ -94,6 +94,12 @@
             </goals>
           </execution>
         </executions>
+
+        <configuration>
+          <args>
+            <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
+          </args>
+        </configuration>
       </plugin>
 
       <plugin>
