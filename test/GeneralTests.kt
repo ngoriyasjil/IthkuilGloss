@@ -102,5 +102,10 @@ class GeneralTests {
     "a'la'nanalla'a" givesError "Too many glottal stops found"
   }
 
+  @Test
+  fun caTest() {
+    "alartřa" glossesTo "S1-**l**-DSS/RPV"
+  }
+
 
 }

@@ -517,6 +517,7 @@ fun parseCa(s: String) : Slot? {
 
     if (normal.drop(index).isNotEmpty() && index > 0) {
         perspective = when(normal[index]) {
+            'ř' -> Perspective.MONADIC
             'r', 'v', 'l' -> Perspective.POLYADIC
             'w', 'm', 'h' -> Perspective.NOMIC
             'y', 'n', 'ç' -> Perspective.ABSTRACT
