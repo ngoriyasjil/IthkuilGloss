@@ -3,7 +3,7 @@ package io.github.syst3ms.tnil
 var affixData: Map<String, AffixData> = emptyMap()
 var rootData: Map<String, RootData> = emptyMap()
 
-fun String.stripPunctuation(): String = this.replace("[.,?!:;]+$".toRegex(), "")
+fun String.stripPunctuation(): String = this.replace("[.,?!:;\"*]+".toRegex(), "")
 
 fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
     when (length) {

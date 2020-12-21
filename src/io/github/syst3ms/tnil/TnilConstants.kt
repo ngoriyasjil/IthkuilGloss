@@ -73,7 +73,7 @@ val ALLOGRAPHS = listOf(
 val UNSTRESSED_FORMS = listOf(
     "á" to "a", "â" to "ä",
     "é" to "e", "ê" to "ë",
-    "í" to "i",
+    "í" to "i", "î" to "ï",
     "ô" to "ö", "ó" to "o",
     "û" to "ü", "ú" to "u"
 )
