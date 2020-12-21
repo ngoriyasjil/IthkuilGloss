@@ -127,7 +127,7 @@ enum class Shortcut {
     W_SHORTCUT;
 }
 
-enum class Concatenation(override val short: String) : Category {
+enum class Concatenation(override val short: String) : NoDefault {
     TYPE_ONE("T1"),
     TYPE_TWO("T2");
 }
