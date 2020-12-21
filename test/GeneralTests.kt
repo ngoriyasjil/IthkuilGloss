@@ -1,6 +1,8 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import io.github.syst3ms.tnil.*
+import java.io.File
+import kotlin.test.assertTrue
 
 infix fun String.glossesTo(gloss: String) {
 
@@ -105,6 +107,16 @@ class GeneralTests {
   @Test
   fun caTest() {
     "alartřa" glossesTo "S1-**l**-DSS/RPV"
+  }
+
+  @Test
+  fun longMessageTest() {
+    val longText = File("./resources/longtest.txt").readText()
+    val messages = respond("?gloss $longText")!!.splitMessages().toList()
+    assertTrue("Is empty!") { messages.isNotEmpty() }
+    assertTrue("Wrong size: ${messages.size}") { messages.size == 2 }
+    assertTrue("Are longer than 2000 chars ${messages.map { it.length }}") { messages.all { it.length <= 2000 } }
+
   }
 
 

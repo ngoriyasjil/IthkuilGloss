@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import java.io.File
+import java.lang.StringBuilder
 
 fun main() {
     val tokenFile = File("./resources/token.txt")
@@ -43,12 +44,19 @@ class MessageListener : ListenerAdapter() {
         }
 
         val response = respond(content)
+
         if (response != null) {
-            channel.sendMessage(MessageBuilder(response).build()).queue()
+
+            val messages = response.splitMessages()
+
+            messages.forEach {
+                channel.sendMessage(MessageBuilder(it).build()).queue()
+            }
         }
+
     }
 
-    private fun sendHelp(event: MessageReceivedEvent, chan: MessageChannel): Boolean {
+    private fun sendHelp(event: MessageReceivedEvent, publicChannel: MessageChannel): Boolean {
         val helpMessage = File("./resources/help.md").readText().split("SPLITMESSAGEHERE")
         val first = MessageBuilder().append(helpMessage[0])
         val second = MessageBuilder().append(helpMessage[1])
@@ -59,21 +67,31 @@ class MessageListener : ListenerAdapter() {
                 .flatMap { it.sendMessage(first.build()) }
                 .flatMap { it.channel.sendMessage(second.build()) }
                 .queue({
-                    chan.sendMessage("Help was sent your way, ${helpee.asMention}!").queue()
+                    publicChannel.sendMessage("Help was sent your way, ${helpee.asMention}!").queue()
                 }) { // Failure
                     val m = second.append("\n")
                         .append("(Couldn't send the message in DMs, ${helpee.asMention})")
                         .build()
-                    chan.sendMessage(first.build())
+                    publicChannel.sendMessage(first.build())
                         .queue()
-                    chan.sendMessage(m)
+                    publicChannel.sendMessage(m)
                         .queue()
                 }
         } else {
-            chan.sendMessage(first.build())
+            publicChannel.sendMessage(first.build())
                 .queue()
             return true
         }
         return false
     }
+}
+
+fun String.splitMessages(): Sequence<String> = sequence {
+    val remainder = lines().fold(StringBuilder()) { current, line ->
+        if (current.length + line.length + 1 > 2000) {
+            yield(current.toString())
+            StringBuilder(line)
+        } else current.appendLine(line)
+    }
+    yield(remainder.toString())
 }
