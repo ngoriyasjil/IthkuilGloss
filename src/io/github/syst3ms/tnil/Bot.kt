@@ -24,23 +24,26 @@ const val AFFIXES_PATH = "./resources/affixes.tsv"
 const val ROOTS_PATH = "./resources/roots.tsv"
 
 fun loadResourcesOnline() {
+    logger.info("-> loadResourcesOnline()    ({} affixes, {} roots)", affixData.size, rootData.size)
     val affixes = URL(AFFIXES_URL).readText()
     val roots = URL(ROOTS_URL).readText()
-
 
     File(AFFIXES_PATH).writeText(affixes)
     File(ROOTS_PATH).writeText(roots)
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
+    logger.info("   loadResourcesOnline() -> ({} affixes, {} roots)", affixData.size, rootData.size)
 }
 
 fun loadResourcesLocal() {
+    logger.info("-> loadResourcesLocal()    ({} affixes, {} roots)", affixData.size, rootData.size)
     val affixes = File(AFFIXES_PATH).readText()
     val roots = File(ROOTS_PATH).readText()
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
+    logger.info("   loadResourcesLocal() -> ({} affixes, {} roots)", affixData.size, rootData.size)
 }
 
 fun requestPrecision(request: String) = when {
