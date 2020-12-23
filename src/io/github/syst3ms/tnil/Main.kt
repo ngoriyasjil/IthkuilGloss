@@ -14,13 +14,10 @@ suspend fun main() {
 
     kord.on<MessageCreateEvent> {
         with(message) {
-
-            val author = author ?: return@on
-
-            if (!content.startsWith("?") || !author.isBot) return@on
+            if (!content.startsWith("?") || author?.isBot != false) return@on
 
             if (content == "?help") {
-                sendHelp(author, channel)
+                sendHelp(author ?: return@on, channel)
                 return@on
             }
 
@@ -37,7 +34,7 @@ suspend fun main() {
     }
 }
 
-suspend fun sendHelp(helpee: User, channel : MessageChannelBehavior) {
+ suspend fun sendHelp(helpee: User, channel : MessageChannelBehavior) {
      val dmChannel = helpee.getDmChannelOrNull() ?: return
      val helpMessages = File("./resources/help.md")
         .readText()
