@@ -14,10 +14,15 @@ suspend fun main() {
 
     kord.on<MessageCreateEvent> {
         with(message) {
+
+            val sender = author ?: return@on
+
+
+            //No idea why "!sender.isBot" doesn't work
             if (!content.startsWith("?") || author?.isBot != false) return@on
 
             if (content == "?help") {
-                sendHelp(author ?: return@on, channel)
+                sendHelp(sender, channel)
                 return@on
             }
 

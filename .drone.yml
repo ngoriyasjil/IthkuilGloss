@@ -15,10 +15,13 @@ steps:
     password:
       from_secret: registry_pass
     repo: ghcr.io/ngoriyasjil/tnilgloss
+    branch: master
     tags: latest
   when:
     repo:
     - ngoriyasjil/TNILGloss
+    branch:
+    - master
 - name: webhook
   image: plugins/webhook
   settings:
@@ -27,3 +30,5 @@ steps:
   when:
     repo:
     - ngoriyasjil/TNILGloss
+    branch:
+    - master
