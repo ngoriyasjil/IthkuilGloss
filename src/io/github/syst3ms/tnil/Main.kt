@@ -18,8 +18,7 @@ suspend fun main() {
             val sender = author ?: return@on
 
 
-            //No idea why "!sender.isBot" doesn't work
-            if (!content.startsWith("?") || author?.isBot != false) return@on
+            if (!content.startsWith("?") || sender.isBot) return@on
 
             if (content == "?help") {
                 sendHelp(sender, channel)
