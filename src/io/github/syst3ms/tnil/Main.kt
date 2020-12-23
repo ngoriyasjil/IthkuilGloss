@@ -23,13 +23,13 @@ suspend fun main() {
 
 suspend fun respondHelper(message: Message) {
     with(message) {
-        val user = author as? User ?: return
+        val user = author ?: return
         if (user.isBot || !content.startsWith("?")) return
         if (content == "?help") return sendHelp(user, channel)
 
         logger.info("-> respond({})", content)
         val response = respond(content)
-        logger.info("   respond({}) -> {}", content, ("\n" + response) ?: "null")
+        logger.info("   respond({}) -> {}", content, ("\n" + response))
         (response ?: return).splitMessages().forEach { channel.createMessage(it) }
     }
 }

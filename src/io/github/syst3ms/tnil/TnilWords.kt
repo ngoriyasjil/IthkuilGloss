@@ -29,17 +29,9 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     else -> WordType.FORMATIVE
 }
 
+
 fun parseWord(s: String) : GlossOutcome {
     logger.trace("-> parseWord({})", s)
-    val result = parseWordOne(s)
-    if(logger.isTraceEnabled()) when(result) {
-        is Gloss -> logger.trace("   parseWord({}) -> Gloss({})", s, result.toString(0, true))
-        is Error -> logger.trace("   parseWord({}) -> Error({})", s, result.message)
-    }
-    return result
-}
-
-fun parseWordOne(s: String) : GlossOutcome {
 
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
@@ -80,12 +72,18 @@ fun parseWordOne(s: String) : GlossOutcome {
         WordType.FORMATIVE -> parseFormative(groups, stress)
     }
 
-    return if (sentencePrefix) {
+    val outcome = if (sentencePrefix) {
         when (result) {
             is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
             is Error -> result
         }
     } else result
+
+    if(logger.isTraceEnabled) when(outcome) {
+        is Gloss -> logger.trace("   parseWord({}) -> Gloss({})", s, outcome.toString(0, true))
+        is Error -> logger.trace("   parseWord({}) -> Error({})", s, outcome.message)
+    }
+    return outcome
 
 }
 
