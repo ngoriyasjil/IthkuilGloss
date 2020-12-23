@@ -63,18 +63,6 @@
       <artifactId>kord-core</artifactId>
       <version>0.7.0-RC</version>
     </dependency>
-
-    <dependency>
-      <groupId>net.dv8tion</groupId>
-      <artifactId>JDA</artifactId>
-      <version>4.2.0_217</version>
-      <exclusions>
-        <exclusion>
-          <groupId>club.minnced</groupId>
-          <artifactId>opus-java</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
   </dependencies>
 
   <build>
@@ -128,7 +116,7 @@
             <configuration>
               <archive>
                 <manifest>
-                  <mainClass>io.github.syst3ms.tnil.KordKt</mainClass>
+                  <mainClass>${main.class}</mainClass>
                 </manifest>
               </archive>
               <descriptorRefs>
