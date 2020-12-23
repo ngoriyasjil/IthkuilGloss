@@ -253,7 +253,7 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
     if (!cnInVI) {
         while (true) {
-            if (index+1 > groups.lastIndex || groups[index+1] in CN_CONSONANTS || groups[index+1] == "-") {
+            if (index+1 > groups.lastIndex || groups[index+1] in CN_CONSONANTS) {
                 break
             }
 
