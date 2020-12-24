@@ -82,12 +82,12 @@ class GlossString(
     private val ignorable: Boolean = false
 ) : Glossable {
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         return when {
-            ignorable && ignoreDefault -> ""
-            precision == 0 -> short
-            precision < 2 -> normal
-            else -> full
+            ignorable && !o.includeDefaults -> ""
+            o.concise -> short
+            o.verbose -> full
+            else      -> normal
         }
     }
 }

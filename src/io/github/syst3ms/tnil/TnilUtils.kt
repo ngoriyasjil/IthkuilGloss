@@ -1,7 +1,7 @@
 package io.github.syst3ms.tnil
 
 var affixData: Map<String, AffixData> = emptyMap()
-var rootData: Map<String, RootData> = emptyMap()
+var rootData:  Map<String, RootData>  = emptyMap()
 
 fun String.stripPunctuation(): String = this.replace("[.,?!:;\"*]+".toRegex(), "")
 
@@ -150,7 +150,3 @@ fun parseRoots(data: String): Map<String, RootData> = data
         .filter { it.size >= 5 }
         .map    { it[0] to RootData(it.subList(1, 5)) }
         .toMap()
-
-
-
-

@@ -8,6 +8,10 @@ import dev.kord.core.event.message.MessageCreateEvent
 
 import java.io.File
 import java.lang.StringBuilder
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+
+fun String.log() = System.err.println("${DateTimeFormatter.ISO_INSTANT.format(Instant.now())} | $this")
 
 suspend fun main() {
     val token = File("./resources/token.txt").readLines()[0]
@@ -17,7 +21,7 @@ suspend fun main() {
     loadResourcesOnline()
     kord.login {
         playing("?help for info")
-        logger.info("Logged in!")
+        "Logged in!".log()
     }
 }
 
@@ -27,15 +31,15 @@ suspend fun respondHelper(message: Message) {
         if (user.isBot || !content.startsWith("?")) return
         if (content == "?help") return sendHelp(user, channel)
 
-        logger.info("-> respond({})", content)
-        val response = respond(content)
-        logger.info("   respond({}) -> {}", content, ("\n" + response))
-        (response ?: return).splitMessages().forEach { channel.createMessage(it) }
+        "-> respond($content)".log()
+        respond(content)?.also {
+            "   respond($content) -> ${"\n" + it}".log()
+        }?.splitMessages()?.forEach { channel.createMessage(it) }
     }
 }
 
 suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {
-    logger.info("-> sendHelp({})", helpee)
+    "-> sendHelp($helpee)".log()
     val dmChannel = helpee.getDmChannelOrNull() ?: return
     val helpMessages = File("./resources/help.md")
         .readText()

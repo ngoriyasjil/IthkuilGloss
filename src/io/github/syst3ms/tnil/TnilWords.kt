@@ -29,16 +29,23 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
     else -> WordType.FORMATIVE
 }
 
-
 fun parseWord(s: String) : GlossOutcome {
-    logger.trace("-> parseWord({})", s)
+    "-> parseWord($s)".log()
+    return parseWordInner(s).also {
+        ("   parseWord($s) -> " + when(it) {
+            is Gloss -> "Gloss(${it.toString(GlossOpts(Precision.SHORT))})"
+            is Error -> "Error(${it.message})"
+        }).log()
+    }
+}
 
+fun parseWordInner(s: String) : GlossOutcome {
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
         return Error(
             "Non-ithkuil characters detected: " +
-                    nonIthkuil.map { "\"$it\" (" + it.toInt().toString(16) + ")" }.joinToString() +
-                    if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
+                nonIthkuil.map { "\"$it\" (U+" + it.toInt().toString(16).toUpperCase().padStart(4, '0') + ")" }.joinToString() +
+                if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
         )
     }
 
@@ -131,7 +138,6 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
         index++
         parseCc(groups[0])
     } else Pair(null, null)
-
 
 
     val relation = if (concatenation == null) {

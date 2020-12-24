@@ -2,7 +2,6 @@
 
 package io.github.syst3ms.tnil
 
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -10,8 +9,6 @@ import java.net.URL
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
-
-val logger = LoggerFactory.getLogger("tnilgloss")!!
 
 val leStart = System.currentTimeMillis()
 
@@ -24,7 +21,7 @@ const val AFFIXES_PATH = "./resources/affixes.tsv"
 const val ROOTS_PATH = "./resources/roots.tsv"
 
 fun loadResourcesOnline() {
-    logger.info("-> loadResourcesOnline()    ({} affixes, {} roots)", affixData.size, rootData.size)
+    "-> loadResourcesOnline()    (${affixData.size} affixes, ${rootData.size} roots)".log()
     val affixes = URL(AFFIXES_URL).readText()
     val roots = URL(ROOTS_URL).readText()
 
@@ -33,36 +30,36 @@ fun loadResourcesOnline() {
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
-    logger.info("   loadResourcesOnline() -> ({} affixes, {} roots)", affixData.size, rootData.size)
+    "   loadResourcesOnline() -> (${affixData.size} affixes, ${rootData.size} roots)".log()
 }
 
 fun loadResourcesLocal() {
-    logger.info("-> loadResourcesLocal()    ({} affixes, {} roots)", affixData.size, rootData.size)
+    "-> loadResourcesLocal()    (${affixData.size} affixes, ${rootData.size} roots)".log()
     val affixes = File(AFFIXES_PATH).readText()
     val roots = File(ROOTS_PATH).readText()
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
-    logger.info("   loadResourcesLocal() -> ({} affixes, {} roots)", affixData.size, rootData.size)
+    "   loadResourcesLocal() -> (${affixData.size} affixes, ${rootData.size} roots)".log()
 }
 
 fun requestPrecision(request: String) = when {
-    request.contains("short") -> 0
-    request.contains("full")  -> 2
-    request.contains("debug") -> 3
-    else                      -> 1
+    request.contains("short") -> Precision.SHORT
+    request.contains("full")  -> Precision.FULL
+    request.contains("debug") -> Precision.DEBUG
+    else                      -> Precision.REGULAR
 }
 
 fun respond(content: String) : String? {
     val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
-    val ignoreDefault = !fullRequest.startsWith("??")
     val request = fullRequest.removePrefix("??").removePrefix("?")
-    val precision = requestPrecision(request)
+    val o = GlossOpts(requestPrecision(request), fullRequest.startsWith("??"))
+    "   respond($content) got opts: $o".log()
 
     when(request) {
-        "gloss", "short", "full", "!debug" -> return wordByWord(arguments, precision, ignoreDefault)
+        "gloss", "short", "full", "!debug" -> return wordByWord(arguments, o)
 
-        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(arguments, precision, ignoreDefault)
+        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(arguments, o)
         
         "root", "affix" -> when(arguments.size) {
             1 -> {
@@ -86,7 +83,7 @@ fun respond(content: String) : String? {
                 loadResourcesOnline()
                 "External resources successfully reloaded!"
             } catch(e: Exception) {
-                logger.error("{}", e)
+                e.toString().log()
                 "Error while reloading external resources…"
             }
         }
