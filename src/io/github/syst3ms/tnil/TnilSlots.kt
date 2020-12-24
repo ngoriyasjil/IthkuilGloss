@@ -40,7 +40,7 @@ class Root(private val cr: String, private val stem: Int) : Glossable {
 
     val hasStem : Boolean = rootEntry?.descriptions?.get(stem).isNullOrEmpty().not()
 
-    override fun toString(o: GlossOpts): String {
+    override fun toString(o: GlossOptions): String {
         val root = rootEntry ?: return "**$cr**"
 
         val description = when (val stemDsc = root.descriptions[stem]) {
@@ -52,8 +52,8 @@ class Root(private val cr: String, private val stem: Int) : Glossable {
 
 }
 
-fun parseAffix(cs: String, vx: String, o: GlossOpts,
-               canBePraShortcut: Boolean = false,
+fun parseAffix(cs: String, vx: String, o: GlossOptions,
+               canBeReferentialShortcut: Boolean = false,
                noType: Boolean = false) : String {
     if (vx == CA_STACKING_VOWEL) {
         val ca = parseCa(cs)?.toString(o) ?: return "(Unknown Ca)"
@@ -61,7 +61,7 @@ fun parseAffix(cs: String, vx: String, o: GlossOpts,
         return if (ca.isNotEmpty()) {
             "($ca)"
         } else {
-            "(${Configuration.UNIPLEX.toString(o.withDefaults())})"
+            "(${Configuration.UNIPLEX.toString(o.showDefaults())})"
         }
     }
 
@@ -92,7 +92,7 @@ fun parseAffix(cs: String, vx: String, o: GlossOpts,
 
     var (type, degree) = seriesAndForm(vx)
 
-    if (canBePraShortcut && type == 3 || type == 4) {
+    if (canBeReferentialShortcut && type == 3 || type == 4) {
         return parseReferentialShortcut(cs, vx, o) ?: "(Unknown PRA shortcut)"
     }
 

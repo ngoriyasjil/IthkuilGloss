@@ -99,8 +99,8 @@ class Affix(private val vx: String,
             var canBeReferentialShortcut: Boolean = false,
             private val noType: Boolean = false) : Glossable { //Definitely not final
 
-    override fun toString(o: GlossOpts): String
-            = parseAffix(cs, vx, o, canBePraShortcut = canBeReferentialShortcut, noType = noType)
+    override fun toString(o: GlossOptions): String
+            = parseAffix(cs, vx, o, canBeReferentialShortcut = canBeReferentialShortcut, noType = noType)
 }
 
 enum class WordType {
@@ -264,10 +264,10 @@ enum class Phase(override val short: String) : NoDefault {
 
 class EffectAndPerson(private val person: String?, private val effect: Effect) : Glossable {
 
-    override fun toString(o: GlossOpts): String {
+    override fun toString(o: GlossOptions): String {
         return if (person != null) {
-            "$person:${effect.toString(o.withDefaults())}"
-        } else effect.toString(o.withDefaults())
+            "$person:${effect.toString(o.showDefaults())}"
+        } else effect.toString(o.showDefaults())
     }
 
     companion object {
@@ -296,15 +296,15 @@ enum class Effect(override val short: String) : Category {
 
 @Suppress("unused")
 enum class Level(override val short: String) : NoDefault {
+    MINIMAL("MIN"),
+    SUBEQUATIVE("SBE"),
+    INFERIOR("IFR"),
+    DEFICIENT("DFT"),
     EQUATIVE("EQU"),
     SURPASSIVE("SUR"),
-    DEFICIENT("DFT"),
-    MAXIMAL("MAX"),
-    MINIMAL("MIN"),
     SUPERLATIVE("SPL"),
-    INFERIOR("IFR"),
     SUPEREQUATIVE("SPQ"),
-    SUBEQUATIVE("SUBEQUATIVE");
+    MAXIMAL("MAX");
 
     companion object {
         fun byForm(form: Int) = values()[form-1]
@@ -546,7 +546,7 @@ enum class Bias(override val short: String, val cb: String) : NoDefault {
 }
 
 class RegisterAdjunct(private val register: Register, private val final: Boolean) : Glossable {
-    override fun toString(o: GlossOpts): String {
+    override fun toString(o: GlossOptions): String {
         return when (final) {
             false -> "<${register.toString(o)}>"
             true -> "</${register.toString(o)}>"
@@ -586,7 +586,7 @@ enum class Referent(override val short: String) : NoDefault {
     PROVISIONAL("PVS");
 }
 
-fun parseReferentialShortcut(c: String, v: String, o: GlossOpts): String? {
+fun parseReferentialShortcut(c: String, v: String, o: GlossOptions): String? {
     val (series, form) = seriesAndForm(v)
     val case = when (series) {
         3 -> when (form) {

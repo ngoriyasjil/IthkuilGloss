@@ -99,7 +99,7 @@ fun String.splitGroups(): Array<String> {
 val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
 
 class PersonalReferent(private vararg val referents: Slot) : Glossable {
-    override fun toString(o: GlossOpts): String {
+    override fun toString(o: GlossOptions): String {
         return when (referents.size) {
             0 -> ""
             1 -> referents[0].toString(o)

@@ -33,7 +33,7 @@ fun parseWord(s: String) : GlossOutcome {
     "-> parseWord($s)".log()
     return parseWordInner(s).also {
         ("   parseWord($s) -> " + when(it) {
-            is Gloss -> "Gloss(${it.toString(GlossOpts(Precision.SHORT))})"
+            is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
             is Error -> "Error(${it.message})"
         }).log()
     }
@@ -78,7 +78,7 @@ fun parseWordInner(s: String) : GlossOutcome {
 
 fun parseConcatenationChain(s: String) : GlossOutcome {
     return s.split('-')
-        .takeIf { it.all { wordTypeOf(it.splitGroups()) == WordType.FORMATIVE } }
+        .takeIf { it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE } }
         .let { it ?: return Error("Non-formatives concatenated") }
         .map(::parseWord)
         .map { it as? Gloss ?: return it }

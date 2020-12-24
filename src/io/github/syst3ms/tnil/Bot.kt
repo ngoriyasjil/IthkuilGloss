@@ -3,8 +3,6 @@
 package io.github.syst3ms.tnil
 
 import java.io.File
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.net.URL
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
@@ -46,29 +44,28 @@ fun loadResourcesLocal() {
 fun requestPrecision(request: String) = when {
     request.contains("short") -> Precision.SHORT
     request.contains("full")  -> Precision.FULL
-    request.contains("debug") -> Precision.DEBUG
     else                      -> Precision.REGULAR
 }
 
 fun respond(content: String) : String? {
     val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
-    val o = GlossOpts(requestPrecision(request), fullRequest.startsWith("??"))
+    val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
     "   respond($content) got opts: $o".log()
 
     when(request) {
-        "gloss", "short", "full", "!debug" -> return wordByWord(arguments, o)
+        "gloss", "short", "full" -> return wordByWord(arguments, o)
 
-        "s", "sgloss", "sshort", "sfull", "!sdebug" -> return sentenceGloss(arguments, o)
+        "s", "sgloss", "sshort", "sfull" -> return sentenceGloss(arguments, o)
         
         "root", "affix" -> when(arguments.size) {
             1 -> {
                 val lookup = arguments[0].trim('-').toLowerCase()
                 val (consonantalForm, generalDescription, details) = when(request) {
-                    "root"  ->  rootData.get(lookup)?.let {  root -> Triple("-$lookup-", root.descriptions[0], root.descriptions.drop(1)) }
-                    "affix" -> affixData.get(lookup)?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
+                    "root"  ->  rootData[lookup]?.let { root -> Triple("-$lookup-", root.descriptions[0], root.descriptions.drop(1)) }
+                    "affix" -> affixData[lookup]?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
                     else    -> /* unreachable */ null
-                } ?: return "$lookup not found";
+                } ?: return "$lookup not found"
 
                 return "$request **$consonantalForm**: $generalDescription\n" +
                     details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
@@ -108,7 +105,7 @@ fun respond(content: String) : String? {
     }
 }
 
-fun sentenceGloss(words: List<String>, o: GlossOpts): String {
+fun sentenceGloss(words: List<String>, o: GlossOptions): String {
     val glosses = words.map {
         it to (try {
             parseWord(it.stripPunctuation()) as? Gloss
@@ -124,7 +121,7 @@ fun sentenceGloss(words: List<String>, o: GlossOpts): String {
             glosses.joinToString("\u2003")
 }
 
-fun wordByWord(words: List<String>, o: GlossOpts): String {
+fun wordByWord(words: List<String>, o: GlossOptions): String {
     val glossPairs = words
         .map(String::stripPunctuation)
         .map { word ->
@@ -132,18 +129,7 @@ fun wordByWord(words: List<String>, o: GlossOpts): String {
                 parseWord(word)
             } catch (ex: Exception) {
                 ex.toString().log()
-                when {
-                    o.debug -> Error("A severe exception occurred. Please contact the maintainers.")
-                    else -> {
-                        val sw = StringWriter()
-                        ex.printStackTrace(PrintWriter(sw))
-                        val stacktrace = sw.toString()
-                            .split("\n")
-                            .take(10)
-                            .joinToString("\n")
-                        Error(stacktrace)
-                    }
-                }
+                Error("A severe exception occurred. Please contact the maintainers.")
             }
             word to gloss
         }.map { (word, gloss) ->

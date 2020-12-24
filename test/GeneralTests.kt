@@ -8,7 +8,7 @@ infix fun String.glossesTo(gloss: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
     is Error -> null to "Error: ${parse.message}"
-    is Gloss -> parse.toString(GlossOpts(Precision.REGULAR)) to this
+    is Gloss -> parse.toString(GlossOptions(Precision.REGULAR)) to this
   }
 
   assertEquals(gloss, result, message)
@@ -18,7 +18,7 @@ infix fun String.givesError(error: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
     is Error -> parse.message to this
-    is Gloss -> null to parse.toString(GlossOpts(Precision.REGULAR))
+    is Gloss -> null to parse.toString(GlossOptions(Precision.REGULAR))
   }
 
   assertEquals(error, result, message)
