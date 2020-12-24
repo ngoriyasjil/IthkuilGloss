@@ -40,30 +40,28 @@ class Root(private val cr: String, private val stem: Int) : Glossable {
 
     val hasStem : Boolean = rootEntry?.descriptions?.get(stem).isNullOrEmpty().not()
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         val root = rootEntry ?: return "**$cr**"
 
         val description = when (val stemDsc = root.descriptions[stem]) {
             "" -> root.descriptions[0]
             else -> stemDsc
         }
-        return "'$description'"
+        return "“$description”"
     }
 
 }
 
-fun parseAffix(cs: String, vx: String,
-               precision: Int,
-               ignoreDefault: Boolean,
+fun parseAffix(cs: String, vx: String, o: GlossOpts,
                canBePraShortcut: Boolean = false,
                noType: Boolean = false) : String {
     if (vx == CA_STACKING_VOWEL) {
-        val ca = parseCa(cs)?.toString(precision, ignoreDefault) ?: return "(Unknown Ca)"
+        val ca = parseCa(cs)?.toString(o) ?: return "(Unknown Ca)"
 
         return if (ca.isNotEmpty()) {
             "($ca)"
         } else {
-            "(${Configuration.UNIPLEX.toString(precision, ignoreDefault = false)})"
+            "(${Configuration.UNIPLEX.toString(o.withDefaults())})"
         }
     }
 
@@ -75,9 +73,9 @@ fun parseAffix(cs: String, vx: String,
         }
 
         val s = when (cs) {
-            "sw", "sy", "zw", "zy" -> if (precision > 1) "case accessor:" else "acc:"
-            "šw", "šy", "žw", "žy" -> if (precision > 1) "inverse accessor:" else "ia:"
-            "lw", "ly" -> if (precision > 1) "case-stacking:" else ""
+            "sw", "sy", "zw", "zy" -> if (o.verbose) "case accessor:"    else "acc:"
+            "šw", "šy", "žw", "žy" -> if (o.verbose) "inverse accessor:" else "ia:"
+            "lw", "ly"             -> if (o.verbose) "case-stacking:"    else ""
             else -> return "(Unknown case affix form)"
         }
 
@@ -87,7 +85,7 @@ fun parseAffix(cs: String, vx: String,
             else -> ""
         }
 
-        val case = Case.byVowel(vc)?.toString(precision) ?: return "(Unknown case: $vc)"
+        val case = Case.byVowel(vc)?.toString(o) ?: return "(Unknown case: $vc)"
         return "($s$case)$type"
 
     }
@@ -95,7 +93,7 @@ fun parseAffix(cs: String, vx: String,
     var (type, degree) = seriesAndForm(vx)
 
     if (canBePraShortcut && type == 3 || type == 4) {
-        return parseReferentialShortcut(cs, vx, precision) ?: "(Unknown PRA shortcut)"
+        return parseReferentialShortcut(cs, vx, o) ?: "(Unknown PRA shortcut)"
     }
 
     if (type == -1 && degree == -1) {
@@ -112,8 +110,8 @@ fun parseAffix(cs: String, vx: String,
 
     val affString = when {
         aff == null -> "**$cs**/$degree"
-        precision == 0 || degree == 0 -> "${aff.abbr}/$degree"
-        precision > 0 -> "'${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}'"
+        o.concise || degree == 0 -> "${aff.abbr}/$degree"
+        !o.concise -> "‘${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}’"
         else -> return "(Unknown affix: $cs)"
     }
 

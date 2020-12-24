@@ -58,55 +58,31 @@ fun parseWordInner(s: String) : GlossOutcome {
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
     val result : GlossOutcome = when (wordTypeOf(groups)) {
-        WordType.BIAS_ADJUNCT -> Gloss(Bias.byGroup(groups[0]) ?:  return Error("Unknown bias: ${groups[0]}"))
-
-        WordType.SUPPLETIVE_ADJUNCT -> parseSuppletiveAdjuncts(groups[0], groups[1])
-
-        WordType.MOOD_CASESCOPE_ADJUNCT -> parseMoodCaseScopeAdjunct(groups[1])
-
-        WordType.REGISTER_ADJUNCT -> parseRegisterAdjunct(groups[1])
-
-        WordType.MODULAR_ADJUNCT -> parseModular(groups, stress)
-
-        WordType.COMBINATION_REFERENTIAL -> parseCombinationReferential(groups, stress)
-
-        WordType.AFFIXUAL_ADJUNCT -> parseAffixual(groups, stress)
-
-        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix(groups, stress)
-
-        WordType.REFERENTIAL -> parseReferential(groups, stress)
-
-        WordType.FORMATIVE -> parseFormative(groups, stress)
+        WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
+        WordType.SUPPLETIVE_ADJUNCT       -> parseSuppletiveAdjuncts    (groups[0], groups[1])
+        WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (groups[1])
+        WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (groups[1])
+        WordType.MODULAR_ADJUNCT          -> parseModular               (groups, stress)
+        WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(groups, stress)
+        WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (groups, stress)
+        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (groups, stress)
+        WordType.REFERENTIAL              -> parseReferential           (groups, stress)
+        WordType.FORMATIVE                -> parseFormative             (groups, stress)
     }
 
-    val outcome = if (sentencePrefix) {
-        when (result) {
-            is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
-            is Error -> result
-        }
-    } else result
-
-    if(logger.isTraceEnabled) when(outcome) {
-        is Gloss -> logger.trace("   parseWord({}) -> Gloss({})", s, outcome.toString(0, true))
-        is Error -> logger.trace("   parseWord({}) -> Error({})", s, outcome.message)
+    return when {
+        sentencePrefix && result is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
+        else                              -> result
     }
-    return outcome
-
 }
 
 fun parseConcatenationChain(s: String) : GlossOutcome {
     return s.split('-')
-        .takeIf {
-            it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE }
-        }.let { it ?: return Error("Non-formatives concatenated") }
-        .map { parseWord(it) }
-        .map {
-            when (it) {
-                is Gloss -> it
-                is Error -> return it
-            }
-        }.let { ConcatenationChain(*it.toTypedArray()) }
-
+        .takeIf { it.all { wordTypeOf(it.splitGroups()) == WordType.FORMATIVE } }
+        .let { it ?: return Error("Non-formatives concatenated") }
+        .map(::parseWord)
+        .map { it as? Gloss ?: return it }
+        .let { ConcatenationChain(*it.toTypedArray()) }
 }
 
 fun parseRegisterAdjunct(v: String): GlossOutcome {
@@ -115,10 +91,8 @@ fun parseRegisterAdjunct(v: String): GlossOutcome {
 }
 
 fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
-
     val glottalIndices = igroups
-        .mapIndexed { index, group ->  if (group.contains('\'')) index else null }
-        .filterNotNull()
+        .mapIndexedNotNull { index, group -> if (group.contains('\'')) index else null }
 
     if (glottalIndices.size > 2) return Error("Too many glottal stops found")
 

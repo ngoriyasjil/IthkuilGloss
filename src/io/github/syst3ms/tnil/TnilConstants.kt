@@ -99,8 +99,8 @@ class Affix(private val vx: String,
             var canBeReferentialShortcut: Boolean = false,
             private val noType: Boolean = false) : Glossable { //Definitely not final
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String
-            = parseAffix(cs, vx, precision, ignoreDefault, canBePraShortcut = canBeReferentialShortcut, noType = noType)
+    override fun toString(o: GlossOpts): String
+            = parseAffix(cs, vx, o, canBePraShortcut = canBeReferentialShortcut, noType = noType)
 }
 
 enum class WordType {
@@ -264,10 +264,10 @@ enum class Phase(override val short: String) : NoDefault {
 
 class EffectAndPerson(private val person: String?, private val effect: Effect) : Glossable {
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         return if (person != null) {
-            "$person:${effect.toString(precision, ignoreDefault = false)}"
-        } else effect.toString(precision, ignoreDefault = false)
+            "$person:${effect.toString(o.withDefaults())}"
+        } else effect.toString(o.withDefaults())
     }
 
     companion object {
@@ -546,10 +546,10 @@ enum class Bias(override val short: String, val cb: String) : NoDefault {
 }
 
 class RegisterAdjunct(private val register: Register, private val final: Boolean) : Glossable {
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         return when (final) {
-            false -> "<${register.toString(precision, ignoreDefault)}>"
-            true -> "</${register.toString(precision, ignoreDefault)}>"
+            false -> "<${register.toString(o)}>"
+            true -> "</${register.toString(o)}>"
         }
     }
 
@@ -586,7 +586,7 @@ enum class Referent(override val short: String) : NoDefault {
     PROVISIONAL("PVS");
 }
 
-fun parseReferentialShortcut(c: String, v: String, precision: Int): String? {
+fun parseReferentialShortcut(c: String, v: String, o: GlossOpts): String? {
     val (series, form) = seriesAndForm(v)
     val case = when (series) {
         3 -> when (form) {
@@ -617,6 +617,6 @@ fun parseReferentialShortcut(c: String, v: String, precision: Int): String? {
     }
 
 
-    val ref = parsePersonalReference(c)?.toString(precision) ?: return null
-    return "($ref-${case.toString(precision)})"
+    val ref = parsePersonalReference(c)?.toString(o) ?: return null
+    return "($ref-${case.toString(o)})"
 }

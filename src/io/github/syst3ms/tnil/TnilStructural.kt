@@ -4,12 +4,10 @@ sealed class GlossOutcome
 class Error(val message: String) : GlossOutcome()
 open class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(), Glossable {
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         return slots
             .filterNotNull()
-            .map {
-                it.toString(precision, ignorable && ignoreDefault)
-            }
+            .map { it.toString(o.withDefaults(!ignorable)) }
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
     }
@@ -18,7 +16,27 @@ open class Gloss(private vararg val slots: Glossable?, private val ignorable: Bo
 }
 
 interface Glossable {
-    fun toString(precision: Int, ignoreDefault: Boolean = false): String
+    fun toString(o: GlossOpts): String
+}
+
+class GlossOpts(val precision: Precision, val includeDefaults: Boolean = false) {
+    fun withDefaults(onConditionThat: Boolean = true): GlossOpts =
+        GlossOpts(this.precision, this.includeDefaults || onConditionThat)
+    override fun toString(): String = "$precision form with ${if(includeDefaults) "" else "no "}defaults"
+
+    val concise: Boolean
+        get() = this.precision.concise
+    val verbose: Boolean
+        get() = this.precision.verbose
+    val debug:   Boolean
+        get() = this.precision.debug
+}
+
+enum class Precision(val concise: Boolean, val verbose: Boolean, val debug: Boolean) {
+    REGULAR(false, false, false),
+    SHORT  (true,  false, false),
+    FULL   (false, true,  false),
+    DEBUG  (false, true,  true);
 }
 
 interface Category : Glossable {
@@ -26,16 +44,16 @@ interface Category : Glossable {
     val name: String
     val short: String
 
-    override fun toString(precision: Int, ignoreDefault: Boolean) = when {
-        ignoreDefault && this.ordinal == 0 -> ""
-        precision >= 2 -> this.name.toLowerCase().replace("_", " ")
+    override fun toString(o: GlossOpts) = when {
+        !o.includeDefaults && this.ordinal == 0 -> ""
+        o.verbose -> this.name.toLowerCase().replace("_", " ")
         else -> short
     }
 }
 
 interface NoDefault : Category {
-    override fun toString(precision: Int, ignoreDefault: Boolean): String =
-        super.toString(precision, false)
+    override fun toString(o: GlossOpts): String =
+        super.toString(o.withDefaults())
 }
 
 class Slot(private vararg val values: Glossable?) : Glossable {
@@ -46,12 +64,12 @@ class Slot(private vararg val values: Glossable?) : Glossable {
     val size: Int
         get() = values.size
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         return values
             .filterNotNull()
             .map {
-                val gloss = it.toString(precision, ignoreDefault)
-                if (stemAvailable && it is Stem && precision > 0) "__${gloss}__" else gloss
+                val gloss = it.toString(o)
+                if (stemAvailable && it is Stem && !o.concise) "__${gloss}__" else gloss
             }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
@@ -65,11 +83,9 @@ class Slot(private vararg val values: Glossable?) : Glossable {
 
 class ConcatenationChain(private vararg val formatives: Gloss) : Gloss() {
 
-    override fun toString(precision: Int, ignoreDefault: Boolean): String {
+    override fun toString(o: GlossOpts): String {
         return formatives
-            .map {
-                it.toString(precision, ignoreDefault)
-            }
+            .map { it.toString(o) }
             .filter(String::isNotEmpty)
             .joinToString(CONCATENATION_SEPARATOR)
     }

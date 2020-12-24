@@ -108,51 +108,48 @@ fun respond(content: String) : String? {
     }
 }
 
-fun sentenceGloss(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
-    val glosses = words.map { word ->
-        val gloss = try {
-            when (val parse = parseWord(word.stripPunctuation())) {
-                is Error -> null
-                is Gloss -> parse
-            }
+fun sentenceGloss(words: List<String>, o: GlossOpts): String {
+    val glosses = words.map {
+        it to (try {
+            parseWord(it.stripPunctuation()) as? Gloss
         } catch (ex: Exception) {
-            logger.error("{}", ex)
+            ex.toString().log()
             null
-        }
-        word to gloss
+        })
     }.map { (word, gloss) ->
-        gloss?.toString(precision, ignoreDefault)?.withZeroWidthSpaces() ?: "**$word**"
+        gloss?.toString(o)?.withZeroWidthSpaces() ?: "**$word**"
     }
 
     return "__Gloss__:\n" +
-            glosses.joinToString(" ")
+            glosses.joinToString("\u2003")
 }
 
-fun wordByWord(words: List<String>, precision: Int, ignoreDefault: Boolean): String {
+fun wordByWord(words: List<String>, o: GlossOpts): String {
     val glossPairs = words
         .map(String::stripPunctuation)
         .map { word ->
             val gloss = try {
                 parseWord(word)
             } catch (ex: Exception) {
-                logger.error("{}", ex)
-                if (precision < 3) {
-                    Error("A severe exception occurred. Please contact the maintainers.")
-                } else {
-                    val sw = StringWriter()
-                    ex.printStackTrace(PrintWriter(sw))
-                    val stacktrace = sw.toString()
-                        .split("\n")
-                        .take(10)
-                        .joinToString("\n")
-                    Error(stacktrace)
+                ex.toString().log()
+                when {
+                    o.debug -> Error("A severe exception occurred. Please contact the maintainers.")
+                    else -> {
+                        val sw = StringWriter()
+                        ex.printStackTrace(PrintWriter(sw))
+                        val stacktrace = sw.toString()
+                            .split("\n")
+                            .take(10)
+                            .joinToString("\n")
+                        Error(stacktrace)
+                    }
                 }
             }
             word to gloss
         }.map { (word, gloss) ->
             word to when (gloss) {
                 is Error -> "*${gloss.message}*"
-                is Gloss -> gloss.toString(precision, ignoreDefault)
+                is Gloss -> gloss.toString(o)
             }
         }
 
