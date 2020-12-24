@@ -8,7 +8,7 @@ infix fun String.glossesTo(gloss: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
     is Error -> null to "Error: ${parse.message}"
-    is Gloss -> parse.toString(1, true) to this
+    is Gloss -> parse.toString(GlossOpts(Precision.REGULAR)) to this
   }
 
   assertEquals(gloss, result, message)
@@ -18,7 +18,7 @@ infix fun String.givesError(error: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
     is Error -> parse.message to this
-    is Gloss -> null to parse.toString(1, true)
+    is Gloss -> null to parse.toString(GlossOpts(Precision.REGULAR))
   }
 
   assertEquals(error, result, message)
@@ -32,16 +32,16 @@ class GeneralTests {
 
   @Test
   fun poemTest() {
-    "hlamröé-uçtļořï" glossesTo "S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM"
+    "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM"
     "khe" glossesTo  "Obv/DET-ABS"
     "adnilo'o" glossesTo  "S1-**dn**-OBJ-UTL"
-    "yeilaišeu" glossesTo  "S2/RPV-**l**-**š**/1₂-ATT"
+    "yeilaiceu" glossesTo  "S2/RPV-**l**-**c**/1₂-ATT"
     "aiňļavu'u" glossesTo  "S1/**r**/4-**ňļ**-N-RLT"
   }
 
   @Test
   fun slotVTest() {
-    "alarfull" glossesTo "S1-**l**-**rf**/9₁"
+    "alarfull" glossesTo "S1-**l**-**rf**/9₁-{Ca}"
     "wa'lena" givesError "Unexpectedly few slot V affixes"
   }
 
@@ -99,8 +99,8 @@ class GeneralTests {
     "la'la" glossesTo "S1-**l**-PRN"
     "wala'ana" glossesTo "S1-**l**-**n**/1₁-{Ca}"
     "halala'a" givesError "Unexpected glottal stop in incorporated formative"
-    "a'lananalla'a" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-PRN"
-    "a'la'nanalla" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-PRN"
+    "a'lananalla'a" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-{Ca}-PRN"
+    "a'la'nanalla" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-{Ca}-PRN"
     "a'la'nanalla'a" givesError "Too many glottal stops found"
   }
 
