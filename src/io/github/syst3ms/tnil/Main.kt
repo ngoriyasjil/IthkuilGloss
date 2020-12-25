@@ -54,7 +54,7 @@ fun String.splitMessages(): Sequence<String> = sequence {
     val remainder = lines().fold(StringBuilder()) { current, line ->
         if (current.length + line.length + 1 > 2000) {
             yield(current.toString())
-            StringBuilder(line)
+            StringBuilder().appendLine(line)
         } else current.appendLine(line)
     }
     yield(remainder.toString())
