@@ -2,10 +2,10 @@
 
 **v0.18.4**
 
-- Format elision rules
-- Ca substitutions changed
-- Contextual replaced with Vacillative
-- Cases shuffled and shifted
+- ~~Format elision rules~~
+- ~~Ca substitutions changed~~
+- ~~Contextual replaced with Vacillative~~
+- ~~Cases shuffled and shifted~~
 
 **Language to-dos**
 

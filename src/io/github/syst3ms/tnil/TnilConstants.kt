@@ -245,7 +245,6 @@ enum class Valence(override val short: String) : Category {
 
 @Suppress("unused")
 enum class Phase(override val short: String) : NoDefault {
-    CONTEXTUAL("CTX"),
     PUNCTUAL("PCT"),
     ITERATIVE("ITR"),
     REPETITIVE("REP"),
@@ -253,6 +252,7 @@ enum class Phase(override val short: String) : NoDefault {
     RECURRENT("RCT"),
     FREQUENTATIVE("FRE"),
     FRAGMENTATIVE("FRG"),
+    VACILLATIVE("VAC"),
     FLUCTUATIVE("FLC");
 
     companion object {
@@ -375,6 +375,7 @@ enum class CaseScope(override val short: String) : Category {
 
 @Suppress("unused")
 enum class Case(override val short: String, val vc: String) : Category {
+    //  Transrelative
     THEMATIC("THM", "a"),
     INSTRUMENTAL("INS", "ä"),
     ABSOLUTIVE("ABS", "e"),
@@ -385,6 +386,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     DATIVE("DAT", "ü"),
     INDUCIVE("IND", "u"),
 
+    //  Appositive
     POSSESSIVE("POS", "ai"),
     PROPRIETIVE("PRP", "au"),
     GENITIVE("GEN", "ei"),
@@ -395,6 +397,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     INTERDEPENDENT("IDP", "iu"),
     PARTITIVE("PAR", "ui"),
 
+    //  Associative
     APPLICATIVE("APL", "ia/oä"),
     PURPOSIVE("PUR", "iä/uä"),
     TRANSMISSIVE("TRA", "ie/oë"),
@@ -405,6 +408,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     COMPARATIVE("CMP", "ue/eö"),
     CONSIDERATIVE("CSD", "ua/aö"),
 
+    // Adverbial
     FUNCTIVE("FUN", "ao"),
     TRANSFORMATIVE("TFM", "ae"),
     CLASSIFICATIVE("CLA", "ea"),
@@ -415,24 +419,27 @@ enum class Case(override val short: String, val vc: String) : Category {
     CONVERSIVE("CVS", "öa"),
     SITUATIVE("SIT", "oa"),
 
+    // Relational
     PERTINENTIAL("PRN", "a'a"),
-    ASSIMILATIVE("ASI", "ä'ä"),
-    ESSIVE("ESS", "e'e"),
-    CORRELATIVE("COR", "ï'ï"),
-    COMPOSITIVE("CPS", "i'i"),
-    COMITATIVE("COM", "ö'ö"),
-    UTILITATIVE("UTL", "o'o"),
+    DESCRIPTIVE("DSP", "ä'ä"),
+    CORRELATIVE("COR", "e'e"),
+    COMPOSITIVE("CPS", "ï'ï"),
+    COMITATIVE("COM", "i'i"),
+    UTILITATIVE("UTL", "ö'ö"),
+    PREDICATIVE("PRD", "o'o"),
     RELATIVE("RLT", "u'u"),
 
+    // Affinitive
     ACTIVATIVE("ACT", "a'i"),
-    DESCRIPTIVE("DSP", "a'u"),
-    TERMINATIVE("TRM", "e'i"),
-    SELECTIVE("SEL", "e'u"),
-    CONFORMATIVE("CFM", "ë'i"),
-    DEPENDENT("DEP", "o'u"),
-    PREDICATIVE("PRD", "o'i"),
+    ASSIMILATIVE("ASI", "a'u"),
+    ESSIVE("ESS", "e'i"),
+    TERMINATIVE("TRM", "e'u"),
+    SELECTIVE("SEL", "ë'i"),
+    CONFORMATIVE("CFM", "o'u"),
+    DEPENDENT("DEP", "o'i"),
     VOCATIVE("VOC", "u'i"),
 
+    //  Spatio-Temporal I
     LOCATIVE("LOC", "i'a"),
     ATTENDANT("ATD", "i'ä"),
     ALLATIVE("ALL", "i'e"),
@@ -442,6 +449,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     INTRATIVE("INV", "u'o"),
     NAVIGATIVE("NAV", "u'a"),
 
+    // Spatio-Temporal II
     CONCURSIVE("CNR", "a'o"),
     ASSESSIVE("ASS", "a'e"),
     PERIODIC("PER", "e'a"),

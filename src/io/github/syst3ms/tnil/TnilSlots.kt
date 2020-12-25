@@ -398,13 +398,12 @@ fun parsePersonalReference(s: String) : Slot? {
 
 val UNGEMINATE_MAP = mapOf(
     "bd" to "pt", "bg" to "pk", "gd" to "kt", "gb" to "kp", "dg" to "tk", "db" to "tp",
-    "bzm" to "pm", "bzn" to "pn", "gzm" to "km", "gzn" to "kn",  "ẓm" to "tm", "ẓn" to "tn",
-    "bžm" to "bm", "bžn" to "bn", "gžm" to "gm", "gžn" to "gn",  "jm" to "dm", "jn" to "dn",
+    "bzzm" to "pm", "bzzn" to "pn", "gzzm" to "km", "gzzn" to "kn",  "zzm" to "tm", "zzn" to "tn",
+    "bžžm" to "bm", "bžžn" to "bn", "gžžm" to "gm", "gžžn" to "gn",  "žžm" to "dm", "žžn" to "dn",
 )
 
 fun String.isGeminateCa(): Boolean = when {
     withIndex().any { (index, ch) ->  ch == getOrNull(index + 1) } -> true
-    length > 1 && this[0] in setOf('ẓ', 'j') -> true
     this in UNGEMINATE_MAP.keys -> true
     else -> false
 }
@@ -412,8 +411,6 @@ fun String.isGeminateCa(): Boolean = when {
 
 fun String.unGeminateCa(): String = when {
     this in UNGEMINATE_MAP.keys -> UNGEMINATE_MAP[this] ?: this
-    length > 1 && this[0]  == 'ẓ' -> replaceFirst('ẓ','c')
-    length > 1 && this[0] == 'j' -> replaceFirst('j','č')
     withIndex().any { (index, letter) ->  letter == getOrNull(index + 1) } -> mapIndexed {
             index, letter -> if (letter == getOrNull(index + 1)) "" else letter
     }.joinToString("")

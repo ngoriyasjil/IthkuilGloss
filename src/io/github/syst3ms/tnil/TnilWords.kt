@@ -204,8 +204,6 @@ fun parseFormative(igroups: Array<String>, stress: Int) : GlossOutcome {
 
     }
 
-
-
     if (csVxAffixes.size == 1) csVxAffixes[0].canBeReferentialShortcut = true
 
 

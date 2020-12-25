@@ -34,7 +34,7 @@ class GeneralTests {
   fun poemTest() {
     "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM"
     "khe" glossesTo  "Obv/DET-ABS"
-    "adnilo'o" glossesTo  "S1-**dn**-OBJ-UTL"
+    "adnilö'ö" glossesTo  "S1-**dn**-OBJ-UTL"
     "yeilaiceu" glossesTo  "S2/RPV-**l**-**c**/1₂-ATT"
     "aiňļavu'u" glossesTo  "S1/**r**/4-**ňļ**-N-RLT"
   }
@@ -74,17 +74,17 @@ class GeneralTests {
     "ggw".unGeminateCa() mustBe "gw"
     "mmtw".unGeminateCa() mustBe "mtw"
     "tççkl".unGeminateCa() mustBe "tçkl"
-    "ẓw".unGeminateCa() mustBe "cw"
-    "jtw".unGeminateCa() mustBe "čtw"
+    "ccw".unGeminateCa() mustBe "cw"
+    "ččtw".unGeminateCa() mustBe "čtw"
     "gd".unGeminateCa() mustBe "kt"
-    "jn".unGeminateCa() mustBe "dn"
+    "žžn".unGeminateCa() mustBe "dn"
   }
 
   @Test
   fun vnCnTest() {
-    "auha" glossesTo "PCT"
+    "iuha" glossesTo "VAC"
     "ïha" glossesTo "RCP"
-    "aiha" glossesTo "CTX"
+    "ëuha" glossesTo "UNK"
     "ëha" givesError "Unknown VnCn: ëh"
   }
 
