@@ -85,7 +85,7 @@ fun parseAffix(cs: String, vx: String, o: GlossOptions,
             else -> ""
         }
 
-        val case = Case.byVowel(vc)?.toString(o) ?: return "(Unknown case: $vc)"
+        val case = Case.byVowel(vc)?.toString(o.showDefaults()) ?: return "(Unknown case: $vc)"
         return "($s$case)$type"
 
     }

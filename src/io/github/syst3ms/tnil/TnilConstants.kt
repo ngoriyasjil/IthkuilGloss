@@ -626,5 +626,5 @@ fun parseReferentialShortcut(c: String, v: String, o: GlossOptions): String? {
 
 
     val ref = parsePersonalReference(c)?.toString(o) ?: return null
-    return "($ref-${case.toString(o)})"
+    return "($ref-${case.toString(o.showDefaults())})"
 }
