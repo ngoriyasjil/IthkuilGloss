@@ -11,36 +11,34 @@ import java.lang.StringBuilder
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-fun String.log() = System.err.println("${DateTimeFormatter.ISO_INSTANT.format(Instant.now())} | $this")
+fun log(message: String) = System.err.println("${DateTimeFormatter.ISO_INSTANT.format(Instant.now())} | $message")
 
 suspend fun main() {
     val token = File("./resources/token.txt").readLines()[0]
     val kord = Kord(token)
-    kord.on<MessageCreateEvent> { respondHelper(message) }
+    kord.on<MessageCreateEvent> { message.respondTo() }
 
     loadResourcesOnline()
     kord.login {
         playing("?help for info")
-        "Logged in!".log()
+        log("Logged in!")
     }
 }
 
-suspend fun respondHelper(message: Message) {
-    with(message) {
-        val user = author ?: return
-        if (user.isBot || !content.startsWith("?")) return
-        if (content == "?help") return sendHelp(user, channel)
+suspend fun Message.respondTo() {
+    val user = author ?: return
+    if (user.isBot || !content.startsWith("?")) return
+    if (content == "?help") return sendHelp(user, channel)
 
-        "-> respond($content)".log()
-        respond(content)
-            .also { "   respond($content) -> ${"\n" + it}".log() }
-            ?.splitMessages()
-            ?.forEach { channel.createMessage(it) }
-    }
+    log("-> respond($content)")
+    respond(content)
+        .also { log("   respond($content) -> ${"\n" + it}") }
+        ?.splitMessages()
+        ?.forEach { channel.createMessage(it) }
 }
 
 suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {
-    "-> sendHelp($helpee)".log()
+    log("-> sendHelp($helpee)")
     val dmChannel = helpee.getDmChannelOrNull() ?: return
     val helpMessages = File("./resources/help.md")
         .readText()

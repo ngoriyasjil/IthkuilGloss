@@ -30,12 +30,14 @@ fun wordTypeOf(groups: Array<String>) : WordType = when {
 }
 
 fun parseWord(s: String) : GlossOutcome {
-    "-> parseWord($s)".log()
+    log("-> parseWord($s)")
     return parseWordInner(s).also {
-        ("   parseWord($s) -> " + when(it) {
-            is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
-            is Error -> "Error(${it.message})"
-        }).log()
+        log(
+            ("   parseWord($s) -> " + when (it) {
+                is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
+                is Error -> "Error(${it.message})"
+            })
+        )
     }
 }
 

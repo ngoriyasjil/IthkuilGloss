@@ -8,7 +8,7 @@ import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
-val leStart = System.currentTimeMillis()
+val startTime = System.currentTimeMillis()
 
 const val MORPHOPHONOLOGY_VERSION = "0.18.4"
 
@@ -19,7 +19,7 @@ const val AFFIXES_PATH = "./resources/affixes.tsv"
 const val ROOTS_PATH = "./resources/roots.tsv"
 
 fun loadResourcesOnline() {
-    "-> loadResourcesOnline()    (${affixData.size} affixes, ${rootData.size} roots)".log()
+    log("-> loadResourcesOnline()    (${affixData.size} affixes, ${rootData.size} roots)")
     val affixes = URL(AFFIXES_URL).readText()
     val roots = URL(ROOTS_URL).readText()
 
@@ -28,17 +28,17 @@ fun loadResourcesOnline() {
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
-    "   loadResourcesOnline() -> (${affixData.size} affixes, ${rootData.size} roots)".log()
+    log("   loadResourcesOnline() -> (${affixData.size} affixes, ${rootData.size} roots)")
 }
 
 fun loadResourcesLocal() {
-    "-> loadResourcesLocal()    (${affixData.size} affixes, ${rootData.size} roots)".log()
+    log("-> loadResourcesLocal()    (${affixData.size} affixes, ${rootData.size} roots)")
     val affixes = File(AFFIXES_PATH).readText()
     val roots = File(ROOTS_PATH).readText()
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
-    "   loadResourcesLocal() -> (${affixData.size} affixes, ${rootData.size} roots)".log()
+    log("   loadResourcesLocal() -> (${affixData.size} affixes, ${rootData.size} roots)")
 }
 
 fun requestPrecision(request: String) = when {
@@ -51,7 +51,7 @@ fun respond(content: String) : String? {
     val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
-    "   respond($content) got opts: $o".log()
+    log("   respond($content) received options: $o")
 
     when(request) {
         "gloss", "short", "full" -> return wordByWord(arguments, o)
@@ -80,7 +80,7 @@ fun respond(content: String) : String? {
                 loadResourcesOnline()
                 "External resources successfully reloaded!"
             } catch(e: Exception) {
-                e.toString().log()
+                log(e.toString())
                 "Error while reloading external resources…"
             }
         }
@@ -94,7 +94,7 @@ fun respond(content: String) : String? {
                 "**Roots:** ${rootData.size}",
                 "**Affixes:** ${affixData.size}",
                 "**Help file exists:** ${File("./resources/help.md").exists()}",
-                "**Uptime:** ${(System.currentTimeMillis() - leStart).milliseconds}",
+                "**Uptime:** ${(System.currentTimeMillis() - startTime).milliseconds}",
                 "**Last commit:** $lastCommit"
             ).joinToString("\n")
         }
@@ -110,7 +110,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
         it to (try {
             parseWord(it.stripPunctuation()) as? Gloss
         } catch (ex: Exception) {
-            ex.toString().log()
+            log(ex.toString())
             null
         })
     }.map { (word, gloss) ->
@@ -128,7 +128,7 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
             val gloss = try {
                 parseWord(word)
             } catch (ex: Exception) {
-                ex.toString().log()
+                log(ex.toString())
                 Error("A severe exception occurred. Please contact the maintainers.")
             }
             word to gloss
