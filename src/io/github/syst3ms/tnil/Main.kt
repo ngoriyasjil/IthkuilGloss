@@ -32,9 +32,10 @@ suspend fun respondHelper(message: Message) {
         if (content == "?help") return sendHelp(user, channel)
 
         "-> respond($content)".log()
-        respond(content)?.also {
-            "   respond($content) -> ${"\n" + it}".log()
-        }?.splitMessages()?.forEach { channel.createMessage(it) }
+        respond(content)
+            .also { "   respond($content) -> ${"\n" + it}".log() }
+            ?.splitMessages()
+            ?.forEach { channel.createMessage(it) }
     }
 }
 
