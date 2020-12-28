@@ -14,12 +14,12 @@ steps:
     username: ngoriyasjil
     password:
       from_secret: registry_pass
-    repo: ghcr.io/ngoriyasjil/tnilgloss
+    repo: ghcr.io/ngoriyasjil/ithkuilgloss
     branch: master
     tags: latest
   when:
     repo:
-    - ngoriyasjil/TNILGloss
+    - ngoriyasjil/IthkuilGloss
     branch:
     - master
 - name: webhook
@@ -29,6 +29,6 @@ steps:
       from_secret: webhook_url
   when:
     repo:
-    - ngoriyasjil/TNILGloss
+    - ngoriyasjil/IthkuilGloss
     branch:
     - master
