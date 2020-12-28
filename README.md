@@ -1,6 +1,6 @@
-# TNILGloss
+# IthkuilGloss
 
-A Discord parser bot for the new Ithkuil language
+A Discord parser bot for the Ithkuil IV language.
 
 Currently up to date to morphophonology v0.18.4.
 
@@ -16,3 +16,7 @@ Currently up to date to morphophonology v0.18.4.
 2. Compile with Maven and run
 
 The CLI will by default download the lexicon locally, and then use that. To update the local lexicon, use the `?!reload` command.
+
+Ithkuil IV language is created by John Quijada.
+
+Based on TNILGloss by Syst3ms
