@@ -10,7 +10,7 @@ Currently up to date to morphophonology v0.18.4.
    file in `resources/token.txt`.
 2. Compile with Maven.
 
-## How to run Command Line Interface
+## How to run the Command Line Interface
 
 1. Set `main.class` to `io.github.syst3ms.tnil.CommandLineInterfaceKt`
 2. Compile with Maven and run
