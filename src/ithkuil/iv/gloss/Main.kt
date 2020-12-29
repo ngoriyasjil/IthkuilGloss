@@ -1,4 +1,4 @@
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior

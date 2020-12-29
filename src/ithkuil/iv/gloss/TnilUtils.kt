@@ -1,4 +1,4 @@
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 var affixData: Map<String, AffixData> = emptyMap()
 var rootData:  Map<String, RootData>  = emptyMap()

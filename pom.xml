@@ -6,15 +6,15 @@
   <artifactId>tnilgloss</artifactId>
   <version>0.1.0-0.18.4</version>
 
-  <name>tnilgloss</name>
-  <url>https://github.com/ngoriyasjil/TNILGloss</url>
+  <name>ithkuilgloss</name>
+  <url>https://github.com/ngoriyasjil/IthkuilGloss</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <kotlin.version>1.4.10</kotlin.version>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
-    <main.class>io.github.syst3ms.tnil.MainKt</main.class>
+    <main.class>ithkuil.iv.gloss.MainKt</main.class>
   </properties>
 
   <repositories>

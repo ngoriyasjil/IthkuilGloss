@@ -1,6 +1,6 @@
 @file:Suppress("SpellCheckingInspection")
 
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 const val SLOT_SEPARATOR = "-"
 const val CATEGORY_SEPARATOR = "/"

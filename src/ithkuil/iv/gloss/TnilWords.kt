@@ -1,7 +1,7 @@
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 fun wordTypeOf(groups: Array<String>) : WordType = when {
-    groups.size == 1 && groups[0].isConsonant() ->  WordType.BIAS_ADJUNCT
+    groups.size == 1 && groups[0].isConsonant() -> WordType.BIAS_ADJUNCT
 
     groups[0] in setOf("hl", "hm", "hn", "hň") && (groups.size == 2) -> WordType.SUPPLETIVE_ADJUNCT
 
@@ -60,16 +60,16 @@ fun parseWordInner(s: String) : GlossOutcome {
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
     val result : GlossOutcome = when (wordTypeOf(groups)) {
-        WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
-        WordType.SUPPLETIVE_ADJUNCT       -> parseSuppletiveAdjuncts    (groups[0], groups[1])
-        WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (groups[1])
-        WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (groups[1])
-        WordType.MODULAR_ADJUNCT          -> parseModular               (groups, stress)
-        WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(groups, stress)
-        WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (groups, stress)
+        WordType.BIAS_ADJUNCT -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
+        WordType.SUPPLETIVE_ADJUNCT -> parseSuppletiveAdjuncts    (groups[0], groups[1])
+        WordType.MOOD_CASESCOPE_ADJUNCT -> parseMoodCaseScopeAdjunct  (groups[1])
+        WordType.REGISTER_ADJUNCT -> parseRegisterAdjunct       (groups[1])
+        WordType.MODULAR_ADJUNCT -> parseModular               (groups, stress)
+        WordType.COMBINATION_REFERENTIAL -> parseCombinationReferential(groups, stress)
+        WordType.AFFIXUAL_ADJUNCT -> parseAffixual              (groups, stress)
         WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (groups, stress)
-        WordType.REFERENTIAL              -> parseReferential           (groups, stress)
-        WordType.FORMATIVE                -> parseFormative             (groups, stress)
+        WordType.REFERENTIAL -> parseReferential           (groups, stress)
+        WordType.FORMATIVE -> parseFormative             (groups, stress)
     }
 
     return when {

@@ -1,8 +1,9 @@
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 sealed class GlossOutcome
 class Error(val message: String) : GlossOutcome()
-open class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(), Glossable {
+open class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(),
+    Glossable {
 
     override fun toString(o: GlossOptions): String {
         return slots

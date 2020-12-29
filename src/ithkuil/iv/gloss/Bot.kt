@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 import java.io.File
 import java.net.URL

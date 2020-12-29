@@ -1,6 +1,6 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import io.github.syst3ms.tnil.*
+import ithkuil.iv.gloss.*
 import java.io.File
 import kotlin.test.assertTrue
 

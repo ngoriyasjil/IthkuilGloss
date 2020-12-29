@@ -1,4 +1,4 @@
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it eq v }) {

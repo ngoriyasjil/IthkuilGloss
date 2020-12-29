@@ -1,4 +1,4 @@
-package io.github.syst3ms.tnil
+package ithkuil.iv.gloss
 
 import java.io.FileNotFoundException
 

@@ -2,3 +2,5 @@ resources/token.txt
 resources/roots.tsv
 resources/affixes.tsv
 target/
+.idea
+tnilgloss.iml
