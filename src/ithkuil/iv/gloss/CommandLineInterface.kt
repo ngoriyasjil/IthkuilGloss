@@ -2,7 +2,6 @@ package ithkuil.iv.gloss
 
 import java.io.FileNotFoundException
 
-
 fun main() {
 
     try {

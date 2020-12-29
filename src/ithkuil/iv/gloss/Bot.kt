@@ -12,14 +12,16 @@ val startTime = System.currentTimeMillis()
 
 const val MORPHOPHONOLOGY_VERSION = "0.18.4"
 
-const val AFFIXES_URL = "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516"
-const val ROOTS_URL = "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303"
+const val AFFIXES_URL =
+    "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516"
+const val ROOTS_URL =
+    "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=1534088303"
 
 const val AFFIXES_PATH = "./resources/affixes.tsv"
 const val ROOTS_PATH = "./resources/roots.tsv"
 
 fun loadResourcesOnline() {
-    log("-> loadResourcesOnline()    (${affixData.size} affixes, ${rootData.size} roots)")
+    logger.info { "-> loadResourcesOnline()    (${affixData.size} affixes, ${rootData.size} roots)" }
     val affixes = URL(AFFIXES_URL).readText()
     val roots = URL(ROOTS_URL).readText()
 
@@ -28,47 +30,53 @@ fun loadResourcesOnline() {
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
-    log("   loadResourcesOnline() -> (${affixData.size} affixes, ${rootData.size} roots)")
+    logger.info { "   loadResourcesOnline() -> (${affixData.size} affixes, ${rootData.size} roots)" }
 }
 
 fun loadResourcesLocal() {
-    log("-> loadResourcesLocal()    (${affixData.size} affixes, ${rootData.size} roots)")
+    logger.info { "-> loadResourcesLocal()    (${affixData.size} affixes, ${rootData.size} roots)" }
     val affixes = File(AFFIXES_PATH).readText()
     val roots = File(ROOTS_PATH).readText()
 
     affixData = parseAffixes(affixes)
     rootData = parseRoots(roots)
-    log("   loadResourcesLocal() -> (${affixData.size} affixes, ${rootData.size} roots)")
+    logger.info { "   loadResourcesLocal() -> (${affixData.size} affixes, ${rootData.size} roots)" }
 }
 
 fun requestPrecision(request: String) = when {
     request.contains("short") -> Precision.SHORT
-    request.contains("full")  -> Precision.FULL
-    else                      -> Precision.REGULAR
+    request.contains("full") -> Precision.FULL
+    else -> Precision.REGULAR
 }
 
-fun respond(content: String) : String? {
+fun respond(content: String): String? {
     val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
-    log("   respond($content) received options: $o")
+    logger.info { "   respond($content) received options: $o" }
 
-    when(request) {
+    when (request) {
         "gloss", "short", "full" -> return wordByWord(arguments, o)
 
         "s", "sgloss", "sshort", "sfull" -> return sentenceGloss(arguments, o)
-        
-        "root", "affix" -> when(arguments.size) {
+
+        "root", "affix" -> when (arguments.size) {
             1 -> {
                 val lookup = arguments[0].trim('-').toLowerCase()
-                val (consonantalForm, generalDescription, details) = when(request) {
-                    "root"  ->  rootData[lookup]?.let { root -> Triple("-$lookup-", root.descriptions[0], root.descriptions.drop(1)) }
+                val (consonantalForm, generalDescription, details) = when (request) {
+                    "root" -> rootData[lookup]?.let { root ->
+                        Triple(
+                            "-$lookup-",
+                            root.descriptions[0],
+                            root.descriptions.drop(1)
+                        )
+                    }
                     "affix" -> affixData[lookup]?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
-                    else    -> /* unreachable */ null
+                    else -> /* unreachable */ null
                 } ?: return "$lookup not found"
 
                 return "$request **$consonantalForm**: $generalDescription\n" +
-                    details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
+                        details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
             }
             else -> return "*Please enter exactly one root or affix.*"
         }
@@ -79,8 +87,8 @@ fun respond(content: String) : String? {
             return try {
                 loadResourcesOnline()
                 "External resources successfully reloaded!"
-            } catch(e: Exception) {
-                log(e.toString())
+            } catch (e: Exception) {
+                logger.info { e.toString() }
                 "Error while reloading external resources…"
             }
         }
@@ -110,7 +118,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
         it to (try {
             parseWord(it.stripPunctuation()) as? Gloss
         } catch (ex: Exception) {
-            log(ex.toString())
+            logger.info { ex.toString() }
             null
         })
     }.map { (word, gloss) ->
@@ -128,7 +136,7 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
             val gloss = try {
                 parseWord(word)
             } catch (ex: Exception) {
-                log(ex.toString())
+                logger.info { ex.toString() }
                 Error("A severe exception occurred. Please contact the maintainers.")
             }
             word to gloss
