@@ -60,7 +60,7 @@ val ALLOGRAPHS = listOf(
     "ó" to "ó", "ö" to "ö", "ô" to "ô",
     "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
     "č" to "č",
-    "ç" to "ç", "[ṭŧ]|ţ|ṭ" to "ţ",
+    "ç" to "ç", "[ṭŧț]|ţ|ṭ" to "ţ",
     "[ḍđ]|ḍ|ḑ" to "ḑ",
     "[łḷ]|ḷ|ļ" to "ļ",
     "š" to "š",
