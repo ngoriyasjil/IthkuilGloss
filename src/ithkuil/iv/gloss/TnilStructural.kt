@@ -1,22 +1,33 @@
 package ithkuil.iv.gloss
 
 sealed class GlossOutcome
+
 class Error(val message: String) : GlossOutcome()
-open class Gloss(private vararg val slots: Glossable?, private val ignorable: Boolean = true) : GlossOutcome(),
-    Glossable {
+
+open class Gloss(
+    private vararg val slots: Glossable?,
+    private val stressMarked: Glossable? = null,
+    private val ignorable: Boolean = true,
+) :
+    GlossOutcome(), Glossable {
 
     override fun toString(o: GlossOptions): String {
-        return slots
+        val mainWord = slots
             .filterNotNull()
             .map { it.toString(o.showDefaults(!ignorable)) }
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
+        val stressCategory = stressMarked?.toString(o.showDefaults(!ignorable))
+            ?.let { "$STRESS_SLOT_SEPARATOR$it" } ?: ""
+
+        return mainWord + stressCategory
+
     }
 
     fun addPrefix(prefix: Glossable?): Gloss = Gloss(prefix, *slots)
 }
 
-class GlossOptions(private val precision: Precision, val includeDefaults: Boolean = false) {
+class GlossOptions(private val precision: Precision = Precision.REGULAR, val includeDefaults: Boolean = false) {
 
     fun showDefaults(condition: Boolean = true) =
         GlossOptions(this.precision, this.includeDefaults || condition)

@@ -8,7 +8,7 @@ infix fun String.glossesTo(gloss: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
     is Error -> null to "Error: ${parse.message}"
-    is Gloss -> parse.toString(GlossOptions(Precision.REGULAR)) to this
+    is Gloss -> parse.toString(GlossOptions()) to this
   }
 
   assertEquals(gloss, result, message)
@@ -18,7 +18,7 @@ infix fun String.givesError(error: String) {
 
   val (result, message) = when (val parse = parseWord(this)) {
     is Error -> parse.message to this
-    is Gloss -> null to parse.toString(GlossOptions(Precision.REGULAR))
+    is Gloss -> null to parse.toString(GlossOptions())
   }
 
   assertEquals(error, result, message)
@@ -32,11 +32,11 @@ class GeneralTests {
 
   @Test
   fun poemTest() {
-    "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN/CSV-RPV-STM"
-    "khe" glossesTo  "Obv/DET-ABS"
+    "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN.CSV-RPV-STM"
+    "khe" glossesTo  "Obv.DET-ABS"
     "adnilö'ö" glossesTo  "S1-**dn**-OBJ-UTL"
-    "yeilaiceu" glossesTo  "S2/RPV-**l**-**c**/1₂-ATT"
-    "aiňļavu'u" glossesTo  "S1/**r**/4-**ňļ**-N-RLT"
+    "yeilaiceu" glossesTo  "S2.RPV-**l**-**c**/1₂-ATT"
+    "aiňļavu'u" glossesTo  "S1.**r**/4-**ňļ**-N-RLT"
   }
 
   @Test
@@ -90,7 +90,7 @@ class GeneralTests {
 
   @Test
   fun csRootTest() {
-    "öëgüöl" glossesTo "CPT/DYN-**g**/0-D0/OBJ"
+    "öëgüöl" glossesTo "CPT.DYN-**g**/0-D0.OBJ"
   }
 
   @Test
@@ -106,7 +106,7 @@ class GeneralTests {
 
   @Test
   fun caTest() {
-    "alartřa" glossesTo "S1-**l**-DSS/RPV"
+    "alartřa" glossesTo "S1-**l**-DSS.RPV"
   }
 
   @Test

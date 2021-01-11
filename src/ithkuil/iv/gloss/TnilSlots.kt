@@ -109,8 +109,8 @@ fun parseAffix(cs: String, vx: String, o: GlossOptions,
     val aff = affixData[cs]
 
     val affString = when {
-        aff == null -> "**$cs**/$degree"
-        o.concise || degree == 0 -> "${aff.abbr}/$degree"
+        aff == null -> "**$cs**$AFFIX_DEGREE_SEPARATOR$degree"
+        o.concise || degree == 0 -> "${aff.abbr}$AFFIX_DEGREE_SEPARATOR$degree"
         !o.concise -> "‘${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}’"
         else -> return "(Unknown affix: $cs)"
     }
@@ -435,7 +435,7 @@ fun parseCa(s: String) : Slot? {
         "d" -> affiliation = Affiliation.ASSOCIATIVE
         "g" -> affiliation = Affiliation.COALESCENT
         "b" -> affiliation = Affiliation.VARIATIVE
-        "l", "ř" -> Unit
+        "l", "ř" -> { }
         "r", "tļ" -> perspective = Perspective.POLYADIC
         "v", "lm" -> perspective = Perspective.NOMIC
         "z", "ln" -> perspective = Perspective.ABSTRACT

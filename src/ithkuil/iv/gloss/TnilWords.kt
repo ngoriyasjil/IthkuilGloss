@@ -33,17 +33,6 @@ fun wordTypeOf(groups: Array<String>): WordType = when {
 
 fun parseWord(s: String): GlossOutcome {
     logger.info { "-> parseWord($s)" }
-    return parseWordInner(s).also {
-        logger.info {
-            ("   parseWord($s) -> " + when (it) {
-                is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
-                is Error -> "Error(${it.message})"
-            })
-        }
-    }
-}
-
-fun parseWordInner(s: String): GlossOutcome {
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
         return Error(
@@ -78,6 +67,13 @@ fun parseWordInner(s: String): GlossOutcome {
     return when {
         sentencePrefix && result is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
         else -> result
+    }.also {
+        logger.info {
+            ("   parseWord($s) -> " + when (it) {
+                is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
+                is Error -> "Error(${it.message})"
+            })
+        }
     }
 }
 
@@ -311,10 +307,10 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
     if (groups.lastIndex >= index) return Error("Formative continued unexpectedly: ${groups[index]}")
 
-    val slotList: List<Glossable> = listOfNotNull(relation, concatenation, slotII, root, slotIV) +
+    val slotList: List<Glossable> = listOfNotNull(concatenation, slotII, root, slotIV) +
             csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX)
 
-    return Gloss(*slotList.toTypedArray())
+    return Gloss(*slotList.toTypedArray(), stressMarked = relation)
 
 }
 
@@ -394,7 +390,7 @@ fun parseReferential(groups: Array<String>, stress: Int): GlossOutcome {
         }
         groups.size > index + 1 -> return Error("Referential is too long")
 
-        else -> return Gloss(refA, caseA, essence)
+        else -> return Gloss(refA, caseA, stressMarked = essence)
     }
 }
 
@@ -442,7 +438,7 @@ fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcom
         else -> Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")
     }
 
-    return Gloss(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, essence)
+    return Gloss(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, stressMarked = essence)
 
 }
 
@@ -476,7 +472,7 @@ fun parseMultipleAffix(groups: Array<String>, stress: Int): GlossOutcome {
         affixualAdjunctScope(vz, isMultipleAdjunctVowel = true) ?: return Error("Unknown Vz: $vz")
     } else null
 
-    return Gloss(firstAffix, scopeOfFirst, *vxCsAffixes.toTypedArray(), scopeOfRest, concatOnly)
+    return Gloss(firstAffix, scopeOfFirst, *vxCsAffixes.toTypedArray(), scopeOfRest, stressMarked = concatOnly)
 
 }
 
@@ -499,7 +495,7 @@ fun parseAffixual(groups: Array<String>, stress: Int): GlossOutcome {
     val affix = Affix(groups[index], groups[index + 1])
     val scope = affixualAdjunctScope(groups.getOrNull(index + 2))
 
-    return Gloss(affix, scope, concatOnly)
+    return Gloss(affix, scope, stressMarked = concatOnly)
 
 }
 

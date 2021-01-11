@@ -3,7 +3,9 @@
 package ithkuil.iv.gloss
 
 const val SLOT_SEPARATOR = "-"
-const val CATEGORY_SEPARATOR = "/"
+const val CATEGORY_SEPARATOR = "."
+const val AFFIX_DEGREE_SEPARATOR = "/"
+const val STRESS_SLOT_SEPARATOR = "\\"
 const val REFERENT_SEPARATOR = "+"
 const val REFERENT_START = "["
 const val REFERENT_END = "]"
