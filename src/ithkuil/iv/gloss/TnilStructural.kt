@@ -18,7 +18,7 @@ open class Gloss(
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
         val stressCategory = stressMarked?.toString(o.showDefaults(!ignorable))
-            ?.let { "$STRESS_SLOT_SEPARATOR$it" } ?: ""
+            ?.let { if (it.isNotEmpty()) "$STRESS_SLOT_SEPARATOR$it" else "" } ?: ""
 
         return mainWord + stressCategory
 
