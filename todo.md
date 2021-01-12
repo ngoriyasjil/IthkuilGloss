@@ -1,12 +1,5 @@
 ### To-Do list
 
-**v0.18.4**
-
-- ~~Format elision rules~~
-- ~~Ca substitutions changed~~
-- ~~Contextual replaced with Vacillative~~
-- ~~Cases shuffled and shifted~~
-
 **Language to-dos**
 
 - Implement absolute level
@@ -17,7 +10,6 @@
  - Re-write sentence parsing
     - Reimplement Mood/Case-Scope distinction in modular adjuncts
  - Clean up glottal vowel uses
- - Structs everywhere
 
 **Ideas**
 
