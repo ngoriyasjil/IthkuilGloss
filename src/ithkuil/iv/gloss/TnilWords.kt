@@ -385,7 +385,7 @@ fun parseReferential(groups: Array<String>, stress: Int): GlossOutcome {
 
             if (groups.size > index) return Error("Referential is too long")
 
-            return Gloss(refA, caseA, caseB, refB, essence)
+            return Gloss(refA, caseA, caseB, refB, stressMarked = essence)
 
         }
         groups.size > index + 1 -> return Error("Referential is too long")
@@ -418,21 +418,16 @@ fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcom
 
     val vxCsAffixes: MutableList<Glossable> = mutableListOf()
     while (true) {
-        if (index + 1 >= groups.size || groups[index + 1] in CN_CONSONANTS || groups[index + 1] == "-") {
+        if (index + 1 > groups.lastIndex) {
             break
         }
 
-        val (vx, glottal) = unGlottalVowel(groups[index])
-            ?: return Error("Unknown vowelform: ${groups[index]} (slot VII)")
-
-        if (glottal) return Error("Unexpected glottal stop")
-
-        vxCsAffixes.add(Affix(vx, groups[index + 1]))
+        vxCsAffixes.add(Affix(groups[index], groups[index + 1]))
         index += 2
 
     }
 
-    val caseB = when (groups.getOrNull(index)?.defaultForm()) {
+    val caseB = when (groups.getOrNull(index)) {
         "a", null -> null
         "üa" -> Case.THEMATIC
         else -> Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")

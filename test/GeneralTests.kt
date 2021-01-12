@@ -116,7 +116,12 @@ class GeneralTests {
     assertTrue("Is empty!") { messages.isNotEmpty() }
     assertTrue("Wrong size: ${messages.size}") { messages.size == 2 }
     assertTrue("Are longer than 2000 chars ${messages.map { it.length }}") { messages.all { it.length <= 2000 } }
+  }
 
+  @Test
+  fun stressMarkingTest() {
+    "lála'a" glossesTo "S1-**l**-PRN\\FRA"
+    "layá" glossesTo "1m\\RPV"
   }
 
 
