@@ -26,6 +26,9 @@ fun String.hasStress() : Boolean? = when {
 
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
+fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter { !it.isEmpty() }
+fun String.trimWhitespace() = this.splitOnWhitespace().joinToString(" ")
+
 
 //Deals with series three vowels and non-default consonant forms
 infix fun String.eq(s: String): Boolean = if ("/" in this) {
@@ -35,7 +38,7 @@ infix fun String.eq(s: String): Boolean = if ("/" in this) {
 }
 
 fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
-        current, (allo, sub) -> current.replace(allo.toRegex(), sub)
+    current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
 
 fun String.defaultForm() = toLowerCase().substituteAll(ALLOGRAPHS).substituteAll(UNSTRESSED_FORMS)

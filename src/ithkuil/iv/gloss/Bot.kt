@@ -52,11 +52,11 @@ fun requestPrecision(request: String) = when {
 fun respond(content: String): String? {
     if (!content.startsWith("?")) {
         return Regex(":\\?(.*?)\\?:", RegexOption.DOT_MATCHES_ALL).findAll(content)
-            .map { match -> respond("?sshort ${match.groupValues[1].trim()}") }
+            .map { match -> respond("?sshort ${match.groupValues[1].trimWhitespace()}") }
             .joinToString("\n\n")
     }
 
-    val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
+    val (fullRequest, arguments) = content.splitOnWhitespace().let { Pair(it[0], it.drop(1)) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
     logger.info { "   respond($content) received options: $o" }
@@ -150,7 +150,7 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
             }
         }
 
-    return glossPairs.joinToString("\n") { (word, gloss) -> "**$word:** $gloss" }
+    return glossPairs.joinToString("\n") { (word, gloss) -> "**$word**: $gloss" }
 
 }
 
