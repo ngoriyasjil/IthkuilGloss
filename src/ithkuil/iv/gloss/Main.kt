@@ -56,5 +56,5 @@ fun String.splitMessages(): Sequence<String> = sequence {
             StringBuilder().appendLine(line)
         } else current.appendLine(line)
     }
-    yield(remainder.toString())
+    yieldAll(remainder.chunkedSequence(2000))
 }

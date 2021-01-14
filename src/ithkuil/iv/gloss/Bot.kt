@@ -126,7 +126,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
     }
 
     return "__Gloss__:\n" +
-            glosses.joinToString("\u2003")
+            glosses.joinToString(" ")
 }
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
