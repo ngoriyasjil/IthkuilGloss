@@ -43,10 +43,10 @@ val CASE_AFFIXES = setOf(
 
 val CA_SUBSTITUTIONS = listOf(
         "řd" to "řtt", "řg" to "řkk", "řb" to "řpp",
-        "rd" to "rtt", "rg" to "rkk", "rb" to "rpp", "ňv" to "rňm", "nḑ" to "rňn",
-        "ld" to "ltt", "lg" to "lkk", "lb" to "lpp", "ňž" to "rnm", "mž" to "rmn",
+        "rd" to "rtt", "rg" to "rkk", "rb" to "rpp", "ňv" to "rňm", "ňḑ" to "rňn",
+        "ld" to "ltt", "lg" to "lkk", "lb" to "lpp", "nḑ" to "rnm", "mḑ" to "rmn",
         "^nd" to "tt", "^ng" to "kk", "^mb" to "pp", "nz" to "nn", "mz" to "mm",
-        "ňž" to "ňy", "ž" to "çy", "ẓ" to "cy", "j" to "čy",
+        "ẓ" to "ňy", "ž" to "çy", "j" to "tçy", "gž" to "kçy", "bž" to "pçy",
         "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
         "c" to "ts", "tš" to "č", "ḑ" to "tţ")
 

@@ -10,7 +10,7 @@ import kotlin.time.milliseconds
 
 val startTime = System.currentTimeMillis()
 
-const val MORPHOPHONOLOGY_VERSION = "0.18.4"
+const val MORPHOPHONOLOGY_VERSION = "0.18.5"
 
 const val AFFIXES_URL =
     "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516"

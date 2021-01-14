@@ -59,7 +59,7 @@ interface Category : Glossable {
 
     override fun toString(o: GlossOptions) = when {
         !o.includeDefaults && this.ordinal == 0 -> ""
-        o.verbose -> this.name.toLowerCase().replace("_", " ")
+        o.verbose -> this.name.toLowerCase()
         else -> short
     }
 }
