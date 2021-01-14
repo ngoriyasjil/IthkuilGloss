@@ -50,15 +50,21 @@ fun requestPrecision(request: String) = when {
 }
 
 fun respond(content: String): String? {
+    if (!content.startsWith("?")) {
+        return Regex(":\\?(.*?)\\?:", RegexOption.DOT_MATCHES_ALL).findAll(content)
+            .map { match -> respond("?sshort ${match.groupValues[1].trim()}") }
+            .joinToString("\n\n")
+    }
+
     val (fullRequest, arguments) = content.split("\\s+".toRegex()).let { Pair(it[0], it.drop(1)) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
     logger.info { "   respond($content) received options: $o" }
 
-    when (request) {
-        "gloss", "short", "full" -> return wordByWord(arguments, o)
+    return when (request) {
+        "gloss", "short", "full" -> wordByWord(arguments, o)
 
-        "s", "sgloss", "sshort", "sfull" -> return sentenceGloss(arguments, o)
+        "s", "sgloss", "sshort", "sfull" -> sentenceGloss(arguments, o)
 
         "root", "affix" -> when (arguments.size) {
             1 -> {
@@ -78,19 +84,17 @@ fun respond(content: String): String? {
                 return "$request **$consonantalForm**: $generalDescription\n" +
                         details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
             }
-            else -> return "*Please enter exactly one root or affix.*"
+            else -> "*Please enter exactly one root or affix.*"
         }
 
         "!stop" -> exitProcess(0)
 
-        "!reload" -> {
-            return try {
-                loadResourcesOnline()
-                "External resources successfully reloaded!"
-            } catch (e: Exception) {
-                logger.info { e.toString() }
-                "Error while reloading external resources…"
-            }
+        "!reload" -> try {
+            loadResourcesOnline()
+            "External resources successfully reloaded!"
+        } catch (e: Exception) {
+            logger.info { e.toString() }
+            "Error while reloading external resources…"
         }
 
         "!status" -> {
@@ -107,9 +111,9 @@ fun respond(content: String): String? {
             ).joinToString("\n")
         }
 
-        "!whosagoodbot", "!whosacutebot" -> return "(=^ェ^=✿)"
+        "!whosagoodbot", "!whosacutebot" -> "(=^ェ^=✿)"
 
-        else -> return null
+        else -> null
     }
 }
 
@@ -125,8 +129,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
         gloss?.toString(o)?.withZeroWidthSpaces() ?: "**$word**"
     }
 
-    return "__Gloss__:\n" +
-            glosses.joinToString(" ")
+    return glosses.joinToString(" ")
 }
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
@@ -147,8 +150,7 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
             }
         }
 
-    return "__Gloss__:\n" +
-            glossPairs.joinToString("\n") { (word, gloss) -> "**$word:** $gloss" }
+    return glossPairs.joinToString("\n") { (word, gloss) -> "**$word:** $gloss" }
 
 }
 

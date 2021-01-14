@@ -27,7 +27,7 @@ suspend fun main() {
 
 suspend fun Message.respondTo() {
     val user = author ?: return
-    if (user.isBot || !content.startsWith("?")) return
+    if (user.isBot || !(content.startsWith("?") || content.contains(":?"))) return
     if (content == "?help") return sendHelp(user, channel)
 
     logger.info { "-> respond($content)" }
