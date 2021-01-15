@@ -1,7 +1,11 @@
 package ithkuil.iv.gloss
 
+import mu.KotlinLogging
+
 var affixData: Map<String, AffixData> = emptyMap()
 var rootData:  Map<String, RootData>  = emptyMap()
+
+val logger = KotlinLogging.logger { }
 
 fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶\"*]+".toRegex(), "")
 

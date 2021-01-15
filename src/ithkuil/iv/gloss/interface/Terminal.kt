@@ -1,4 +1,4 @@
-package ithkuil.iv.gloss
+package ithkuil.iv.gloss.`interface`
 
 import java.io.FileNotFoundException
 

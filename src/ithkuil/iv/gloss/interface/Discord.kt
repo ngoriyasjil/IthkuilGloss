@@ -1,4 +1,4 @@
-package ithkuil.iv.gloss
+package ithkuil.iv.gloss.`interface`
 
 import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior
@@ -9,9 +9,7 @@ import dev.kord.core.event.message.MessageCreateEvent
 import java.io.File
 import java.lang.StringBuilder
 
-import mu.KotlinLogging
-
-val logger = KotlinLogging.logger { }
+import ithkuil.iv.gloss.logger
 
 suspend fun main() {
     val token = File("./resources/token.txt").readLines()[0]
