@@ -142,10 +142,9 @@ fun parseAffixes(data: String): Map<String, AffixData> = data
         .lines()
         .asSequence()
         .drop(1)
-        .map    { it.split("\t") }
-        .filter { it.size >= 11 }
-        .map    { it[0] to AffixData(it[1], it.subList(2, 11)) }
-        .toMap()
+        .map       { it.split("\t") }
+        .filter    { it.size >= 11 }
+        .associate { it[0] to AffixData(it[1], it.subList(2, 11)) }
 
 data class RootData(val descriptions: List<String>)
 
@@ -153,7 +152,6 @@ fun parseRoots(data: String): Map<String, RootData> = data
         .lines()
         .asSequence()
         .drop(1)
-        .map    { it.split("\t") }
-        .filter { it.size >= 5 }
-        .map    { it[0] to RootData(it.subList(1, 5)) }
-        .toMap()
+        .map       { it.split("\t") }
+        .filter    { it.size >= 5 }
+        .associate { it[0] to RootData(it.subList(1, 5)) }
