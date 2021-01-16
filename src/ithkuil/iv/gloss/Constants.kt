@@ -313,6 +313,23 @@ enum class Level(override val short: String) : NoDefault {
     }
 }
 
+enum class LevelRelativity(override val short: String) : Category {
+    RELATIVE("r"),
+    ABSOLUTE("a");
+}
+
+class LevelAndRelativity(
+        private val level: Level,
+        private val relativity: LevelRelativity
+    ) : Glossable {
+
+    override fun toString(o: GlossOptions): String {
+        return level.toString(o) +
+                (if (!o.verbose) "" else CATEGORY_SEPARATOR) +
+                relativity.toString(o)
+    }
+}
+
 @Suppress("unused")
 enum class Aspect(override val short: String, val vn: String) : NoDefault {
     RETROSPECTIVE("RTR", "a"),
@@ -596,37 +613,3 @@ enum class Referent(override val short: String) : NoDefault {
     PROVISIONAL("PVS");
 }
 
-fun parseReferentialShortcut(c: String, v: String, o: GlossOptions): String? {
-    val (series, form) = seriesAndForm(v)
-    val case = when (series) {
-        3 -> when (form) {
-            1 -> Case.POSSESSIVE
-            2 -> Case.PROPRIETIVE
-            3 -> Case.GENITIVE
-            4 -> Case.ATTRIBUTIVE
-            5 -> Case.PRODUCTIVE
-            6 -> Case.INTERPRETIVE
-            7 -> Case.ORIGINATIVE
-            8 -> Case.INTERDEPENDENT
-            9 -> Case.PARTITIVE
-            else -> return null
-        }
-        4 -> when (form) {
-            1 -> Case.THEMATIC
-            2 -> Case.INSTRUMENTAL
-            3 -> Case.ABSOLUTIVE
-            4 -> Case.STIMULATIVE
-            5 -> Case.AFFECTIVE
-            6 -> Case.EFFECTUATIVE
-            7 -> Case.ERGATIVE
-            8 -> Case.DATIVE
-            9 -> Case.INDUCIVE
-            else -> return null
-        }
-        else -> return null
-    }
-
-
-    val ref = parsePersonalReference(c)?.toString(o) ?: return null
-    return "($ref-${case.toString(o.showDefaults())})"
-}

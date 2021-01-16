@@ -257,19 +257,37 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
     if (shortcut != null && slotVFilled && !hasSlotV) return Error("Unexpectedly few slot V affixes")
 
-
-
-    if (vxCsAffixes.size == 1) (vxCsAffixes[0] as? Affix)?.canBeReferentialShortcut = true
+    if (vxCsAffixes.size == 1) {
+            (vxCsAffixes[0] as? Affix)?.canBeReferentialShortcut = true
+    }
 
     val marksMood = (stress == 0) || (stress == -1)
 
+
+    val absoluteLevel = groups.getOrNull(index + 1) == "y" &&
+            groups.getOrNull(index + 3) in setOf("h", "hl", "hr", "hm", "hn", "hň")
+
     val slotVIII: Slot? = when {
         cnInVI -> {
-            parseVnCn("a", groups[index], marksMood).also { index++ }
+            parseVnCn("a", groups[index], marksMood, false).also { index++ }
                 ?: return Error("Unknown Cn value in Ca: ${groups[index]}")
         }
+
+        absoluteLevel -> {
+                    parseVnCn(groups[index] + groups[index+2],
+                        groups[index + 3],
+                        marksMood,
+                        absoluteLevel = true)
+                            .also { index += 4 }
+
+                        ?: return Error("Unknown VnCn value: ${groups
+                            .subList(index, index + 4)
+                            .joinToString("")
+                        }")
+                }
+
         groups.getOrNull(index + 1) in CN_CONSONANTS -> {
-            parseVnCn(groups[index], groups[index + 1], marksMood).also { index += 2 }
+            parseVnCn(groups[index], groups[index + 1], marksMood, false).also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
         else -> null
@@ -330,7 +348,7 @@ fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
 
     while (groups.size > index + 2) {
         midSlotList.add(
-            parseVnCn(groups[index], groups[index + 1], false)
+            parseVnCn(groups[index], groups[index + 1], false, false)
                 ?: return Error("Unknown VnCn: ${groups[index]}${groups[index + 1]}")
         )
         index += 2
@@ -340,7 +358,7 @@ fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
 
     val slot5 = when {
         midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return Error("Unknown aspect: ${groups[index]}")
-        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true)
+        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true, absoluteLevel = false)
             ?: return Error("Unknown non-aspect Vn: ${groups[index]}")
         stress == 0 -> parseVh(groups[index]) ?: return Error("Unknown Vh: ${groups[index]}")
         else -> return Error("Unknown stress on modular adjunct: $stress from ultimate")

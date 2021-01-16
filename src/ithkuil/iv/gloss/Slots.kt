@@ -253,6 +253,42 @@ fun parseAffixVr(vr: String): Slot? {
     return Slot(degree, specification)
 }
 
+fun parseReferentialShortcut(c: String, v: String, o: GlossOptions): String? {
+    val (series, form) = seriesAndForm(v)
+    val case = when (series) {
+        3 -> when (form) {
+            1 -> Case.POSSESSIVE
+            2 -> Case.PROPRIETIVE
+            3 -> Case.GENITIVE
+            4 -> Case.ATTRIBUTIVE
+            5 -> Case.PRODUCTIVE
+            6 -> Case.INTERPRETIVE
+            7 -> Case.ORIGINATIVE
+            8 -> Case.INTERDEPENDENT
+            9 -> Case.PARTITIVE
+            else -> return null
+        }
+        4 -> when (form) {
+            1 -> Case.THEMATIC
+            2 -> Case.INSTRUMENTAL
+            3 -> Case.ABSOLUTIVE
+            4 -> Case.STIMULATIVE
+            5 -> Case.AFFECTIVE
+            6 -> Case.EFFECTUATIVE
+            7 -> Case.ERGATIVE
+            8 -> Case.DATIVE
+            9 -> Case.INDUCIVE
+            else -> return null
+        }
+        else -> return null
+    }
+
+
+    val ref = parsePersonalReference(c)?.toString(o) ?: return null
+    return "($ref-${case.toString(o.showDefaults())})"
+}
+
+
 fun parseVh(vh: String) : GlossString? = when (vh.defaultForm()) {
     "a" -> GlossString("{scope over formative}", "{form.}")
     "e" -> GlossString("{scope over case/mood}", "{mood}")
@@ -320,7 +356,7 @@ fun parseVr(v: String): Slot? {
 
 }
 
-fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
+fun parseVnCn(vn: String, cn: String, marksMood: Boolean, absoluteLevel: Boolean): Slot? {
     val pattern = when (cn) {
         "h", "hl", "hr", "hm", "hn", "hň" -> 1
         "w", "y", "hw", "hlw", "hly", "hnw", "hny" -> 2
@@ -329,12 +365,16 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean): Slot? {
 
     val (series, form) = seriesAndForm(vn)
 
+    if (absoluteLevel && (series != 4 || pattern != 1)) return null
+
     val vnValue: Glossable = if (pattern == 1) {
         when (series) {
             1 -> Valence.byForm(form)
             2 -> Phase.byForm(form)
             3 -> EffectAndPerson.byForm(form)
-            4 -> Level.byForm(form)
+            4 -> LevelAndRelativity(Level.byForm(form),
+                if (absoluteLevel) LevelRelativity.ABSOLUTE else LevelRelativity.RELATIVE
+            )
             else -> return null
         }
     } else {
