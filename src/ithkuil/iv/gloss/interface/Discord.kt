@@ -9,6 +9,8 @@ import dev.kord.core.event.message.MessageCreateEvent
 import java.io.File
 import java.lang.StringBuilder
 
+import kotlinx.coroutines.runBlocking
+
 import ithkuil.iv.gloss.logger
 
 suspend fun main() {
@@ -29,14 +31,22 @@ suspend fun Message.respondTo() {
     if (content == "?help") return sendHelp(user, channel)
 
     logger.info { "-> respond($content)" }
-    respond(content)
+    val maybeLastMessage = {
+        runBlocking {
+            channel.getMessagesBefore(this@respondTo.id, limit = 1)
+                .firstOrNull { true }
+                .let { it?.content }
+        }
+    };
+
+    respond(content, maybeLastMessage)
         .also { logger.info { "   respond($content) -> ${"\n" + it}" } }
         ?.splitMessages()
         ?.forEach { channel.createMessage(it) }
 }
 
 suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {
-    logger.info { "-> sendHelp($helpee)" }
+    logger.info { "-> sendHelp(${helpee.tag})" }
     val dmChannel = helpee.getDmChannelOrNull() ?: return
     val helpMessages = File("./resources/help.md")
         .readText()
