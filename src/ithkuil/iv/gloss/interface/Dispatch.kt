@@ -50,23 +50,20 @@ fun requestPrecision(request: String) = when {
     else -> Precision.REGULAR
 }
 
-fun respond(content: String, maybeLastMessage: (() -> String?)? = null): String? {
+fun respond(content: String): String? {
     if (!content.startsWith("?")) {
         return Regex(":\\?(.*?)\\?:", RegexOption.DOT_MATCHES_ALL).findAll(content)
             .map { match -> respond("?sshort ${match.groupValues[1].trimWhitespace()}") }
             .joinToString("\n\n")
     }
 
-    val (fullRequest, remainder) = content.splitOnWhitespace().let { Pair(it[0], it.drop(1)) }
+    val (fullRequest, arguments) = content.splitOnWhitespace().let { Pair(it[0], it.drop(1)) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
     logger.info { "   respond($content) received options: $o" }
-
-    val arguments = if(remainder.size == 0) {
-        maybeLastMessage?.invoke()?.splitOnWhitespace()
-    } else { null } ?: remainder;
-    logger.info { "   respond($content) received arguments: ${
-        arguments.mapIndexed { index, it -> "$index: $it" }}}" }
+    logger.info { "   respond($content) received arguments: ${ 
+        arguments.mapIndexed { index, it -> "$index: $it" }
+    }" }
 
     return when (request) {
         "gloss", "short", "full" -> wordByWord(arguments, o)

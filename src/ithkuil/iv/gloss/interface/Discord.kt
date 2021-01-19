@@ -9,8 +9,6 @@ import dev.kord.core.event.message.MessageCreateEvent
 import java.io.File
 import java.lang.StringBuilder
 
-import kotlinx.coroutines.runBlocking
-
 import ithkuil.iv.gloss.logger
 
 suspend fun main() {
@@ -30,16 +28,17 @@ suspend fun Message.respondTo() {
     if (user.isBot || !(content.startsWith("?") || content.contains(":?"))) return
     if (content == "?help") return sendHelp(user, channel)
 
-    logger.info { "-> respond($content)" }
-    val maybeLastMessage = {
-        runBlocking {
-            channel.getMessagesBefore(this@respondTo.id, limit = 1)
-                .firstOrNull { true }
-                .let { it?.content }
-        }
-    };
+    val replyTo = referencedMessage?.content
 
-    respond(content, maybeLastMessage)
+    val contentWithReply = if (replyTo != null && content matches "^\\S*$".toRegex()) {
+        logger.info { "-> respond($content) replying to $replyTo" }
+        "$content $replyTo"
+    } else {
+        logger.info { "-> respond($content)" }
+        content
+    }
+
+    respond(contentWithReply)
         .also { logger.info { "   respond($content) -> ${"\n" + it}" } }
         ?.splitMessages()
         ?.forEach { channel.createMessage(it) }
@@ -58,7 +57,7 @@ suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {
 }
 
 fun String.splitMessages(): Sequence<String> = sequence {
-    val remainder = lines().fold(StringBuilder()) { current, line ->
+    val remainder = lineSequence().fold(StringBuilder()) { current, line ->
         if (current.length + line.length + 1 > 2000) {
             yield(current.toString())
             StringBuilder().appendLine(line)
