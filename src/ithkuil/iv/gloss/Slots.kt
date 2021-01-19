@@ -110,8 +110,8 @@ fun parseAffix(cs: String, vx: String, o: GlossOptions,
 
     val affString = when {
         aff == null -> "**$cs**$AFFIX_DEGREE_SEPARATOR$degree"
-        o.concise || degree == 0 -> "${aff.abbr}$AFFIX_DEGREE_SEPARATOR$degree"
-        !o.concise -> "‘${aff.desc.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}’"
+        o.concise || degree == 0 -> "${aff.abbreviation}$AFFIX_DEGREE_SEPARATOR$degree"
+        !o.concise -> "‘${aff.descriptions.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}’"
         else -> return "(Unknown affix: $cs)"
     }
 

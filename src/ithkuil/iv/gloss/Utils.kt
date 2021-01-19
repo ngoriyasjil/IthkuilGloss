@@ -136,11 +136,10 @@ fun parseFullReferent(s: String): PersonalReferent? {
     }
 }
 
-data class AffixData(val abbr: String, val desc: List<String>)
+data class AffixData(val abbreviation: String, val descriptions: List<String>)
 
 fun parseAffixes(data: String): Map<String, AffixData> = data
-        .lines()
-        .asSequence()
+        .lineSequence()
         .drop(1)
         .map       { it.split("\t") }
         .filter    { it.size >= 11 }
@@ -149,8 +148,7 @@ fun parseAffixes(data: String): Map<String, AffixData> = data
 data class RootData(val descriptions: List<String>)
 
 fun parseRoots(data: String): Map<String, RootData> = data
-        .lines()
-        .asSequence()
+        .lineSequence()
         .drop(1)
         .map       { it.split("\t") }
         .filter    { it.size >= 5 }

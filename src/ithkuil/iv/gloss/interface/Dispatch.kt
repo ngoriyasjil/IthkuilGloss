@@ -84,7 +84,7 @@ fun respond(content: String, maybeLastMessage: (() -> String?)? = null): String?
                             root.descriptions.drop(1)
                         )
                     }
-                    "affix" -> affixData[lookup]?.let { affix -> Triple("-$lookup", affix.abbr, affix.desc) }
+                    "affix" -> affixData[lookup]?.let { affix -> Triple("-$lookup", affix.abbreviation, affix.descriptions) }
                     else -> /* unreachable */ null
                 } ?: return "$lookup not found"
 
