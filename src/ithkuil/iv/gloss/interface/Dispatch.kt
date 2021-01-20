@@ -5,9 +5,9 @@ package ithkuil.iv.gloss.`interface`
 import java.io.File
 import java.net.URL
 import kotlin.system.exitProcess
-import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 import ithkuil.iv.gloss.*
+import kotlin.time.ExperimentalTime
 
 val startTime = System.currentTimeMillis()
 
@@ -49,6 +49,7 @@ fun requestPrecision(request: String) = when {
     request.contains("full") -> Precision.FULL
     else -> Precision.REGULAR
 }
+
 
 fun respond(content: String): String? {
     if (!content.startsWith("?")) {
@@ -101,7 +102,7 @@ fun respond(content: String): String? {
             "Error while reloading external resources…"
         }
 
-        "!status" -> {
+        "status" -> {
             val git = ProcessBuilder("git", "log", "-1", "--oneline").start()
             val lastCommit = String(git.inputStream.readBytes())
             return listOf(
@@ -116,6 +117,8 @@ fun respond(content: String): String? {
         }
 
         "!whosagoodbot", "!whosacutebot" -> "(=^ェ^=✿)"
+
+        "date" -> datetimeInIthkuil()
 
         else -> null
     }

@@ -22,6 +22,7 @@ Precision:
 
 Other commands:
   - **?!reload**: updates the root and affix documents from the spreadsheet
+  - **?date**: gives the current UTC time and date in Ithkuil IV
   - **?!whosacutebot**: tells the bot that it is such a cute bot
 
 Formatting details:
@@ -30,4 +31,4 @@ Formatting details:
    For example, " 'description'/S2 " indicates that S2 contributed nothing to the final result of 'description' ; However, " 'description'/__S2__ " indicates that 'description' was specifically picked because S2 was specified.
    NOTE: this currently only applies to Stem.
 
-The bot is currently in development, and may suffer from severe bugs. If you spot one, please contact me (Behemoth#6479) so I can hopefully go about fixing it.
+The bot is currently in development, and may suffer from severe bugs. If you spot one, please contact me (Behemoth#6479), so I can hopefully go about fixing it.
