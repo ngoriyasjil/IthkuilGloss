@@ -79,7 +79,7 @@ fun parseWord(s: String): GlossOutcome {
 
 fun parseConcatenationChain(s: String): GlossOutcome {
     return s.split('-')
-        .takeIf { it.all { word -> wordTypeOf(word.splitGroups()) == WordType.FORMATIVE } }
+        .takeIf { it.all { word -> wordTypeOf(word.defaultForm().splitGroups()) == WordType.FORMATIVE } }
         .let { it ?: return Error("Non-formatives concatenated") }
         .map(::parseWord)
         .map { it as? Gloss ?: return it }
