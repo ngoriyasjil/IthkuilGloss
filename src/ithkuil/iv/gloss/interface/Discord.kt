@@ -2,9 +2,12 @@ package ithkuil.iv.gloss.`interface`
 
 import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior
+import dev.kord.core.behavior.reply
 import dev.kord.core.entity.Message
+import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.User
 import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.ReactionAddEvent
 
 import java.io.File
 import java.lang.StringBuilder
@@ -15,6 +18,19 @@ suspend fun main() {
     val token = File("./resources/token.txt").readLines()[0]
     val kord = Kord(token)
     kord.on<MessageCreateEvent> { message.respondTo() }
+
+    kord.on<ReactionAddEvent> {
+
+        val messag = message.asMessageOrNull() ?: return@on
+
+        if (messag.author != kord.getSelf()) return@on
+
+        if (user != messag.referencedMessage?.author) return@on
+
+        if (emoji != ReactionEmoji.Unicode("\u274C")) return@on
+
+        messag.delete()
+    }
 
     loadResourcesOnline()
     kord.login {
@@ -41,7 +57,7 @@ suspend fun Message.respondTo() {
     respond(contentWithReply)
         .also { logger.info { "   respond($content) -> ${"\n" + it}" } }
         ?.splitMessages()
-        ?.forEach { channel.createMessage(it) }
+        ?.forEach { reply { content = it } }
 }
 
 suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {
