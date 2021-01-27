@@ -129,7 +129,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
         it to (try {
             parseWord(it.stripPunctuation()) as? Gloss
         } catch (ex: Exception) {
-            logger.info { ex.toString() }
+            logger.error("", ex)
             null
         })
     }.map { (word, gloss) ->
@@ -146,7 +146,7 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
             val gloss = try {
                 parseWord(word)
             } catch (ex: Exception) {
-                logger.info { ex.toString() }
+                logger.error("", ex)
                 Error("A severe exception occurred. Please contact the maintainers.")
             }
             word to gloss
