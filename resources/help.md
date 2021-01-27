@@ -24,6 +24,8 @@ Other commands:
   - **?!reload**: updates the root and affix documents from the spreadsheet
   - **?date**: gives the current UTC time and date in Ithkuil IV
   - **?!whosacutebot**: tells the bot that it is such a cute bot
+    
+You can delete a message that is a reply to you by reacting to it with an ``:x:`` emoji.
 
 Formatting details:
   - Bold text in place of a root/affix means that it was not found in the current database
