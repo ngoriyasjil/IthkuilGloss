@@ -52,7 +52,8 @@ val CA_SUBSTITUTIONS = listOf(
 
 val ALLOGRAPHS = listOf(
     "\u200B" to "",
-    "’" to "'",
+    "’" to "'", // U+2019 RIGHT SINGLE QUOTATION MARK (used by JQ and others and cross-linguistically)
+    "ʼ" to "'", // U+02BC MODIFIER LETTER APOSTROPHE (used by uagle and cross-linguistically)
     "á" to "á",
     "ä" to "ä", "â" to "â",
     "é" to "é",
