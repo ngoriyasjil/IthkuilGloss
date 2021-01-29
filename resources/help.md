@@ -13,7 +13,7 @@ General commands (must be preceded by the proper prefix):
   - **sshort**: gives a morphological analysis of the whole following sentence, with weak precision
   - **root**, **affix**: look up the definition of a root or affix in the respective document as used by the bot
 
-(Sentence parsing is currently not implemented)
+(Sentence parsing is currently only partially functional)
 
 Precision:
   - *Default precision*: all morphological components except affixes are abbreviated, roots may change depending on the stem

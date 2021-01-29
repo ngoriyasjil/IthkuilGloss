@@ -370,6 +370,39 @@ fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
 
 }
 
+val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
+
+class PersonalReferent(private vararg val referents: Slot) : Glossable {
+    override fun toString(o: GlossOptions): String {
+        return when (referents.size) {
+            0 -> ""
+            1 -> referents[0].toString(o)
+            else -> referents
+                .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
+                { it.toString(o) }
+        }
+    }
+}
+
+fun parseFullReferent(s: String): PersonalReferent? {
+    val refList = mutableListOf<Slot>()
+    var index = 0
+
+    while (index < s.length) {
+        refList.add(
+            if (index + 1 < s.length && s.substring(index, index + 2) in BICONSONANTAL_PRS) {
+                parsePersonalReference(s.substring(index, index + 2)).also { index += 2 }
+                    ?: return null
+            } else parsePersonalReference(s.substring(index, index + 1)).also { index++ }
+                ?: return null
+        )
+    }
+    return when (refList.size) {
+        0 -> null
+        else -> PersonalReferent(*refList.toTypedArray())
+    }
+}
+
 fun parseReferential(groups: Array<String>, stress: Int): GlossOutcome {
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     val c1 = groups
