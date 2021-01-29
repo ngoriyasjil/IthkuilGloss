@@ -52,7 +52,7 @@ val CA_SUBSTITUTIONS = listOf(
 
 val ALLOGRAPHS = listOf(
     "\u200B" to "",
-    "ʼ" to "'",
+    "’" to "'",
     "á" to "á",
     "ä" to "ä", "â" to "â",
     "é" to "é",
