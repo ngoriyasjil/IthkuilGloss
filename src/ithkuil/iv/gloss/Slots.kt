@@ -437,7 +437,7 @@ fun parsePersonalReference(s: String) : Slot? {
 
 
 val UNGEMINATE_MAP = mapOf(
-    "bd" to "pt", "bg" to "pk", "gd" to "kt", "gb" to "kp", "dg" to "tk", "db" to "tp",
+    "bḑḑ" to "pt", "bvv" to "pk", "gḑḑ" to "kt", "gvv" to "kp", "ḑvv" to "tk", "dvv" to "tp",
     "bzzm" to "pm", "bzzn" to "pn", "gzzm" to "km", "gzzn" to "kn",  "zzm" to "tm", "zzn" to "tn",
     "bžžm" to "bm", "bžžn" to "bn", "gžžm" to "gm", "gžžn" to "gn",  "žžm" to "dm", "žžn" to "dn",
 )
