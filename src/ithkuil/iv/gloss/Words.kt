@@ -16,11 +16,12 @@ fun wordTypeOf(groups: Array<String>): WordType = when {
             || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_REFERENTIAL_SPECIFICATION
     -> WordType.COMBINATION_REFERENTIAL
 
-    groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS
-            || groups.size in 3..4 && groups[0] == "h" && groups[1] == "ë" -> WordType.AFFIXUAL_ADJUNCT
+    groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS && groups[0] != "ë"
+    -> WordType.AFFIXUAL_ADJUNCT
 
     groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
-            || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS) -> WordType.AFFIXUAL_SCOPING_ADJUNCT
+            || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS)
+    -> WordType.AFFIXUAL_SCOPING_ADJUNCT
 
     (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
         ?.isVowel() == true)
@@ -533,12 +534,6 @@ fun parseAffixual(groups: Array<String>, stress: Int): GlossOutcome {
     if (groups.size < 2) return Error("Affixual adjunct too short: ${groups.size}")
 
     var index = 0
-
-    when {
-        groups[0] == "h" && groups[1] == "ë" -> index++
-        groups[0] == "h" && groups[1] != "ë" -> return Error("Non-degree 4 affixual adjuncts prefixed with h")
-        groups[0] == "ë" -> return Error("Degree 4 affixual adjunct not prefixed with h")
-    }
 
     val affix = Affix(groups[index], groups[index + 1])
     val scope = affixualAdjunctScope(groups.getOrNull(index + 2))

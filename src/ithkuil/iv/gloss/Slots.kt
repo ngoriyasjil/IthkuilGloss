@@ -626,7 +626,7 @@ fun parseSuppletiveAdjuncts(typeC: String, caseV: String) : GlossOutcome {
 fun Array<String>.stripSentencePrefix(): Pair<Array<String>, Boolean>? {
     return when {
         isEmpty() -> return null
-        size >= 4 && this[0] == "ç" && this[1] == "ë" -> drop(2)
+        size >= 3 && this[0] == "ç" && this[1] == "ë" -> drop(2)
         this[0] == "ç" && this[1].isVowel() -> drop(1)
         this[0] == "çw" -> listOf("w") + drop(1)
         this[0] == "çç" -> listOf("y") + drop(1)
