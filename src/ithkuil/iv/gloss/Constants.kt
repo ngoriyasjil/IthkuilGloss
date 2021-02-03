@@ -48,7 +48,7 @@ val CA_SUBSTITUTIONS = listOf(
         "^nd" to "tt", "^ng" to "kk", "^mb" to "pp", "nz" to "nn", "mz" to "mm",
         "ẓ" to "ňy", "ž" to "çy", "j" to "tçy", "gž" to "kçy", "bž" to "pçy",
         "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
-        "c" to "ts", "tš" to "č", "ḑ" to "tţ")
+        "c" to "ts", "č" to "tš", "ḑ" to "tţ")
 
 val ALLOGRAPHS = listOf(
     "\u200B" to "",
