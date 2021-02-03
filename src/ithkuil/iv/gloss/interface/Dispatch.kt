@@ -73,7 +73,7 @@ fun respond(content: String): String? {
 
         "root", "affix" -> when (arguments.size) {
             1 -> {
-                val lookup = arguments[0].trim('-').toLowerCase()
+                val lookup = arguments[0].trim('-').toLowerCase().defaultForm()
                 val (consonantalForm, generalDescription, details) = when (request) {
                     "root" -> rootData[lookup]?.let { root ->
                         Triple(

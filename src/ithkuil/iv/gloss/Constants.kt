@@ -70,7 +70,7 @@ val ALLOGRAPHS = listOf(
     "ž" to "ž",
     "ż|ẓ" to "ẓ",
     "ṇ|ň|ņ|ṇ" to "ň",
-    "ṛ|ř|ŗ|ṛ" to "ř",
+    "ṛ|ř|ŗ|r͕|ŗ|ṛ" to "ř",
 )
 
 val UNSTRESSED_FORMS = listOf(
