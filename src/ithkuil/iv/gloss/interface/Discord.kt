@@ -1,23 +1,61 @@
 package ithkuil.iv.gloss.`interface`
 
+import dev.kord.common.annotation.KordPreview
 import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior
+import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.reply
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.User
 import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.message.MessageUpdateEvent
 import dev.kord.core.event.message.ReactionAddEvent
+import dev.kord.core.live.live
+import dev.kord.core.live.on
 
 import java.io.File
 import java.lang.StringBuilder
 
 import ithkuil.iv.gloss.logger
+import kotlinx.coroutines.delay
 
+@KordPreview
 suspend fun main() {
     val token = File("./resources/token.txt").readLines()[0]
     val kord = Kord(token)
-    kord.on<MessageCreateEvent> { message.respondTo() }
+    kord.on<MessageCreateEvent> {
+        val response = message.respondTo() ?: return@on
+
+        val liveMessage = message.live()
+
+
+         liveMessage.on<MessageUpdateEvent> inner@ {
+            with(liveMessage.message) {
+                val replyTo = message.referencedMessage?.content
+
+                logger.debug { "replyTo: $replyTo" }
+
+                val contentWithReply = if (replyTo != null && content matches "^\\S*$".toRegex()) {
+                    "$content $replyTo"
+                } else {
+                    content
+                }
+
+                val editTo = respond(contentWithReply)?.splitMessages()?.first() ?: "*Unknown invocation*"
+
+                logger.info { "Edited a message to $editTo responding to $contentWithReply" }
+
+                response.edit {
+                    content = editTo
+                }
+            }
+        }
+
+        delay(60000)
+
+        liveMessage.shutDown()
+    }
 
     kord.on<ReactionAddEvent> {
 
@@ -39,10 +77,13 @@ suspend fun main() {
     }
 }
 
-suspend fun Message.respondTo() {
-    val user = author ?: return
-    if (user.isBot || !(content.startsWith("?") || content.contains(":?"))) return
-    if (content == "?help") return sendHelp(user, channel)
+suspend fun Message.respondTo() : Message? {
+    val user = author ?: return null
+    if (user.isBot || !(content.startsWith("?") || content.contains(":?"))) return null
+    if (content == "?help") {
+        sendHelp(user, channel)
+        return null
+    }
 
     val replyTo = referencedMessage?.content
 
@@ -54,10 +95,17 @@ suspend fun Message.respondTo() {
         content
     }
 
+    val replies = mutableListOf<Message>()
+
     respond(contentWithReply)
-        .also { logger.info { "   respond($content) -> ${"\n" + it}" } }
+        .also { logger.info { "   respond($content) ->\n$it" } }
         ?.splitMessages()
-        ?.forEach { reply { content = it } }
+        ?.forEach {
+            val r = reply { content = it }
+            replies.add(r)
+        }
+
+    return replies[0]
 }
 
 suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {

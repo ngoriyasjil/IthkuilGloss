@@ -56,6 +56,9 @@ fun respond(content: String): String? {
         return Regex(":\\?(.*?)\\?:", RegexOption.DOT_MATCHES_ALL).findAll(content)
             .map { match -> respond("?sshort ${match.groupValues[1].trimWhitespace()}") }
             .joinToString("\n\n")
+            .also {
+                if (it.isBlank()) return null
+            }
     }
 
     val (fullRequest, arguments) = content.splitOnWhitespace().let { Pair(it[0], it.drop(1)) }
