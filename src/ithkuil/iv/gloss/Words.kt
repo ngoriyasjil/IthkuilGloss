@@ -50,10 +50,12 @@ fun parseWord(s: String): GlossOutcome {
 
     val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress() ?: return Error("Unknown stress")
 
+    if (stress == 1 && s.substituteAll(ALLOGRAPHS) != s.defaultForm()) return Error("Marked default stress")
+
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
     val (concatenation, _) = parseCc(groups[0])
-    if (concatenation != null) return Error("Lone formatives can't be concatenated")
+    if (concatenation != null) return Error("Lone concatenated formative")
 
     val result: GlossOutcome = when (wordTypeOf(groups)) {
         WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
