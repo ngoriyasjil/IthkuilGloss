@@ -32,7 +32,7 @@ fun wordTypeOf(groups: Array<String>): WordType = when {
     else -> WordType.FORMATIVE
 }
 
-fun parseWord(s: String): GlossOutcome {
+fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
     logger.info { "-> parseWord($s)" }
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
@@ -54,9 +54,11 @@ fun parseWord(s: String): GlossOutcome {
 
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
-    val (concatenation, _) = parseCc(groups[0])
-    if (concatenation != null) return Error("Lone concatenated formative")
-
+    if (!inConcatenationChain) {
+        val (concatenation, _) = parseCc(groups[0])
+        if (concatenation != null) return Error("Lone concatenated formative")
+    }
+    
     val result: GlossOutcome = when (wordTypeOf(groups)) {
         WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
         WordType.SUPPLETIVE_ADJUNCT       -> parseSuppletiveAdjuncts    (groups[0], groups[1])
@@ -102,7 +104,7 @@ fun parseConcatenationChain(s: String): GlossOutcome =
                     return Error("Invalid concatenation (at ${index+1})")
             }
         }
-        .map(::parseWord)
+        .map { parseWord(it, inConcatenationChain = true) }
         .map { it as? Gloss ?: return it }
         .let { ConcatenationChain(*it.toTypedArray()) }
 
@@ -368,7 +370,7 @@ fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
 
     while (groups.size > index + 2) {
         midSlotList.add(
-            parseVnCn(groups[index], groups[index + 1], false, false)
+            parseVnCn(groups[index], groups[index + 1], marksMood = false, absoluteLevel = false)
                 ?: return Error("Unknown VnCn: ${groups[index]}${groups[index + 1]}")
         )
         index += 2
@@ -550,10 +552,8 @@ fun parseAffixual(groups: Array<String>, stress: Int): GlossOutcome {
 
     if (groups.size < 2) return Error("Affixual adjunct too short: ${groups.size}")
 
-    var index = 0
-
-    val affix = Affix(groups[index], groups[index + 1])
-    val scope = affixualAdjunctScope(groups.getOrNull(index + 2))
+    val affix = Affix(groups[0], groups[1])
+    val scope = affixualAdjunctScope(groups.getOrNull(2))
 
     return Gloss(affix, scope, stressMarked = concatOnly)
 
