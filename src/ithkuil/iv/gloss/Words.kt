@@ -52,6 +52,9 @@ fun parseWord(s: String): GlossOutcome {
 
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
+    val (concatenation, _) = parseCc(groups[0])
+    if (concatenation != null) return Error("Lone formatives can't be concatenated")
+
     val result: GlossOutcome = when (wordTypeOf(groups)) {
         WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
         WordType.SUPPLETIVE_ADJUNCT       -> parseSuppletiveAdjuncts    (groups[0], groups[1])
@@ -70,24 +73,36 @@ fun parseWord(s: String): GlossOutcome {
         else -> result
     }.also {
         logger.info {
-            ("   parseWord($s) -> " + when (it) {
+            "   parseWord($s) -> " + when (it) {
                 is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
                 is Error -> "Error(${it.message})"
-            })
+            }
         }
     }
 }
 
-fun parseConcatenationChain(s: String): GlossOutcome {
-    return s.split('-')
-        .takeIf { it.all { word -> word.isNotEmpty() } }
-        .let { it ?: return Error("Empty word concatenated") }
-        .takeIf { it.all { word -> wordTypeOf(word.defaultForm().splitGroups()) == WordType.FORMATIVE } }
-        .let { it ?: return Error("Non-formatives concatenated") }
+fun parseConcatenationChain(s: String): GlossOutcome =
+    s.split('-')
+        .also {
+            it.forEachIndexed { index, word ->
+
+                if (word.isEmpty())
+                    return Error("Empty word concatenated (at ${index+1})")
+
+                val groups = word.defaultForm().splitGroups()
+
+                if (wordTypeOf(groups) != WordType.FORMATIVE)
+                    return Error("Non-formatives concatenated (at ${index+1})")
+
+                val (concatenation, _) = parseCc(groups[0])
+
+                if ((concatenation == null) xor (index == it.lastIndex))
+                    return Error("Invalid concatenation (at ${index+1})")
+            }
+        }
         .map(::parseWord)
         .map { it as? Gloss ?: return it }
         .let { ConcatenationChain(*it.toTypedArray()) }
-}
 
 fun parseRegisterAdjunct(v: String): GlossOutcome {
     val (register, final) = Register.byVowel(v) ?: return Error("Unknown register adjunct vowel: $v")
