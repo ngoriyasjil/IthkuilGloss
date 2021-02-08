@@ -7,7 +7,7 @@ var rootData:  Map<String, RootData>  = emptyMap()
 
 val logger = KotlinLogging.logger { }
 
-fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶\"*]+".toRegex(), "")
+fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*]+".toRegex(), "")
 
 fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
     when (length) {
