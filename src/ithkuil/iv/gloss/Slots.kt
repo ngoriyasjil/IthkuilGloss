@@ -284,7 +284,7 @@ fun parseReferentialShortcut(c: String, v: String, o: GlossOptions): String? {
     }
 
 
-    val ref = parsePersonalReference(c)?.toString(o) ?: return null
+    val ref = parseSingleReferent(c)?.toString(o) ?: return null
     return "($ref-${case.toString(o.showDefaults())})"
 }
 
@@ -407,25 +407,14 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean, absoluteLevel: Boolean
 
 }
 
-fun parsePersonalReference(s: String) : Slot? {
-    val r = s.defaultForm()
-    val referent = when (r) {
-        "l", "r", "ř" -> Referent.MONADIC_SPEAKER
-        "s", "š", "ž" -> Referent.MONADIC_ADDRESSEE
-        "n", "t", "d" -> Referent.POLYADIC_ADDRESSEE
-        "m", "p", "b" -> Referent.MONADIC_ANIMATE_THIRD_PARTY
-        "ň", "k", "g" -> Referent.POLYADIC_ANIMATE_THIRD_PARTY
-        "z", "ţ", "ḑ" -> Referent.MONADIC_INANIMATE_THIRD_PARTY
-        "ẓ", "ļ", "f", "v" -> Referent.POLYADIC_INANIMATE_THIRD_PARTY
-        "c", "č", "j" -> Referent.MIXED_THIRD_PARTY
-        "th", "ph", "kh" -> Referent.OBVIATIVE
-        "ll", "rr", "řř" -> Referent.PROVISIONAL
+fun parseSingleReferent(s: String) : Slot? {
+    val referent : Category = when (s) {
         "ç", "x" -> Perspective.NOMIC
         "w", "y" -> Perspective.ABSTRACT
-        else -> return null
+        else -> Referent.byForm(s) ?: return null
     }
 
-    val effect = when (r) {
+    val effect = when (s) {
         "l", "s", "n", "m", "ň", "z", "ẓ", "ļ", "c", "th", "ll" -> Effect.NEUTRAL
         "r", "š", "t", "p", "k", "ţ", "f", "č", "ph", "rr" -> Effect.BENEFICIAL
         "ř", "ž", "d", "b", "g", "ḑ", "v", "j", "kh", "řř" -> Effect.DETRIMENTAL
@@ -607,21 +596,7 @@ fun parseMoodCaseScopeAdjunct(v: String) : GlossOutcome {
     return Gloss(value, ignorable = false)
 }
 
-fun parseSuppletiveAdjuncts(typeC: String, caseV: String) : GlossOutcome {
 
-    val type = when (typeC.defaultForm()) {
-        "hl" -> GlossString("[carrier]", "[CAR]")
-        "hm" -> GlossString("[quotative]", "[QUO]")
-        "hn" -> GlossString("[naming]", "[NAM]")
-        "hň" -> GlossString("[phrasal]", "[PHR]")
-        else -> return Error("Unknown suppletive adjunct consonant: $typeC")
-    }
-
-    val case = Case.byVowel(caseV.defaultForm()) ?: return Error("Unknown case: $caseV")
-
-    return Gloss(type, case)
-
-}
 
 fun Array<String>.stripSentencePrefix(): Pair<Array<String>, Boolean>? {
     return when {

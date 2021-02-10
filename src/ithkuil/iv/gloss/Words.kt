@@ -1,35 +1,37 @@
 package ithkuil.iv.gloss
 
-fun wordTypeOf(groups: Array<String>): WordType = when {
-    groups.size == 1 && groups[0].isConsonant() -> WordType.BIAS_ADJUNCT
+fun wordTypeOf(groups: Array<String>): WordType {
 
-    groups[0] in setOf("hl", "hm", "hn", "hň") && (groups.size == 2) -> WordType.SUPPLETIVE_ADJUNCT
+    return when {
+        groups.size == 1 && groups[0].isConsonant() -> WordType.BIAS_ADJUNCT
 
-    groups[0] == "hr" && (groups.size == 2) -> WordType.MOOD_CASESCOPE_ADJUNCT
+        groups[0] == "hr" && groups.size == 2 -> WordType.MOOD_CASESCOPE_ADJUNCT
 
-    groups[0] == "h" && groups.size == 2 -> WordType.REGISTER_ADJUNCT
+        groups[0] == "h" && groups.size == 2 -> WordType.REGISTER_ADJUNCT
 
-    (groups[0].isVowel() || groups[0] in setOf("w", "y"))
+        (groups[0].isVowel() || groups[0] in setOf("w", "y"))
             && groups.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
 
-    groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_REFERENTIAL_SPECIFICATION
+        groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_REFERENTIAL_SPECIFICATION
             || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_REFERENTIAL_SPECIFICATION
-    -> WordType.COMBINATION_REFERENTIAL
+            || groups.size >= 4 && groups[0] == "ï" && groups[1] in CP_CONSONANTS
+        -> WordType.COMBINATION_REFERENTIAL
 
-    groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS && groups[0] != "ë"
-    -> WordType.AFFIXUAL_ADJUNCT
+        groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS && groups[0] != "ë"
+        -> WordType.AFFIXUAL_ADJUNCT
 
-    groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
+        groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
             || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS)
-    -> WordType.AFFIXUAL_SCOPING_ADJUNCT
+        -> WordType.AFFIXUAL_SCOPING_ADJUNCT
 
-    (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
-        ?.isVowel() == true)
+        (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
+            ?.isVowel() == true)
             && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)
-        ?.all { it.isConsonant() || it == "ë" } == true
-    -> WordType.REFERENTIAL
+            ?.all { it.isConsonant() || it == "ë" } == true
+        -> WordType.REFERENTIAL
 
-    else -> WordType.FORMATIVE
+        else -> WordType.FORMATIVE
+    }
 }
 
 fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
@@ -54,14 +56,15 @@ fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
 
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 
-    if (!inConcatenationChain) {
+    val wordType = wordTypeOf(groups)
+
+    if (wordType == WordType.FORMATIVE && !inConcatenationChain) {
         val (concatenation, _) = parseCc(groups[0])
         if (concatenation != null) return Error("Lone concatenated formative")
     }
     
-    val result: GlossOutcome = when (wordTypeOf(groups)) {
+    val result: GlossOutcome = when (wordType) {
         WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
-        WordType.SUPPLETIVE_ADJUNCT       -> parseSuppletiveAdjuncts    (groups[0], groups[1])
         WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (groups[1])
         WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (groups[1])
         WordType.MODULAR_ADJUNCT          -> parseModular               (groups, stress)
@@ -390,9 +393,9 @@ fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
 
 }
 
-val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř")
+val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř", "hl", "hm", "hn", "hň")
 
-class PersonalReferent(private vararg val referents: Slot) : Glossable {
+class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot> {
     override fun toString(o: GlossOptions): String {
         return when (referents.size) {
             0 -> ""
@@ -402,37 +405,57 @@ class PersonalReferent(private vararg val referents: Slot) : Glossable {
                 { it.toString(o) }
         }
     }
+
+    override fun iterator(): Iterator<Slot> = referents.iterator()
+
+
 }
 
-fun parseFullReferent(s: String): PersonalReferent? {
-    val refList = mutableListOf<Slot>()
-    var index = 0
+fun parseFullReferent(groups: List<String>): Referential? {
 
-    while (index < s.length) {
-        refList.add(
-            if (index + 1 < s.length && s.substring(index, index + 2) in BICONSONANTAL_PRS) {
-                parsePersonalReference(s.substring(index, index + 2)).also { index += 2 }
-                    ?: return null
-            } else parsePersonalReference(s.substring(index, index + 1)).also { index++ }
-                ?: return null
-        )
+    val reflist : List<Slot> = groups.flatMap { c ->
+        parseFullReferent(c) ?: return null
     }
-    return when (refList.size) {
+
+    return when (reflist.size) {
         0 -> null
-        else -> PersonalReferent(*refList.toTypedArray())
+        else -> Referential(*reflist.toTypedArray())
     }
+}
+
+private fun parseFullReferent(c: String): Referential? {
+    val referents = sequence {
+        var index = 0
+
+        while (index <= c.lastIndex) {
+
+            val referent = if (index + 2 <= c.length && c.substring(index, index + 2) in BICONSONANTAL_PRS) {
+                parseSingleReferent(c.substring(index, index + 2)).also { index += 2 }
+            } else {
+                parseSingleReferent(c.substring(index, index + 1)).also { index++ }
+            }
+
+            if (referent != null) yield(referent)
+        }
+
+    }.toList()
+
+    return when (referents.size) {
+        0 -> null
+        else -> Referential(*referents.toTypedArray())
+    }
+
 }
 
 fun parseReferential(groups: Array<String>, stress: Int): GlossOutcome {
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     val c1 = groups
         .takeWhile { it !in setOf("w", "y") }
-        .filter { it != "ë" }
         .dropLast(1)
-        .takeIf { it.size <= 6 }
-        ?.joinToString("") ?: return Error("Too many (>3) initial ë-separated consonants")
+        .filter { it != "ë" }
+        .takeIf { it.size <= 3 } ?: return Error("Too many (>3) initial ë-separated consonants")
     val refA =
-        parseFullReferent(c1) ?: return Error("Unknown personal reference cluster: $c1")
+        parseFullReferent(c1) ?: return Error("Unknown personal reference: $c1")
     var index = (groups
         .indexOfFirst { it in setOf("w", "y") }
         .takeIf { it != -1 } ?: groups.size) - 1
@@ -471,7 +494,11 @@ fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcom
     val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
     var index = 0
 
-    if (groups[0] == "ë") index++
+    if (groups[0] in setOf("ë", "ï")) {
+        if ((groups[0] == "ï") != (groups[1] in CP_CONSONANTS)) return Error("Epenthetic ï must only be used with Suppletive forms")
+        index++
+    }
+
 
     val ref = parseFullReferent(groups[index]) ?: return Error("Unknown referent: ${groups[index]}")
 

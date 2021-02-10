@@ -34,6 +34,8 @@ val CONSONANTS = listOf(
 
 val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")
 
+val CP_CONSONANTS = setOf("hl", "hm", "hn", "hň")
+
 val COMBINATION_REFERENTIAL_SPECIFICATION = listOf("x", "xx", "lx", "rx")
 
 val CASE_AFFIXES = setOf(
@@ -113,7 +115,6 @@ enum class WordType {
     AFFIXUAL_SCOPING_ADJUNCT,
     REFERENTIAL,
     COMBINATION_REFERENTIAL,
-    SUPPLETIVE_ADJUNCT,
     REGISTER_ADJUNCT,
     BIAS_ADJUNCT,
     MOOD_CASESCOPE_ADJUNCT;
@@ -601,16 +602,25 @@ enum class Register(override val short: String, val initial: String, val final: 
     }
 }
 
-enum class Referent(override val short: String) : NoDefault {
-    MONADIC_SPEAKER("1m"),
-    MONADIC_ADDRESSEE("2m"),
-    POLYADIC_ADDRESSEE("2p"),
-    MONADIC_ANIMATE_THIRD_PARTY("ma"),
-    POLYADIC_ANIMATE_THIRD_PARTY("pa"),
-    MONADIC_INANIMATE_THIRD_PARTY("mi"),
-    POLYADIC_INANIMATE_THIRD_PARTY("pi"),
-    MIXED_THIRD_PARTY("Mx"),
-    OBVIATIVE("Obv"),
-    PROVISIONAL("PVS");
+@Suppress("unused")
+enum class Referent(override val short: String, private vararg val forms: String) : NoDefault {
+    MONADIC_SPEAKER("1m", "l", "r", "ř"),
+    MONADIC_ADDRESSEE("2m", "s", "š", "ž"),
+    POLYADIC_ADDRESSEE("2p", "n", "t", "d"),
+    MONADIC_ANIMATE_THIRD_PARTY("ma", "m", "p", "b"),
+    POLYADIC_ANIMATE_THIRD_PARTY("pa", "ň", "k", "g"),
+    MONADIC_INANIMATE_THIRD_PARTY("mi", "z", "ţ", "ḑ"),
+    POLYADIC_INANIMATE_THIRD_PARTY("pi", "ẓ", "ļ", "f", "v"),
+    MIXED_THIRD_PARTY("Mx", "c", "č", "j"),
+    OBVIATIVE("Obv", "th", "ph", "kh"),
+    PROVISIONAL("PVS", "ll", "rr", "řř"),
+    CARRIER("[CAR]", "hl"),
+    QUOTATIVE("[QUO]", "hm"),
+    NAMING("[NAM]", "hn"),
+    PHRASAL("[PHR]", "hň");
+
+    companion object {
+        fun byForm(c: String): Referent? = values().find { c in it.forms }
+    }
 }
 
