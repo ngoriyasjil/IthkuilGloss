@@ -67,7 +67,7 @@ class GeneralTests {
     @Test
     fun affixualAdjunctTest() {
         "ïn" glossesTo "**n**/4₁"
-        "ïní" glossesTo "**n**/4₁-{VIISub}-{concat.}"
+        "ïní" glossesTo "**n**/4₁-{VIISub}\\{concat.}"
     }
 
     @Test
@@ -78,7 +78,7 @@ class GeneralTests {
         "tççkl".unGeminateCa() mustBe "tçkl"
         "ccw".unGeminateCa() mustBe "cw"
         "ččtw".unGeminateCa() mustBe "čtw"
-        "gd".unGeminateCa() mustBe "kt"
+        "gḑḑ".unGeminateCa() mustBe "kt"
         "žžn".unGeminateCa() mustBe "dn"
     }
 
@@ -100,7 +100,7 @@ class GeneralTests {
         "lala'a" glossesTo "S1-**l**-PRN"
         "la'la" glossesTo "S1-**l**-PRN"
         "wala'ana" glossesTo "S1-**l**-**n**/1₁-{Ca}"
-        "halala'a" givesError "Unexpected glottal stop in incorporated formative"
+        "halala'a-alal" givesError "Unexpected glottal stop in concatenated formative"
         "a'lananalla'a" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-{Ca}-PRN"
         "a'la'nanalla" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-{Ca}-PRN"
         "a'la'nanalla'a" givesError "Too many glottal stops found"
