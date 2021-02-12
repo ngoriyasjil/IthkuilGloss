@@ -50,9 +50,9 @@ fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
         return parseConcatenationChain(s)
     }
 
-    val stress = s.substituteAll(ALLOGRAPHS).splitGroups().findStress() ?: return Error("Unknown stress")
+    val stress = s.defaultFormWithStress().splitGroups().findStress() ?: return Error("Unknown stress")
 
-    if (stress == 1 && s.substituteAll(ALLOGRAPHS) != s.defaultForm()) return Error("Marked default stress")
+    if ((stress == 1 || stress == -1) && s.defaultFormWithStress() != s.defaultForm()) return Error("Marked default stress")
 
     val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
 

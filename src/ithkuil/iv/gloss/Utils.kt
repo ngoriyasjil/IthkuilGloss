@@ -45,7 +45,9 @@ fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitut
     current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
 
-fun String.defaultForm() = toLowerCase().substituteAll(ALLOGRAPHS).substituteAll(UNSTRESSED_FORMS)
+fun String.defaultFormWithStress() = toLowerCase().substituteAll(ALLOGRAPHS)
+
+fun String.defaultForm() = defaultFormWithStress().substituteAll(UNSTRESSED_FORMS)
 
 
 fun Array<String>.findStress(): Int? {
