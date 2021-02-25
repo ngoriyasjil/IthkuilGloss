@@ -37,7 +37,7 @@ class GeneralTests {
         "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN.CSV-RPV-STM"
         "khe" glossesTo  "Obv.DET-ABS"
         "adnilö'ö" glossesTo  "S1-**dn**-OBJ-UTL"
-        "yeilaiceu" glossesTo  "S2.RPV-**l**-**c**/1₂-ATT"
+        "yeilaišeu" glossesTo  "S2.RPV-**l**-**š**/1₂-ATT"
         "aiňļavu'u" glossesTo  "S1.**r**/4-**ňļ**-N-RLT"
     }
 
@@ -45,6 +45,7 @@ class GeneralTests {
     fun slotVTest() {
         "alarfull" glossesTo "S1-**l**-**rf**/9₁-{Ca}"
         "wa'lena" givesError "Unexpectedly few slot V affixes"
+        "waršana'anera" givesError "Unexpectedly many slot V affixes"
     }
 
     @Test

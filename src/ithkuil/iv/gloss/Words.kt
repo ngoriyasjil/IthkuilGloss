@@ -117,8 +117,9 @@ fun parseRegisterAdjunct(v: String): GlossOutcome {
 }
 
 fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
-    val glottalIndices = igroups
-        .mapIndexedNotNull { index, group -> if (group.contains('\'')) index else null }
+    val glottalIndices = igroups.mapIndexedNotNull { index, group ->
+        if (group.contains('\'')) index else null
+    }
 
     if (glottalIndices.size > 2) return Error("Too many glottal stops found")
 
@@ -270,7 +271,7 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
                 vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
 
                 if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
-                else if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+                else if (!slotVFilled && vxCsAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
 
                 hasSlotV = true
             }
