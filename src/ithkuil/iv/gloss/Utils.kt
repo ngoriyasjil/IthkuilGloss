@@ -19,7 +19,7 @@ fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
 
 fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
 
-val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'ô', 'ó', 'û', 'ú')
+val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'î', 'ô', 'ó', 'û', 'ú')
 
 fun String.hasStress() : Boolean? = when {
     this.getOrNull(1) in STRESSED_VOWELS -> null
