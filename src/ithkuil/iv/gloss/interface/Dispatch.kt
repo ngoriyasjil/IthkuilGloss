@@ -51,6 +51,7 @@ fun requestPrecision(request: String) = when {
 }
 
 
+
 fun respond(content: String): String? {
     if (!content.startsWith("?")) {
         return Regex(":\\?(.*?)\\?:", RegexOption.DOT_MATCHES_ALL).findAll(content)
@@ -128,34 +129,24 @@ fun respond(content: String): String? {
 }
 
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
-    val glosses = words.map {
-        it to (try {
-            parseWord(it.stripPunctuation()) as? Gloss
-        } catch (ex: Exception) {
-            logger.error("", ex)
-            null
-        })
-    }.map { (word, gloss) ->
-        gloss?.toString(o)?.withZeroWidthSpaces() ?: "**$word**"
-    }
+    val glosses = glossInContext(words)
+        .map { (word, gloss) ->
+            when (gloss) {
+                is Foreign -> "*$word*"
+                is Error -> "**$word**"
+                is Gloss -> gloss.toString(o).withZeroWidthSpaces()
+            }
+        }
 
     return glosses.joinToString(" ")
 }
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
-    val glossPairs = words
-        .map(String::stripPunctuation)
-        .map { word ->
-            val gloss = try {
-                parseWord(word)
-            } catch (ex: Exception) {
-                logger.error("", ex)
-                Error("A severe exception occurred. Please contact the maintainers.")
-            }
-            word to gloss
-        }.map { (word, gloss) ->
+    val glossPairs = glossInContext(words)
+        .map { (word, gloss) ->
             word to when (gloss) {
                 is Error -> "*${gloss.message}*"
+                is Foreign -> ""
                 is Gloss -> gloss.toString(o)
             }
         }

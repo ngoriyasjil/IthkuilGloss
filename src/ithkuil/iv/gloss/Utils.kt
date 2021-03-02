@@ -7,7 +7,7 @@ var rootData:  Map<String, RootData>  = emptyMap()
 
 val logger = KotlinLogging.logger { }
 
-fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*]+".toRegex(), "")
+fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*_]+".toRegex(), "")
 
 fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
     when (length) {
@@ -45,7 +45,7 @@ fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitut
     current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
 
-fun String.defaultFormWithStress() = toLowerCase().substituteAll(ALLOGRAPHS)
+fun String.defaultFormWithStress() = stripPunctuation().toLowerCase().substituteAll(ALLOGRAPHS)
 
 fun String.defaultForm() = defaultFormWithStress().substituteAll(UNSTRESSED_FORMS)
 

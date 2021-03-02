@@ -1,34 +1,45 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import ithkuil.iv.gloss.*
 import ithkuil.iv.gloss.`interface`.respond
 import ithkuil.iv.gloss.`interface`.splitMessages
 import java.io.File
-import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 infix fun String.glossesTo(gloss: String) {
 
-  val (result, message) = when (val parse = parseWord(this)) {
-    is Error -> null to "Error: ${parse.message}"
-    is Gloss -> parse.toString(GlossOptions()) to this
-  }
+    val (result, message) = when (val parse = parseWord(this)) {
+        is Error -> null to "Error: ${parse.message}"
+        is Foreign -> null to "Foreign: ${parse.word}"
+        is Gloss -> parse.toString(GlossOptions()) to this
+    }
 
-  assertEquals(gloss, result, message)
+    assertEquals(gloss, result, message)
 }
 
 infix fun String.givesError(error: String) {
 
-  val (result, message) = when (val parse = parseWord(this)) {
-    is Error -> parse.message to this
-    is Gloss -> null to parse.toString(GlossOptions())
-  }
+    val (result, message) = when (val parse = parseWord(this)) {
+        is Error -> parse.message to this
+        is Foreign -> null to "Foreign: ${parse.word}"
+        is Gloss -> null to parse.toString(GlossOptions())
+    }
 
-  assertEquals(error, result, message)
+    assertEquals(error, result, message)
 }
 
 infix fun String.hasStress(stress: Int) = assertEquals(stress, splitGroups().findStress(), this)
 
 infix fun String.mustBe(s: String) = assertEquals(s, this, this)
+
+fun assertCarrier(word: String) {
+    assertTrue(word) { isCarrier(word) }
+}
+
+fun assertNotCarrier(word: String) {
+    assertFalse(word) { isCarrier(word) }
+}
 
 class GeneralTests {
 
@@ -133,6 +144,18 @@ class GeneralTests {
         "ïhlarxal" glossesTo "[CAR]-OBJ-**l**/1₁"
         "ëhňarxal" givesError "Epenthetic ï must only be used with Suppletive forms"
         "lëhmoyehnë" glossesTo "[1m+[QUO]]-ERG-ABS-[NAM]"
+    }
+
+    @Test
+    fun carrierIdentificationTest() {
+        assertCarrier("sala")
+        assertCarrier("husana-mala")
+        assertCarrier("hamala-sala")
+        assertCarrier("hla")
+        assertCarrier("hňayazë")
+        assertCarrier("ïhnaxena")
+        assertNotCarrier("hma")
+        assertNotCarrier("ëisala")
     }
 
 

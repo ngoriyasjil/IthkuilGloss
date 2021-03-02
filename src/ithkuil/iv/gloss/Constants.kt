@@ -9,8 +9,8 @@ const val STRESS_SLOT_SEPARATOR = "\\"
 const val REFERENT_SEPARATOR = "+"
 const val REFERENT_START = "["
 const val REFERENT_END = "]"
-const val CA_STACKING_VOWEL = "üä"
 const val CONCATENATION_SEPARATOR = "—"
+const val LOW_TONE_MARKER = "_"
 
 val SENTENCE_START_GLOSS = GlossString("[sentence start]", "[sentence:]", "[S]")
 
@@ -26,6 +26,10 @@ val VOWEL_FORMS = listOf(
 )
 
 val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
+
+const val CA_STACKING_VOWEL = "üä"
+
+const val CARRIER_ROOT_CR = "s"
 
 val CONSONANTS = listOf(
     "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",

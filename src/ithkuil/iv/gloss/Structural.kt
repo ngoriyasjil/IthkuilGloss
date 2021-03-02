@@ -4,12 +4,13 @@ sealed class GlossOutcome
 
 class Error(val message: String) : GlossOutcome()
 
+class Foreign(val word: String) : GlossOutcome()
+
 open class Gloss(
     private vararg val slots: Glossable?,
     private val stressMarked: Glossable? = null,
     private val ignorable: Boolean = true,
-) :
-    GlossOutcome(), Glossable {
+) : GlossOutcome(), Glossable {
 
     override fun toString(o: GlossOptions): String {
         val mainWord = slots

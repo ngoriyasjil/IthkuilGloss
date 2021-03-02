@@ -34,7 +34,7 @@ fun wordTypeOf(groups: Array<String>): WordType {
     }
 }
 
-fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
+fun parseWord(s: String, inConcatenationChain: Boolean = false, marksMood : Boolean? = null): GlossOutcome {
     logger.info { "-> parseWord($s)" }
     val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
@@ -67,7 +67,7 @@ fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
         WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
         WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (groups[1])
         WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (groups[1])
-        WordType.MODULAR_ADJUNCT          -> parseModular               (groups, stress)
+        WordType.MODULAR_ADJUNCT          -> parseModular               (groups, stress, marksMood = marksMood)
         WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(groups, stress)
         WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (groups, stress)
         WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (groups, stress)
@@ -83,6 +83,7 @@ fun parseWord(s: String, inConcatenationChain: Boolean = false): GlossOutcome {
             "   parseWord($s) -> " + when (it) {
                 is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
                 is Error -> "Error(${it.message})"
+                is Foreign -> "Impossible foreign word: ${it.word})"
             }
         }
     }
@@ -268,10 +269,10 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
 
             if (shortcut != null && (index in glottalIndices || index + 1 in glottalIndices)) {
-                vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
-
                 if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
                 else if (!slotVFilled && vxCsAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+
+                vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
 
                 hasSlotV = true
             }
@@ -358,7 +359,7 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
 }
 
-fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
+fun parseModular(groups: Array<String>, stress: Int, marksMood: Boolean?): GlossOutcome {
 
     var index = 0
 
@@ -374,7 +375,7 @@ fun parseModular(groups: Array<String>, stress: Int): GlossOutcome {
 
     while (groups.size > index + 2) {
         midSlotList.add(
-            parseVnCn(groups[index], groups[index + 1], marksMood = false, absoluteLevel = false)
+            parseVnCn(groups[index], groups[index + 1], marksMood = marksMood ?: true, absoluteLevel = false)
                 ?: return Error("Unknown VnCn: ${groups[index]}${groups[index + 1]}")
         )
         index += 2
