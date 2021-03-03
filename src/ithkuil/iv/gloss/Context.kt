@@ -10,6 +10,9 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
     var terminatedPhrase = false
 
     for ((index, word) in words.withIndex()) {
+
+        val gloss : GlossOutcome
+
         if (followsCarrier && word matches "^[:⫶]".toRegex()) withinQuotes = true
         if (terminatedPhrase && word == "hü") terminatedPhrase = false
 
@@ -35,23 +38,23 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
                     }
             }
 
-            val gloss = try {
+            gloss = try {
                 parseWord(word, marksMood = nextFormativeIsVerbal)
             } catch (ex: Exception) {
                 logger.error("", ex)
                 Error("A severe exception occurred. Please contact the maintainers.")
             }
 
-            glossPairs.add(word to gloss)
-
         } else {
 
-            glossPairs.add(word to Foreign(word))
+            gloss = Foreign(word)
 
             if (followsCarrier) followsCarrier = false
             if (isTerminator(word)) terminatedPhrase = false
             if (withinQuotes && word matches "[:⫶]$".toRegex()) withinQuotes = false
         }
+
+        glossPairs.add(word.defaultFormWithStress() to gloss)
 
     }
 

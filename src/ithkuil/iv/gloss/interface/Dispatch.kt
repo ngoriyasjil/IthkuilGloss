@@ -144,14 +144,14 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
 fun wordByWord(words: List<String>, o: GlossOptions): String {
     val glossPairs = glossInContext(words)
         .map { (word, gloss) ->
-            word to when (gloss) {
-                is Error -> "*${gloss.message}*"
-                is Foreign -> ""
-                is Gloss -> gloss.toString(o)
+            when (gloss) {
+                is Gloss -> "**$word:** ${gloss.toString(o)}"
+                is Error -> "**$word:** *${gloss.message}*"
+                is Foreign -> "**$word**"
             }
         }
 
-    return glossPairs.joinToString("\n") { (word, gloss) -> "**$word**: $gloss" }
+    return glossPairs.joinToString("\n")
 
 }
 
