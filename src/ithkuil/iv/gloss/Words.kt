@@ -322,7 +322,6 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
     val vcVk = (groups.getOrNull(index) ?: "a").let {
         if (caseGlottal) {
-            if (groups.lastIndex < index) return Error("Unexpected glottal stop with elided Vc")
             glottalVowel(it)?.first ?: return Error("Unknown slot IX vowel: $it")
         } else it
     }
