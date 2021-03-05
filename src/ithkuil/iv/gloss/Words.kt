@@ -482,7 +482,7 @@ fun parseReferential(groups: Array<String>, stress: Int): GlossOutcome {
 
             if (groups.size > index) return Error("Referential is too long")
 
-            return Gloss(refA, caseA, caseB, refB, stressMarked = essence)
+            return Gloss(refA, Shown(caseA), Shown(caseB), refB, stressMarked = essence)
 
         }
         groups.size > index + 1 -> return Error("Referential is too long")
@@ -534,7 +534,10 @@ fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcom
         else -> Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")
     }
 
-    return Gloss(ref, caseA, specification, *vxCsAffixes.toTypedArray(), caseB, stressMarked = essence)
+
+    return Gloss(ref, Shown(caseA, condition = caseB != null), specification,
+        *vxCsAffixes.toTypedArray(),
+        caseB?.let { Shown(it) }, stressMarked = essence)
 
 }
 
@@ -587,4 +590,22 @@ fun parseAffixual(groups: Array<String>, stress: Int): GlossOutcome {
 
 }
 
+fun parseMoodCaseScopeAdjunct(v: String) : GlossOutcome {
+    val value : Glossable = when (v) {
+        "a" -> Mood.FACTUAL
+        "e" -> Mood.SUBJUNCTIVE
+        "i" -> Mood.ASSUMPTIVE
+        "ö" -> Mood.SPECULATIVE
+        "o" -> Mood.COUNTERFACTIVE
+        "u" -> Mood.HYPOTHETICAL
+        "ai" -> CaseScope.NATURAL
+        "ei" -> CaseScope.ANTECEDENT
+        "iu" -> CaseScope.SUBALTERN
+        "ëi" -> CaseScope.QUALIFIER
+        "oi" -> CaseScope.PRECEDENT
+        "ui" -> CaseScope.SUCCESSIVE
+        else -> return Error("Unknown Mood/Case-Scope adjunct vowel: $v")
+    }
 
+    return Gloss(Shown(value))
+}

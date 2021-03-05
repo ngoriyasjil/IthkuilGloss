@@ -9,16 +9,15 @@ class Foreign(val word: String) : GlossOutcome()
 open class Gloss(
     private vararg val slots: Glossable?,
     private val stressMarked: Glossable? = null,
-    private val ignorable: Boolean = true,
 ) : GlossOutcome(), Glossable {
 
     override fun toString(o: GlossOptions): String {
         val mainWord = slots
             .filterNotNull()
-            .map { it.toString(o.showDefaults(!ignorable)) }
+            .map { it.toString(o) }
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
-        val stressCategory = stressMarked?.toString(o.showDefaults(!ignorable))
+        val stressCategory = stressMarked?.toString(o)
             ?.let { if (it.isNotEmpty()) "$STRESS_SLOT_SEPARATOR$it" else "" } ?: ""
 
         return mainWord + stressCategory
@@ -120,4 +119,10 @@ class GlossString(
             else      -> normal
         }
     }
+}
+
+class Shown(private val value: Glossable, private val condition : Boolean = true) : Glossable {
+
+    override fun toString(o: GlossOptions): String = value.toString(o.showDefaults(condition))
+
 }

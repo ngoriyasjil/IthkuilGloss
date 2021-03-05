@@ -576,26 +576,6 @@ fun affixualAdjunctScope(s: String?, isMultipleAdjunctVowel: Boolean = false): G
     return scope?.let { GlossString(it, ignorable = default) }
 }
 
-fun parseMoodCaseScopeAdjunct(v: String) : GlossOutcome {
-    val value : Glossable = when (v) {
-        "a" -> Mood.FACTUAL
-        "e" -> Mood.SUBJUNCTIVE
-        "i" -> Mood.ASSUMPTIVE
-        "ö" -> Mood.SPECULATIVE
-        "o" -> Mood.COUNTERFACTIVE
-        "u" -> Mood.HYPOTHETICAL
-        "ai" -> CaseScope.NATURAL
-        "ei" -> CaseScope.ANTECEDENT
-        "iu" -> CaseScope.SUBALTERN
-        "ëi" -> CaseScope.QUALIFIER
-        "oi" -> CaseScope.PRECEDENT
-        "ui" -> CaseScope.SUCCESSIVE
-        else -> return Error("Unknown Mood/Case-Scope adjunct vowel: $v")
-    }
-
-    return Gloss(value, ignorable = false)
-}
-
 
 
 fun Array<String>.stripSentencePrefix(): Pair<Array<String>, Boolean>? {
