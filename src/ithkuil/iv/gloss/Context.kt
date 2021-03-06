@@ -13,7 +13,7 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
 
         val gloss : GlossOutcome
 
-        if (followsCarrier && word matches "^[:⫶]".toRegex()) withinQuotes = true
+        if (followsCarrier && word matches "^[:⫶].+".toRegex()) withinQuotes = true
         if (terminatedPhrase && word == "hü") terminatedPhrase = false
 
 
@@ -51,7 +51,7 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
 
             if (followsCarrier) followsCarrier = false
             if (isTerminator(word)) terminatedPhrase = false
-            if (withinQuotes && word matches "[:⫶]$".toRegex()) withinQuotes = false
+            if (withinQuotes && word matches ".+[:⫶]$".toRegex()) withinQuotes = false
         }
 
         glossPairs.add(word.defaultFormWithStress() to gloss)
