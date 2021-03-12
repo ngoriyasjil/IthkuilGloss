@@ -1,11 +1,22 @@
 package ithkuil.iv.gloss
 
-import mu.KotlinLogging
+class Word private constructor(
+    private val groups: List<String>,
+    val stress: Int,
+    val prefixPunctuation: String = "",
+    val postfixPunctuation: String = "") : List<String> by groups {
 
-var affixData: Map<String, AffixData> = emptyMap()
-var rootData:  Map<String, RootData>  = emptyMap()
+    override fun toString() : String{
+        return groups.joinToString("", prefix = prefixPunctuation, postfix = postfixPunctuation)
+    }
 
-val logger = KotlinLogging.logger { }
+    companion object {
+        fun create(s: String) : Word {
+            return Word(s.defaultForm().splitGroups().toList(), 0)
+        }
+    }
+}
+
 
 fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*_]+".toRegex(), "")
 
@@ -42,7 +53,7 @@ infix fun String.eq(s: String): Boolean = if ("/" in this) {
 }
 
 fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
-    current, (allo, sub) -> current.replace(allo.toRegex(), sub)
+        current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
 
 fun String.defaultFormWithStress() = stripPunctuation().toLowerCase().substituteAll(ALLOGRAPHS)
@@ -76,8 +87,8 @@ fun Array<String>.findStress(): Int? {
 fun String.splitGroups(): Array<String> {
     val groups = arrayListOf<String>()
     var chars = toCharArray()
-            .map(Char::toString)
-            .toList()
+        .map(Char::toString)
+        .toList()
     while (chars.isNotEmpty()) {
         val group = when {
             chars[0].defaultForm().isVowel() -> {
@@ -104,21 +115,3 @@ fun String.splitGroups(): Array<String> {
     }
     return groups.toTypedArray()
 }
-
-data class AffixData(val abbreviation: String, val descriptions: List<String>)
-
-fun parseAffixes(data: String): Map<String, AffixData> = data
-        .lineSequence()
-        .drop(1)
-        .map       { it.split("\t") }
-        .filter    { it.size >= 11 }
-        .associate { it[0] to AffixData(it[1], it.subList(2, 11)) }
-
-data class RootData(val descriptions: List<String>)
-
-fun parseRoots(data: String): Map<String, RootData> = data
-        .lineSequence()
-        .drop(1)
-        .map       { it.split("\t") }
-        .filter    { it.size >= 5 }
-        .associate { it[0] to RootData(it.subList(1, 5)) }
