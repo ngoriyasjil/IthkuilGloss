@@ -70,7 +70,11 @@ fun isCarrier(word: String) : Boolean {
         return word.split('-').any { isCarrier(it) }
     }
 
-    val groups = word.defaultForm().splitGroups()
+    val groups = try {
+         word.defaultForm().splitGroups()
+    } catch (_ : IllegalArgumentException) {
+        return false // This is a hack until I clean up the formatting logic
+    }
 
     return when (wordTypeOf(groups)) {
         WordType.FORMATIVE -> {
