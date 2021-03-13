@@ -36,21 +36,13 @@ fun wordTypeOf(groups: Array<String>): WordType {
 
 fun parseWord(s: String, inConcatenationChain: Boolean = false, marksMood : Boolean? = null): GlossOutcome {
     logger.info { "-> parseWord($s)" }
-    val nonIthkuil = s.defaultForm().filter { it.toString() !in ITHKUIL_CHARS }
-    if (nonIthkuil.isNotEmpty()) {
-        return Error(
-            "Non-ithkuil characters detected: " +
-                    nonIthkuil.map { "\"$it\" (U+" + it.toInt().toString(16).toUpperCase().padStart(4, '0') + ")" }
-                        .joinToString() +
-                    if (nonIthkuil.contains("[qˇ^ʰ]".toRegex())) " You might be writing in Ithkuil III. Try \"!gloss\" instead." else ""
-        )
-    }
+
 
     if ('-' in s) {
         return parseConcatenationChain(s)
     }
 
-    val stress = s.defaultFormWithStress().splitGroups().findStress() ?: return Error("Unknown stress")
+    val stress = findStress(s.defaultFormWithStress().splitGroups()) ?: return Error("Unknown stress")
 
     if ((stress == 1 || stress == -1) && s.defaultFormWithStress() != s.defaultForm()) return Error("Marked default stress")
 

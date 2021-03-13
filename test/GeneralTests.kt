@@ -29,7 +29,7 @@ infix fun String.givesError(error: String) {
     assertEquals(error, result, message)
 }
 
-infix fun String.hasStress(stress: Int) = assertEquals(stress, splitGroups().findStress(), this)
+infix fun String.hasStress(stress: Int) = assertEquals(stress, findStress(splitGroups()), this)
 
 infix fun String.mustBe(s: String) = assertEquals(s, this, this)
 

@@ -18,11 +18,7 @@ val VOWEL_FORMS = listOf(
         "a", "ä", "e", "ï", "i", "ö", "o", "ü", "u",
         "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
         "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
-        "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa",
-        "a'a", "ä'ä", "e'e", "ï'ï", "i'i", "ö'ö", "o'o", "ü'ü", "u'u",
-        "a'i", "a'u", "e'i", "e'u", "ë'i", "o'u", "o'i", "i'u", "u'i",
-        "i'a", "i'ä", "i'e", "i'ë", "ë'u", "u'ö", "u'o", "u'e", "u'a",
-        "a'o", "a'e", "e'a", "e'o", "e'ë", "ö'e", "o'e", "ö'a", "o'a",
+        "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa"
 )
 
 val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
@@ -87,7 +83,12 @@ val UNSTRESSED_FORMS = listOf(
     "û" to "ü", "ú" to "u"
 )
 
-val VOWELS = setOf("a", "ä", "e", "ë", "i", "ï", "ö", "o", "ü", "u")
+val VOWELS = setOf(
+    "a", "ä", "e", "ë", "i", "ï", "ö", "o", "ü", "u",
+    "á", "â", "é", "ê", "í", "î", "ú", "û", "ó", "ô"
+)
+
+val VOWELS_AND_GLOTTAL_STOP = VOWELS + "'"
 
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
@@ -100,6 +101,7 @@ val ITHKUIL_CHARS = setOf(
         "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
         "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř",
         "a", "ä", "e", "ë", "i", "ï", "u", "ü", "o", "ö",
+        "á", "â", "é", "ê", "í", "î", "ú", "û", "ó", "ô",
         "'", "-"
 )
 
@@ -193,7 +195,7 @@ enum class Configuration(override val short: String) : Category {
 
     companion object {
         fun byAbbreviation(s: String) : Configuration? {
-            return values().find { it.short eq s  }
+            return values().find { it.short == s  }
         }
     }
 
@@ -376,7 +378,7 @@ enum class Aspect(override val short: String, val vn: String) : NoDefault {
     SEQUENTIAL("SQN", "oa");
 
     companion object {
-        fun byVowel(vt: String) = values().find { it.vn eq vt }
+        fun byVowel(vn: String) = values().find { it.vn isSameVowelAs vn }
     }
 }
 
@@ -485,7 +487,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     PROLIMITIVE("PLM", "o'a");
 
     companion object {
-        fun byVowel(vc: String) = values().find { it.vc eq vc }
+        fun byVowel(vc: String) = values().find { it.vc isSameVowelAs vc }
     }
 }
 
@@ -574,7 +576,7 @@ enum class Bias(override val short: String, val cb: String) : NoDefault {
     DEJECTIVE("DEJ", "žžg");
 
     companion object {
-        fun byGroup(cb: String) = values().find { it.cb eq cb }
+        fun byGroup(cb: String) = values().find { it.cb == cb }
     }
 }
 
@@ -600,8 +602,14 @@ enum class Register(override val short: String, val initial: String, val final: 
 
     companion object {
         fun byVowel(v: String): Pair<Register, Boolean>? {
-            return values().find { it.initial eq v }?.let { it to false }
-                ?: values().find { it.final eq v }?.to(true)
+
+            val matchInitial = values().find { it.initial == v }
+            if (matchInitial != null) return matchInitial to false
+
+            val matchFinal = values().find { it.final == v }
+            if (matchFinal != null) return matchFinal to true
+
+            return null
         }
     }
 }

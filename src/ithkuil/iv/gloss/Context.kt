@@ -34,7 +34,7 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
                     .takeWhile { it.last() !in setOf('.', '?', '!') }
                     .find { wordTypeOf(it.defaultForm().splitGroups()) == WordType.FORMATIVE }
                     ?.let {
-                        it.defaultFormWithStress().splitGroups().findStress() in setOf(0, -1)
+                        findStress(it.defaultFormWithStress().splitGroups()) in setOf(0, -1)
                     }
             }
 

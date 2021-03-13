@@ -1,34 +1,133 @@
 package ithkuil.iv.gloss
 
-class Word private constructor(
-    private val groups: List<String>,
+sealed class FormattingOutcome
+
+class Invalid(private val word : String, val message: String) : FormattingOutcome() {
+    override fun toString(): String = word
+}
+
+
+class Word
+private constructor(
+    private val stressedGroups: List<String>,
     val stress: Int,
     val prefixPunctuation: String = "",
-    val postfixPunctuation: String = "") : List<String> by groups {
+    val postfixPunctuation: String = "",
+    val groups : List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
+    // ^ Should never be specified; class delegation doesn't accept properties, only parameters
+) : List<String> by groups, FormattingOutcome() {
 
-    override fun toString() : String{
-        return groups.joinToString("", prefix = prefixPunctuation, postfix = postfixPunctuation)
+    override fun toString() : String {
+        return stressedGroups.joinToString("", prefix = prefixPunctuation, postfix = postfixPunctuation)
     }
 
     companion object {
-        fun create(s: String) : Word {
-            return Word(s.defaultForm().splitGroups().toList(), 0)
+
+        fun from(s: String) : FormattingOutcome {
+
+            if (s.isEmpty()) return Invalid(s, "Empty word")
+
+            val punct = ".,?!:;⫶`\"*_"
+            val punctuationRegex = "^([$punct]*)([^$punct]+)([$punct]*)$".toRegex()
+
+            val (prefix, word, postfix) = punctuationRegex.find(s)?.destructured
+                ?: return Invalid(s, "Unexpected punctuation")
+
+            val clean = word.defaultFormWithStress()
+
+            val nonIthkuil = clean.filter { it.toString() !in ITHKUIL_CHARS }
+            if (nonIthkuil.isNotEmpty()) {
+                var message = nonIthkuil.map { codepointString(it) }.joinToString()
+
+                if ("[qˇ^ʰ]".toRegex() in nonIthkuil) {
+                    message += " You might be writing in Ithkuil III. Try \"!gloss\" instead."
+                }
+                return Invalid(s, "Non-ithkuil characters detected: $message")
+            }
+
+            val stressedGroups = clean.splitGroups() ?: return Invalid(s, "Failed grouping")
+
+            val stress = findStress(stressedGroups) ?: return Invalid(s, "Unknown stress")
+
+            val groups = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
+
+            return Word(groups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
+        }
+
+        private fun codepointString(c : Char): String {
+            val codepoint = c.toInt()
+                .toString(16)
+                .toUpperCase()
+                .padStart(4, '0')
+            return "\"$c\" (U+$codepoint)"
         }
     }
 }
 
+enum class GroupingState {
+    VOWEL,
+    CONSONANT;
 
-fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*_]+".toRegex(), "")
-
-fun String.isVowel() = with(substituteAll(UNSTRESSED_FORMS)) {
-    when (length) {
-        1, 2 -> all { it.toString() in VOWELS }
-        3 -> this[1] == '\'' && this[0].toString() in VOWELS && this[2].toString() in VOWELS
-        else -> false
+    fun switch(): GroupingState = when (this) {
+        CONSONANT -> VOWEL
+        VOWEL -> CONSONANT
     }
 }
 
-fun String.isConsonant() = this.all { it.toString().defaultForm() in CONSONANTS }
+fun String.splitGroups(): List<String>? {
+    val groups = mutableListOf<String>()
+
+    val chars = map(Char::toString) //Change to a list of strings for historical reasons
+
+    var index = 0
+
+    var state = if (chars[index] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
+
+    while (index <= lastIndex) {
+        val group : String
+
+        if (chars[index] == "-") {
+            state = if (chars[index+1] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
+            group = "-"
+        } else {
+            val cluster = when (state) {
+                GroupingState.CONSONANT -> chars.subList(index, length)
+                    .takeWhile { it in CONSONANTS }
+                    .joinToString("")
+                GroupingState.VOWEL -> chars.subList(index, length)
+                    .takeWhile { it in VOWELS_AND_GLOTTAL_STOP }
+                    .joinToString("")
+            }
+
+            if (cluster.isEmpty()) return null
+
+            if (state == GroupingState.VOWEL && !cluster.isVowel()) return null
+
+            state = state.switch()
+            group = cluster
+        }
+
+
+        index += group.length
+        groups += group
+    }
+
+    return groups
+}
+
+//Matches strings of the form "a", "ai", "a'" "a'i" and "ai'". Doesn't guarantee a valid vowelform.
+fun String.isVowel() = when (length) {
+    1 -> this in VOWELS
+    2 -> this[0].toString() in VOWELS && this[1].toString() in VOWELS_AND_GLOTTAL_STOP
+    3 -> all { it.toString() in VOWELS_AND_GLOTTAL_STOP } && this[0] != '\'' && this.count { it == '\'' } == 1
+    else -> false
+}
+
+fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*_]+".toRegex(), "")
+
+
+
+fun String.isConsonant() = this.all { it.toString() in CONSONANTS }
 
 val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'î', 'ô', 'ó', 'û', 'ú')
 
@@ -45,11 +144,11 @@ fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter
 fun String.trimWhitespace() = this.splitOnWhitespace().joinToString(" ")
 
 
-//Deals with series three vowels and non-default consonant forms
-infix fun String.eq(s: String): Boolean = if ("/" in this) {
-    this.split("/").any { it eq s }
+//Deals with series three vowels
+infix fun String.isSameVowelAs(s: String): Boolean = if ("/" in s) {
+    s.split("/").any { it isSameVowelAs this }
 } else {
-    this.defaultForm() == s.defaultForm()
+    s == this
 }
 
 fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
@@ -61,8 +160,8 @@ fun String.defaultFormWithStress() = stripPunctuation().toLowerCase().substitute
 fun String.defaultForm() = defaultFormWithStress().substituteAll(UNSTRESSED_FORMS)
 
 
-fun Array<String>.findStress(): Int? {
-    val vowels = this.filter(String::isVowel)
+fun findStress(groups: List<String>): Int? {
+    val vowels = groups.filter(String::isVowel)
         .flatMap {
             val (series, form) = seriesAndForm(it.defaultForm())
             if (series == 1 || series == 2 || (series == 3 && form == 5)) {
@@ -84,34 +183,5 @@ fun Array<String>.findStress(): Int? {
     }
 }
 
-fun String.splitGroups(): Array<String> {
-    val groups = arrayListOf<String>()
-    var chars = toCharArray()
-        .map(Char::toString)
-        .toList()
-    while (chars.isNotEmpty()) {
-        val group = when {
-            chars[0].defaultForm().isVowel() -> {
-                if (chars.size >= 3 && (chars[0] + chars[1] + chars[2]).isVowel()) {
-                    chars[0] + chars[1] + chars[2]
-                } else if (chars.size >= 2 && (chars[0] + chars[1]).isVowel()) {
-                    chars[0] + chars[1]
-                } else {
-                    chars[0]
-                }
-            }
-            chars[0].isConsonant() -> {
-                chars.takeWhile(String::isConsonant).joinToString("")
-            }
 
-            chars[0] == "-" -> chars[0]
 
-            else -> {
-                throw IllegalArgumentException("Non-Ithkuil character: ${chars[0]}")
-            }
-        }
-        chars = chars.subList(group.length, chars.size)
-        groups += group
-    }
-    return groups.toTypedArray()
-}
