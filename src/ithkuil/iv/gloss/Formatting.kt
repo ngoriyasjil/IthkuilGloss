@@ -6,11 +6,10 @@ class Invalid(private val word : String, val message: String) : FormattingOutcom
     override fun toString(): String = word
 }
 
-
 class Word
 private constructor(
     private val stressedGroups: List<String>,
-    val stress: Int,
+    val stress: Stress,
     val prefixPunctuation: String = "",
     val postfixPunctuation: String = "",
     val groups : List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
@@ -47,7 +46,14 @@ private constructor(
 
             val stressedGroups = clean.splitGroups() ?: return Invalid(s, "Failed grouping")
 
-            val stress = findStress(stressedGroups) ?: return Invalid(s, "Unknown stress")
+            val stress = findStress(stressedGroups)
+
+            when (stress) {
+                Stress.INVALID_PLACE -> return Invalid(s, "Unrecognized stress placement")
+                Stress.MARKED_DEFAULT -> return Invalid(s, "Marked default stress")
+                Stress.DOUBLE_MARKED -> return Invalid(s, "Double-marked stress")
+                else -> {}
+            }
 
             val groups = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
 
@@ -123,10 +129,6 @@ fun String.isVowel() = when (length) {
     else -> false
 }
 
-fun String.stripPunctuation(): String = this.replace("[.,?!:;⫶`\"*_]+".toRegex(), "")
-
-
-
 fun String.isConsonant() = this.all { it.toString() in CONSONANTS }
 
 val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'î', 'ô', 'ó', 'û', 'ú')
@@ -155,13 +157,23 @@ fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitut
         current, (allo, sub) -> current.replace(allo.toRegex(), sub)
 }
 
-fun String.defaultFormWithStress() = stripPunctuation().toLowerCase().substituteAll(ALLOGRAPHS)
+fun String.defaultFormWithStress() = toLowerCase().substituteAll(ALLOGRAPHS)
 
 fun String.defaultForm() = defaultFormWithStress().substituteAll(UNSTRESSED_FORMS)
 
+enum class Stress {
+    ULTIMATE,
+    PENULTIMATE,
+    ANTEPENULTIMATE,
+    MONOSYLLABIC,
 
-fun findStress(groups: List<String>): Int? {
-    val vowels = groups.filter(String::isVowel)
+    MARKED_DEFAULT,
+    DOUBLE_MARKED,
+    INVALID_PLACE;
+}
+
+fun findStress(groups: List<String>): Stress {
+    val nuclei = groups.filter(String::isVowel)
         .flatMap {
             val (series, form) = seriesAndForm(it.defaultForm())
             if (series == 1 || series == 2 || (series == 3 && form == 5)) {
@@ -170,17 +182,27 @@ fun findStress(groups: List<String>): Int? {
                 it.toCharArray().map(Char::toString).filter { ch -> ch != "'" }
             }
         }
-    if (vowels.size == 1) return -1
-    val stressIndex = vowels
+
+    val stresses = nuclei
         .reversed()
-        .map { it.hasStress() ?: return null }
-        .takeIf { list -> list.count { it } <= 1 }
-        ?.indexOfFirst { it }
-    return when (stressIndex) {
-        -1 -> 1
-        null -> null
-        else -> stressIndex
+        .map { it.hasStress() ?: return Stress.INVALID_PLACE }
+
+    val count = stresses.count { it }
+
+    if (count > 1) return Stress.DOUBLE_MARKED
+    if (nuclei.size == 1) {
+        return if (count == 0) Stress.MONOSYLLABIC else Stress.MARKED_DEFAULT
     }
+
+    return when (stresses.indexOfFirst { it } ) {
+        -1 -> Stress.PENULTIMATE
+        0 -> Stress.ULTIMATE
+        1 -> Stress.MARKED_DEFAULT
+        2 -> Stress.ANTEPENULTIMATE
+        else -> Stress.INVALID_PLACE
+    }
+
+
 }
 
 
