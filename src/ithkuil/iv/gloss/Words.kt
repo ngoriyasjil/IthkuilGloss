@@ -1,32 +1,32 @@
 package ithkuil.iv.gloss
 
-fun wordTypeOf(groups: Array<String>): WordType {
+fun wordTypeOf(word: Word): WordType {
 
     return when {
-        groups.size == 1 && groups[0].isConsonant() -> WordType.BIAS_ADJUNCT
+        word.size == 1 && word[0].isConsonant() -> WordType.BIAS_ADJUNCT
 
-        groups[0] == "hr" && groups.size == 2 -> WordType.MOOD_CASESCOPE_ADJUNCT
+        word[0] == "hr" && word.size == 2 -> WordType.MOOD_CASESCOPE_ADJUNCT
 
-        groups[0] == "h" && groups.size == 2 -> WordType.REGISTER_ADJUNCT
+        word[0] == "h" && word.size == 2 -> WordType.REGISTER_ADJUNCT
 
-        (groups[0].isVowel() || groups[0] in setOf("w", "y"))
-            && groups.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
+        (word[0].isVowel() || word[0] in setOf("w", "y"))
+            && word.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
 
-        groups.size >= 4 && groups[0] == "ë" && groups[3] in COMBINATION_REFERENTIAL_SPECIFICATION
-            || groups.size >= 3 && groups[0] !in CC_CONSONANTS && groups[2] in COMBINATION_REFERENTIAL_SPECIFICATION
-            || groups.size >= 4 && groups[0] == "ï" && groups[1] in CP_CONSONANTS
+        word.size >= 4 && word[0] == "ë" && word[3] in COMBINATION_REFERENTIAL_SPECIFICATION
+            || word.size >= 3 && word[0] !in CC_CONSONANTS && word[2] in COMBINATION_REFERENTIAL_SPECIFICATION
+            || word.size >= 4 && word[0] == "ï" && word[1] in CP_CONSONANTS
         -> WordType.COMBINATION_REFERENTIAL
 
-        groups.size in 2..3 && groups[1].isConsonant() && groups[1] !in CN_CONSONANTS && groups[0] != "ë"
+        word.size in 2..3 && word[1].isConsonant() && word[1] !in CN_CONSONANTS && word[0] != "ë"
         -> WordType.AFFIXUAL_ADJUNCT
 
-        groups.size >= 5 && groups[0].isConsonant() && groups[2] in CZ_CONSONANTS
-            || groups.size >= 6 && (groups[0] == "ë") && (groups[3] in CZ_CONSONANTS)
+        word.size >= 5 && word[0].isConsonant() && word[2] in CZ_CONSONANTS
+            || word.size >= 6 && (word[0] == "ë") && (word[3] in CZ_CONSONANTS)
         -> WordType.AFFIXUAL_SCOPING_ADJUNCT
 
-        (groups.last().isVowel() || groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
+        (word.last().isVowel() || word.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
             ?.isVowel() == true)
-            && groups.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)
+            && word.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)
             ?.all { it.isConsonant() || it == "ë" } == true
         -> WordType.REFERENTIAL
 
@@ -34,37 +34,21 @@ fun wordTypeOf(groups: Array<String>): WordType {
     }
 }
 
-fun parseWord(s: String, inConcatenationChain: Boolean = false, marksMood : Boolean? = null): GlossOutcome {
-    logger.info { "-> parseWord($s)" }
+fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
+    logger.info { "-> parseWord($iword)" }
 
-
-    if ('-' in s) {
-        return parseConcatenationChain(s)
-    }
-
-    val stress = findStress(s.defaultFormWithStress().splitGroups()) ?: return Error("Unknown stress")
-
-    if ((stress == 1 || stress == -1) && s.defaultFormWithStress() != s.defaultForm()) return Error("Marked default stress")
-
-    val (groups, sentencePrefix) = s.defaultForm().splitGroups().stripSentencePrefix() ?: return Error("Empty word")
-
-    val wordType = wordTypeOf(groups)
-
-    if (wordType == WordType.FORMATIVE && !inConcatenationChain) {
-        val (concatenation, _) = parseCc(groups[0])
-        if (concatenation != null) return Error("Lone concatenated formative")
-    }
+    val (word, sentencePrefix) = iword.stripSentencePrefix()
     
-    val result: GlossOutcome = when (wordType) {
-        WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(groups[0]) ?: return Error("Unknown bias: ${groups[0]}"))
-        WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (groups[1])
-        WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (groups[1])
-        WordType.MODULAR_ADJUNCT          -> parseModular               (groups, stress, marksMood = marksMood)
-        WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(groups, stress)
-        WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (groups, stress)
-        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (groups, stress)
-        WordType.REFERENTIAL              -> parseReferential           (groups, stress)
-        WordType.FORMATIVE                -> parseFormative             (groups, stress)
+    val result: GlossOutcome = when (wordTypeOf(word)) {
+        WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(word[0]) ?: return Error("Unknown bias: ${word[0]}"))
+        WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word[1])
+        WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word[1])
+        WordType.MODULAR_ADJUNCT          -> parseModular               (word, marksMood = marksMood)
+        WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(word)
+        WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (word)
+        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (word)
+        WordType.REFERENTIAL              -> parseReferential           (word)
+        WordType.FORMATIVE                -> parseFormative             (word)
     }
 
     return when {
@@ -72,7 +56,7 @@ fun parseWord(s: String, inConcatenationChain: Boolean = false, marksMood : Bool
         else -> result
     }.also {
         logger.info {
-            "   parseWord($s) -> " + when (it) {
+            "   parseWord($iword) -> " + when (it) {
                 is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
                 is Error -> "Error(${it.message})"
                 is Foreign -> "Impossible foreign word: ${it.word})"
@@ -81,27 +65,28 @@ fun parseWord(s: String, inConcatenationChain: Boolean = false, marksMood : Bool
     }
 }
 
-fun parseConcatenationChain(s: String): GlossOutcome =
-    s.split('-')
+fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome = chain.words
         .also {
             it.forEachIndexed { index, word ->
 
                 if (word.isEmpty())
                     return Error("Empty word concatenated (at ${index+1})")
 
-                val groups = word.defaultForm().splitGroups()
-
-                if (wordTypeOf(groups) != WordType.FORMATIVE)
+                if (wordTypeOf(word) != WordType.FORMATIVE)
                     return Error("Non-formatives concatenated (at ${index+1})")
 
-                val (concatenation, _) = parseCc(groups[0])
+                val (concatenation, _) = parseCc(word[0])
 
                 if ((concatenation == null) xor (index == it.lastIndex))
                     return Error("Invalid concatenation (at ${index+1})")
             }
         }
-        .map { parseWord(it, inConcatenationChain = true) }
-        .map { it as? Gloss ?: return it }
+        .map { parseWord(it) }
+        .map { when(it) {
+            is Gloss -> it
+            is Error -> return it
+            is Foreign -> throw IllegalArgumentException()
+        } }
         .let { ConcatenationChain(*it.toTypedArray()) }
 
 fun parseRegisterAdjunct(v: String): GlossOutcome {
@@ -109,14 +94,14 @@ fun parseRegisterAdjunct(v: String): GlossOutcome {
     return Gloss(RegisterAdjunct(register, final))
 }
 
-fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
-    val glottalIndices = igroups.mapIndexedNotNull { index, group ->
+fun parseFormative(word: Word): GlossOutcome {
+    val glottalIndices = word.mapIndexedNotNull { index, group ->
         if (group.contains('\'')) index else null
     }
 
     if (glottalIndices.size > 2) return Error("Too many glottal stops found")
 
-    val groups = igroups.map { group ->
+    val groups = word.map { group ->
         if (group.contains('\'')) {
             when {
                 group.isVowel() -> unGlottalVowel(group)?.first ?: group
@@ -135,8 +120,8 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
 
     val relation = if (concatenation == null) {
-        when (stress) {
-            2 -> Relation.FRAMED
+        when (word.stress) {
+            Stress.ANTEPENULTIMATE -> Relation.FRAMED
             else -> Relation.UNFRAMED
         }
     } else null
@@ -280,8 +265,7 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
             (vxCsAffixes[0] as? Affix)?.canBeReferentialShortcut = true
     }
 
-    val marksMood = (stress == 0) || (stress == -1)
-
+    val marksMood = word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC)
 
     val absoluteLevel = groups.getOrNull(index + 1) == "y" &&
             groups.getOrNull(index + 3) in setOf("h", "hl", "hr", "hm", "hn", "hň")
@@ -320,15 +304,15 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
 
     val slotIX: Glossable = if (concatenation == null) {
-        when (stress) {
-            0, -1 -> parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
-            1, 2 -> Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
-            else -> return Error("Unknown stress: $stress from ultimate")
+        when (word.stress) {
+            Stress.MONOSYLLABIC, Stress.ULTIMATE -> parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
+            Stress.PENULTIMATE, Stress.ANTEPENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
+            else -> return Error("Stress error during formative parsing. Please report")
         }
     } else {
-        when (stress) {
-            1 -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
-            0 -> {
+        when (word.stress) {
+            Stress.PENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
+            Stress.MONOSYLLABIC, Stress.ULTIMATE -> {
                 val glottalified = when (vcVk.length) {
                     1 -> "$vcVk'$vcVk"
                     2 -> "${vcVk[0]}'${vcVk[1]}"
@@ -336,7 +320,8 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
                 }
                 Case.byVowel(glottalified) ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
             }
-            else -> return Error("Unknown stress for concatenated formative: $stress from ultimate")
+            Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress in concatenated formative")
+            else -> return Error("Stress error")
         }
     }
     index++
@@ -350,11 +335,11 @@ fun parseFormative(igroups: Array<String>, stress: Int): GlossOutcome {
 
 }
 
-fun parseModular(groups: Array<String>, stress: Int, marksMood: Boolean?): GlossOutcome {
+fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
 
     var index = 0
 
-    val slot1 = when (groups[0]) {
+    val slot1 = when (word[0]) {
         "w" -> GlossString("{parent formative only}", "{parent}")
         "y" -> GlossString("{concatenated formative only}", "{concat.}")
         else -> null
@@ -364,10 +349,10 @@ fun parseModular(groups: Array<String>, stress: Int, marksMood: Boolean?): Gloss
 
     val midSlotList: MutableList<Slot> = mutableListOf()
 
-    while (groups.size > index + 2) {
+    while (word.size > index + 2) {
         midSlotList.add(
-            parseVnCn(groups[index], groups[index + 1], marksMood = marksMood ?: true, absoluteLevel = false)
-                ?: return Error("Unknown VnCn: ${groups[index]}${groups[index + 1]}")
+            parseVnCn(word[index], word[index + 1], marksMood = marksMood ?: true, absoluteLevel = false)
+                ?: return Error("Unknown VnCn: ${word[index]}${word[index + 1]}")
         )
         index += 2
     }
@@ -375,11 +360,15 @@ fun parseModular(groups: Array<String>, stress: Int, marksMood: Boolean?): Gloss
     if (midSlotList.size > 3) return Error("Too many (>3) middle slots in modular adjunct: ${midSlotList.size}")
 
     val slot5 = when {
-        midSlotList.isEmpty() -> Aspect.byVowel(groups[index]) ?: return Error("Unknown aspect: ${groups[index]}")
-        stress == 1 -> parseVnCn(groups[index], "h", marksMood = true, absoluteLevel = false)
-            ?: return Error("Unknown non-aspect Vn: ${groups[index]}")
-        stress == 0 -> parseVh(groups[index]) ?: return Error("Unknown Vh: ${groups[index]}")
-        else -> return Error("Unknown stress on modular adjunct: $stress from ultimate")
+        midSlotList.isEmpty() -> Aspect.byVowel(word[index]) ?: return Error("Unknown aspect: ${word[index]}")
+        else -> when (word.stress) {
+            Stress.PENULTIMATE -> parseVnCn(word[index], "h", marksMood = true, absoluteLevel = false)
+                ?: return Error("Unknown non-aspect Vn: ${word[index]}")
+            Stress.ULTIMATE -> parseVh(word[index]) ?: return Error("Unknown Vh: ${word[index]}")
+            Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress on modular adjunct")
+            else -> return Error("Stress error")
+        }
+
     }
 
     return Gloss(slot1, *midSlotList.toTypedArray(), slot5)
@@ -404,9 +393,9 @@ class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot
 
 }
 
-fun parseFullReferent(groups: List<String>): Referential? {
+fun parseFullReferent(clusters: List<String>): Referential? {
 
-    val reflist : List<Slot> = groups.flatMap { c ->
+    val reflist : List<Slot> = clusters.flatMap { c ->
         parseFullReferent(c) ?: return null
     }
 
@@ -440,90 +429,100 @@ private fun parseFullReferent(c: String): Referential? {
 
 }
 
-fun parseReferential(groups: Array<String>, stress: Int): GlossOutcome {
-    val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
-    val c1 = groups
+fun parseReferential(word: Word): GlossOutcome {
+    val essence = when (word.stress) {
+        Stress.ULTIMATE -> Essence.REPRESENTATIVE
+        Stress.MONOSYLLABIC, Stress.PENULTIMATE -> Essence.NORMAL
+        Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress on referential")
+        else -> return Error("Stress error")
+    }
+    val c1 = word
         .takeWhile { it !in setOf("w", "y") }
         .dropLast(1)
         .filter { it != "ë" }
         .takeIf { it.size <= 3 } ?: return Error("Too many (>3) initial ë-separated consonants")
     val refA =
         parseFullReferent(c1) ?: return Error("Unknown personal reference: $c1")
-    var index = (groups
+    var index = (word
         .indexOfFirst { it in setOf("w", "y") }
-        .takeIf { it != -1 } ?: groups.size) - 1
+        .takeIf { it != -1 } ?: word.size) - 1
 
-    val caseA = Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")
+    val caseA = Case.byVowel(word[index]) ?: return Error("Unknown case: ${word[index]}")
     index++
 
     when {
-        groups.getOrNull(index) in setOf("w", "y") -> {
+        word.getOrNull(index) in setOf("w", "y") -> {
             index++
-            val vc2 = groups.getOrNull(index) ?: return Error("Referential ended unexpectedly")
+            val vc2 = word.getOrNull(index) ?: return Error("Referential ended unexpectedly")
             val caseB =
-                Case.byVowel(vc2) ?: return Error("Unknown case: ${groups[index]}")
+                Case.byVowel(vc2) ?: return Error("Unknown case: ${word[index]}")
             index++
 
-            val c2 = groups.getOrNull(index)
+            val c2 = word.getOrNull(index)
             val refB = if (c2 != null) {
                 parseFullReferent(c2) ?: return Error("Unknown personal reference cluster: $c2")
             } else null
 
             index++
-            if (groups.getOrNull(index) == "ë") index++
+            if (word.getOrNull(index) == "ë") index++
 
-            if (groups.size > index) return Error("Referential is too long")
+            if (word.size > index) return Error("Referential is too long")
 
             return Gloss(refA, Shown(caseA), Shown(caseB), refB, stressMarked = essence)
 
         }
-        groups.size > index + 1 -> return Error("Referential is too long")
+        word.size > index + 1 -> return Error("Referential is too long")
 
         else -> return Gloss(refA, caseA, stressMarked = essence)
     }
 }
 
-fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcome {
-    val essence = if (stress == 0) Essence.REPRESENTATIVE else Essence.NORMAL
+fun parseCombinationReferential(word: Word): GlossOutcome {
+    val essence = when (word.stress) {
+        Stress.ULTIMATE -> Essence.REPRESENTATIVE
+        Stress.MONOSYLLABIC, Stress.PENULTIMATE -> Essence.NORMAL
+        Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress on combination referential")
+        else -> return Error("Stress error")
+    }
     var index = 0
 
-    if (groups[0] in setOf("ë", "ï")) {
-        if ((groups[0] == "ï") != (groups[1] in CP_CONSONANTS)) return Error("Epenthetic ï must only be used with Suppletive forms")
+    if (word[0] in setOf("ë", "ï")) {
+        if ((word[0] == "ï") != (word[1] in CP_CONSONANTS)) return Error("Epenthetic ï must only be used with Suppletive forms")
         index++
     }
 
 
-    val ref = parseFullReferent(groups[index]) ?: return Error("Unknown referent: ${groups[index]}")
+    val ref = parseFullReferent(word[index]) ?: return Error("Unknown referent: ${word[index]}")
 
     index++
 
-    val caseA = Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")
+    val caseA = Case.byVowel(word[index]) ?: return Error("Unknown case: ${word[index]}")
     index++
 
-    val specification = when (groups[index]) {
+    val specification = when (word[index]) {
         "x" -> Specification.BASIC
         "xx" -> Specification.CONTENTIAL
         "lx" -> Specification.CONSTITUTIVE
         "rx" -> Specification.OBJECTIVE
-        else -> return Error("Unknown combination referential Specification: ${groups[index]}")
+        else -> return Error("Unknown combination referential Specification: ${word[index]}")
     }
     index++
 
     val vxCsAffixes: MutableList<Glossable> = mutableListOf()
     while (true) {
-        if (index + 1 > groups.lastIndex) {
+        if (index + 1 > word.lastIndex) {
             break
         }
 
-        vxCsAffixes.add(Affix(groups[index], groups[index + 1]))
+        vxCsAffixes.add(Affix(word[index], word[index + 1]))
         index += 2
 
     }
 
-    val caseB = when (groups.getOrNull(index)) {
+    val caseB = when (word.getOrNull(index)) {
         "a", null -> null
         "üa" -> Case.THEMATIC
-        else -> Case.byVowel(groups[index]) ?: return Error("Unknown case: ${groups[index]}")
+        else -> Case.byVowel(word[index]) ?: return Error("Unknown case: ${word[index]}")
     }
 
 
@@ -533,31 +532,33 @@ fun parseCombinationReferential(groups: Array<String>, stress: Int): GlossOutcom
 
 }
 
-fun parseMultipleAffix(groups: Array<String>, stress: Int): GlossOutcome {
-    val concatOnly = if (stress == 0) GlossString("{concatenated formative only}", "{concat.}") else null
+fun parseMultipleAffix(word: Word): GlossOutcome {
+    val concatOnly = if (word.stress == Stress.ULTIMATE) {
+        GlossString("{concatenated formative only}", "{concat.}")
+    } else null
     var index = 0
-    if (groups[0] == "ë") index++
-    val firstAffix = Affix(groups[index + 1], groups[index])
+    if (word[0] == "ë") index++
+    val firstAffix = Affix(word[index + 1], word[index])
     index += 2
-    val scopeOfFirst = affixualAdjunctScope(groups[index]) ?: return Error("Unknown Cz: ${groups[index]}")
+    val scopeOfFirst = affixualAdjunctScope(word[index]) ?: return Error("Unknown Cz: ${word[index]}")
     index++
 
     val vxCsAffixes: MutableList<Glossable> = mutableListOf()
 
     while (true) {
-        if (index + 1 > groups.lastIndex) break
+        if (index + 1 > word.lastIndex) break
 
-        val (vx, glottal) = unGlottalVowel(groups[index]) ?: return Error("Unknown vowelform: ${groups[index]}")
+        val (vx, glottal) = unGlottalVowel(word[index]) ?: return Error("Unknown vowelform: ${word[index]}")
 
         if (glottal) return Error("Unexpected glottal stop in affixual scoping adjunct")
 
-        vxCsAffixes.add(Affix(vx, groups[index + 1]))
+        vxCsAffixes.add(Affix(vx, word[index + 1]))
         index += 2
     }
 
     if (vxCsAffixes.isEmpty()) return Error("Only one affix found in affixual scoping adjunct")
 
-    val vz = groups.getOrNull(index)
+    val vz = word.getOrNull(index)
 
     val scopeOfRest = if (vz != null) {
         affixualAdjunctScope(vz, isMultipleAdjunctVowel = true) ?: return Error("Unknown Vz: $vz")
@@ -568,15 +569,15 @@ fun parseMultipleAffix(groups: Array<String>, stress: Int): GlossOutcome {
 }
 
 
-fun parseAffixual(groups: Array<String>, stress: Int): GlossOutcome {
-    val concatOnly = if (stress == 0)
+fun parseAffixual(word: Word): GlossOutcome {
+    val concatOnly = if (word.stress == Stress.ULTIMATE)
         GlossString("{concatenated formative only}", "{concat.}")
     else null
 
-    if (groups.size < 2) return Error("Affixual adjunct too short: ${groups.size}")
+    if (word.size < 2) return Error("Affixual adjunct too short: ${word.size}")
 
-    val affix = Affix(groups[0], groups[1])
-    val scope = affixualAdjunctScope(groups.getOrNull(2))
+    val affix = Affix(word[0], word[1])
+    val scope = affixualAdjunctScope(word.getOrNull(2))
 
     return Gloss(affix, scope, stressMarked = concatOnly)
 

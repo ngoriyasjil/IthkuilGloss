@@ -129,7 +129,7 @@ fun respond(content: String): String? {
 }
 
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
-    val glosses = glossInContext(words)
+    val glosses = glossInContext(words.map { Word.from(it) })
         .map { (word, gloss) ->
             when (gloss) {
                 is Foreign -> "*$word*"
@@ -142,7 +142,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
 }
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
-    val glossPairs = glossInContext(words)
+    val glossPairs = glossInContext(words.map { Word.from(it) })
         .map { (word, gloss) ->
             when (gloss) {
                 is Gloss -> "**$word:** ${gloss.toString(o)}"

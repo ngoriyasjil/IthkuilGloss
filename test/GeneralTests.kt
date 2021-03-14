@@ -9,7 +9,13 @@ import kotlin.test.assertFalse
 
 infix fun String.glossesTo(gloss: String) {
 
-    val (result, message) = when (val parse = parseWord(this)) {
+    val parse = when (val word = Word.from(this)) {
+        is Word -> parseWord(word)
+        is ConcatenatedWords -> parseConcatenationChain(word)
+        is Invalid -> throw AssertionError(word.message)
+    }
+
+    val (result, message) = when (parse) {
         is Error -> null to "Error: ${parse.message}"
         is Foreign -> null to "Foreign: ${parse.word}"
         is Gloss -> parse.toString(GlossOptions()) to this
@@ -20,7 +26,13 @@ infix fun String.glossesTo(gloss: String) {
 
 infix fun String.givesError(error: String) {
 
-    val (result, message) = when (val parse = parseWord(this)) {
+    val parse = when (val word = Word.from(this)) {
+        is Word -> parseWord(word)
+        is ConcatenatedWords -> parseConcatenationChain(word)
+        is Invalid -> throw AssertionError(word.message)
+    }
+
+    val (result, message) = when (parse) {
         is Error -> parse.message to this
         is Foreign -> null to "Foreign: ${parse.word}"
         is Gloss -> null to parse.toString(GlossOptions())
@@ -29,16 +41,18 @@ infix fun String.givesError(error: String) {
     assertEquals(error, result, message)
 }
 
-infix fun String.hasStress(stress: Int) = assertEquals(stress, findStress(splitGroups()), this)
+infix fun String.hasStress(stress: Stress) = assertEquals(stress, (Word.from(this) as Word).stress, this)
+
+infix fun String.givesInvalid(error: String) = assertEquals(error, (Word.from(this) as Invalid).message)
 
 infix fun String.mustBe(s: String) = assertEquals(s, this, this)
 
 fun assertCarrier(word: String) {
-    assertTrue(word) { isCarrier(word) }
+    assertTrue(word) { isCarrier(Word.from(word) as Valid) }
 }
 
 fun assertNotCarrier(word: String) {
-    assertFalse(word) { isCarrier(word) }
+    assertFalse(word) { isCarrier(Word.from(word) as Valid) }
 }
 
 class GeneralTests {
@@ -61,14 +75,23 @@ class GeneralTests {
 
     @Test
     fun stressTest() {
-        "a" hasStress -1
-        "ala" hasStress 1
-        "alá" hasStress 0
-        "lìala" hasStress 1
-        "ua" hasStress 1
-        "ëu" hasStress -1
-        "alái" hasStress 0
-        "ála'a" hasStress 2
+        "a" hasStress Stress.MONOSYLLABIC
+        "ala" hasStress Stress.PENULTIMATE
+        "alá" hasStress Stress.ULTIMATE
+        "lìala" hasStress Stress.PENULTIMATE
+        "ua" hasStress Stress.PENULTIMATE
+        "ëu" hasStress Stress.MONOSYLLABIC
+        "alái" hasStress Stress.ULTIMATE
+        "ála'a" hasStress Stress.ANTEPENULTIMATE
+    }
+
+    @Test
+    fun stressErrorTest() {
+        "á" givesInvalid "Marked default stress"
+        "ála" givesInvalid "Marked default stress"
+        "álá" givesInvalid "Double-marked stress"
+        "álalala" givesInvalid "Unrecognized stress placement"
+        "aí" givesInvalid "Unrecognized stress placement"
     }
 
     @Test
@@ -135,7 +158,7 @@ class GeneralTests {
     @Test
     fun stressMarkingTest() {
         "lála'a" glossesTo "S1-**l**-PRN\\FRA"
-        "layá" glossesTo "1m\\RPV"
+        "layá" glossesTo "1m-THM-THM\\RPV"
     }
 
     @Test

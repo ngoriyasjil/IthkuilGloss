@@ -2,27 +2,36 @@ package ithkuil.iv.gloss
 
 import java.lang.Exception
 
-fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
+fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutcome>> {
     val glossPairs = mutableListOf<Pair<String, GlossOutcome>>()
 
     var withinQuotes = false
     var followsCarrier = false
     var terminatedPhrase = false
 
-    for ((index, word) in words.withIndex()) {
+    for ((index, maybeWord) in words.withIndex()) {
 
-        val gloss : GlossOutcome
+        val gloss: GlossOutcome
 
-        if (followsCarrier && word matches "^[:⫶].+".toRegex()) withinQuotes = true
-        if (terminatedPhrase && word == "hü") terminatedPhrase = false
+        val word: Valid = when (maybeWord) {
+            is Invalid -> {
+                glossPairs.add(maybeWord.toString() to Error(maybeWord.message))
+                continue
+            }
+            is Valid -> maybeWord
+        }
+
+        if (followsCarrier && word.prefixPunctuation matches "[:⫶]".toRegex()) withinQuotes = true
+        if (terminatedPhrase && word as? Word == listOf("h", "ü")) terminatedPhrase = false
 
 
         if (!followsCarrier && !withinQuotes && !terminatedPhrase) {
             if (isCarrier(word)) {
                 followsCarrier = true
 
-                val hasTerminator = words.subList(index+1, words.size)
-                    .takeWhile { it.last() !in setOf('.', '?', '!') }
+                val hasTerminator = words.subList(index + 1, words.size)
+                    .mapNotNull { it as? Valid }
+                    .takeWhile { !(it.postfixPunctuation matches "[.?!]+".toRegex()) }
                     .any { isTerminator(it) }
 
                 if (hasTerminator) terminatedPhrase = true
@@ -31,15 +40,18 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
 
             val nextFormativeIsVerbal : Boolean? by lazy {
                 words.subList(index+1, words.size)
-                    .takeWhile { it.last() !in setOf('.', '?', '!') }
-                    .find { wordTypeOf(it.defaultForm().splitGroups()) == WordType.FORMATIVE }
-                    ?.let {
-                        findStress(it.defaultFormWithStress().splitGroups()) in setOf(0, -1)
-                    }
+                    .mapNotNull { it as? Valid }
+                    .takeWhile { !(it.postfixPunctuation matches "[.?!]+".toRegex()) }
+                    .any { isVerbal(it) }
             }
 
             gloss = try {
-                parseWord(word, marksMood = nextFormativeIsVerbal)
+
+                when (word) {
+                    is Word -> parseWord(word, marksMood = nextFormativeIsVerbal)
+                    is ConcatenatedWords -> parseConcatenationChain(word)
+                }
+
             } catch (ex: Exception) {
                 logger.error("", ex)
                 Error("A severe exception occurred. Please contact the maintainers.")
@@ -47,14 +59,14 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
 
         } else {
 
-            gloss = Foreign(word)
+            gloss = Foreign(word.toString())
 
             if (followsCarrier) followsCarrier = false
             if (isTerminator(word)) terminatedPhrase = false
-            if (withinQuotes && word matches ".+[:⫶]$".toRegex()) withinQuotes = false
+            if (withinQuotes && word.postfixPunctuation matches "[:⫶]".toRegex()) withinQuotes = false
         }
 
-        glossPairs.add(word.defaultFormWithStress() to gloss)
+        glossPairs.add(word.toString() to gloss)
 
     }
 
@@ -62,35 +74,37 @@ fun glossInContext(words: List<String>) : List<Pair<String, GlossOutcome>> {
 
 }
 
-private fun isTerminator(word: String) = word == "hü" || word.startsWith(LOW_TONE_MARKER)
-
-fun isCarrier(word: String) : Boolean {
-
-    if ('-' in word) {
-        return word.split('-').any { isCarrier(it) }
+fun isVerbal(word: Valid) : Boolean = when (word) {
+    is ConcatenatedWords -> isVerbal(word.words.last())
+    is Word -> {
+        (wordTypeOf(word) == WordType.FORMATIVE) && (word.stress == Stress.ULTIMATE)
     }
+}
 
-    val groups = try {
-         word.defaultForm().splitGroups()
-    } catch (_ : IllegalArgumentException) {
-        return false // This is a hack until I clean up the formatting logic
-    }
+private fun isTerminator(word: Valid) = word == listOf("h","ü") || word.prefixPunctuation == LOW_TONE_MARKER
 
-    return when (wordTypeOf(groups)) {
-        WordType.FORMATIVE -> {
-            val rootIndex = when {
-                groups.getOrNull(0) in CC_CONSONANTS -> 2
-                groups.getOrNull(0)?.isVowel() == true -> 1
-                else -> 0
+fun isCarrier(word: Valid) : Boolean {
+
+    return when (word) {
+        is ConcatenatedWords -> word.words.any { isCarrier(it) }
+
+        is Word -> when (wordTypeOf(word)) {
+            WordType.FORMATIVE -> {
+                val rootIndex = when {
+                    word.getOrNull(0) in CC_CONSONANTS -> 2
+                    word.getOrNull(0)?.isVowel() == true -> 1
+                    else -> 0
+                }
+
+                if (word.getOrNull(rootIndex - 1) in SPECIAL_VV_VOWELS) return false
+
+                word.getOrNull(rootIndex) == CARRIER_ROOT_CR
             }
+            WordType.REFERENTIAL, WordType.COMBINATION_REFERENTIAL ->
+                setOf("hl", "hn", "hň").any { it in word } //Quotative adjunct "hm" is not included
 
-            if (groups.getOrNull(rootIndex-1) in SPECIAL_VV_VOWELS) return false
-
-            groups.getOrNull(rootIndex) == CARRIER_ROOT_CR
+            else -> false
         }
-        WordType.REFERENTIAL, WordType.COMBINATION_REFERENTIAL ->
-            setOf("hl", "hn", "hň").any { it in groups } //Quotative adjunct "hm" is not included
-
-        else -> false
     }
+
 }

@@ -6,18 +6,45 @@ class Invalid(private val word : String, val message: String) : FormattingOutcom
     override fun toString(): String = word
 }
 
+sealed class Valid : FormattingOutcome() {
+    abstract val prefixPunctuation: String
+    abstract val postfixPunctuation: String
+}
+
+class ConcatenatedWords(
+    val words : List<Word>,
+    override val prefixPunctuation: String = "",
+    override val postfixPunctuation: String = "",
+) : Valid() {
+    override fun toString(): String = words
+        .joinToString("-",
+        prefix = prefixPunctuation,
+        postfix = postfixPunctuation) { it.toString() }
+}
+
 class Word
 private constructor(
     private val stressedGroups: List<String>,
     val stress: Stress,
-    val prefixPunctuation: String = "",
-    val postfixPunctuation: String = "",
-    val groups : List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
+    override val prefixPunctuation: String = "",
+    override val postfixPunctuation: String = "",
+    private val groups : List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
     // ^ Should never be specified; class delegation doesn't accept properties, only parameters
-) : List<String> by groups, FormattingOutcome() {
+) : List<String> by groups, Valid() {
 
     override fun toString() : String {
         return stressedGroups.joinToString("", prefix = prefixPunctuation, postfix = postfixPunctuation)
+    }
+
+    fun stripSentencePrefix(): Pair<Word, Boolean> {
+        val newGroups = when {
+            size >= 3 && stressedGroups[0] == "ç" && stressedGroups[1] == "ë" -> drop(2)
+            stressedGroups[0] == "ç" && stressedGroups[1].isVowel() -> drop(1)
+            stressedGroups[0] == "çw" -> listOf("w") + drop(1)
+            stressedGroups[0] == "çç" -> listOf("y") + drop(1)
+            else -> return this to false
+        }
+        return Word(newGroups, stress, prefixPunctuation, postfixPunctuation) to true
     }
 
     companion object {
@@ -31,6 +58,18 @@ private constructor(
 
             val (prefix, word, postfix) = punctuationRegex.find(s)?.destructured
                 ?: return Invalid(s, "Unexpected punctuation")
+
+            if ("-" in word) {
+                val words = word
+                    .split("-")
+                    .map { from(it) }
+                    .map { when(it) {
+                        is Invalid -> return Invalid(s, it.message)
+                        is ConcatenatedWords -> return Invalid(s, "Nested concatenation, please report this as a bug")
+                        is Word -> it
+                    } }
+                return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
+            }
 
             val clean = word.defaultFormWithStress()
 
@@ -55,9 +94,7 @@ private constructor(
                 else -> {}
             }
 
-            val groups = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
-
-            return Word(groups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
+            return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
         }
 
         private fun codepointString(c : Char): String {

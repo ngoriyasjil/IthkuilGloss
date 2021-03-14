@@ -14,14 +14,12 @@ fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && fo
 fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
     if (!v.isVowel()) return null
 
-    if (v.length != 3) return v to false
-
-    return if (v[1] == '\'') {
-        if (v[0] == v[2]) {
-            v[0].toString() to true
-        } else "${v[0]}${v[2]}" to true
+    return if ('\'' in v) {
+        v.filter { it != '\'' }
+            .let {
+                if (it.length == 2 && it[0] == it[1]) it.substring(0, 1) else it
+            } to true
     } else v to false
-
 }
 
 fun glottalVowel(v: String) : Pair<String, Boolean>? {
@@ -577,14 +575,3 @@ fun affixualAdjunctScope(s: String?, isMultipleAdjunctVowel: Boolean = false): G
 }
 
 
-
-fun Array<String>.stripSentencePrefix(): Pair<Array<String>, Boolean>? {
-    return when {
-        isEmpty() -> return null
-        size >= 3 && this[0] == "ç" && this[1] == "ë" -> drop(2)
-        this[0] == "ç" && this[1].isVowel() -> drop(1)
-        this[0] == "çw" -> listOf("w") + drop(1)
-        this[0] == "çç" -> listOf("y") + drop(1)
-        else -> return this to false
-    }.toTypedArray() to true
-}
