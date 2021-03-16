@@ -38,7 +38,7 @@ Formatting details:
 
 For glossing Ithkuil III, there is the command "!gloss". This is a separate system which is not maintained by us (or anyone).
 
-The bot is an amateur coding project, and may suffer from severe bugs at any time. If you spot one, please contact me (Behemoth#6479), so I can hopefully go about fixing it.
+The bot is an amateur coding project, and may suffer from severe bugs at any time. If you spot one, please contact me (@Behemoth4#6479), so I can hopefully go about fixing it.
 
 GitHub repo at https://github.com/ngoriyasjil/IthkuilGloss
 
