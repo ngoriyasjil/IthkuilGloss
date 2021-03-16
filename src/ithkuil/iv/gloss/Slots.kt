@@ -1,7 +1,6 @@
 package ithkuil.iv.gloss
 
 import ithkuil.iv.gloss.dispatch.affixData
-import ithkuil.iv.gloss.dispatch.rootData
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it isSameVowelAs v }) {
@@ -35,23 +34,34 @@ fun glottalVowel(v: String) : Pair<String, Boolean>? {
     }
 }
 
-class Root(private val cr: String, private val stem: Int) : Glossable {
+class Root(private val cr: String, private val stem: Underline<Stem>) : Glossable {
 
-    private val rootEntry = rootData[cr]
+    private var description: String = "**$cr**"
 
-    val hasStem : Boolean = rootEntry?.descriptions?.get(stem).isNullOrEmpty().not()
+    override fun checkDictionary(r: Resources): Root {
 
-    override fun toString(o: GlossOptions): String {
-        val root = rootEntry ?: return "**$cr**"
+        val rootEntry = r.getRoot(cr)
 
-        val description = when (val stemDsc = root.descriptions[stem]) {
-            "" -> root.descriptions[0]
-            else -> stemDsc
+        if (rootEntry != null) {
+
+            val stemDesc = rootEntry[stem.value]
+
+            description = if (stemDesc.isNotEmpty()) {
+                stem.used = true
+                stemDesc
+            } else {
+                rootEntry[Stem.STEM_ZERO]
+            }
+
         }
-        return "“$description”"
+
+        return this
     }
 
+    override fun toString(o: GlossOptions): String = description
+
 }
+
 
 fun parseAffix(cs: String, vx: String, o: GlossOptions,
                canBeReferentialShortcut: Boolean = false,

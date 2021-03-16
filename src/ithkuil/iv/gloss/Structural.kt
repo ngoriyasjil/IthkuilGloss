@@ -1,5 +1,8 @@
 package ithkuil.iv.gloss
 
+import ithkuil.iv.gloss.dispatch.AffixData
+import ithkuil.iv.gloss.dispatch.RootData
+
 sealed class GlossOutcome
 
 class Error(val message: String) : GlossOutcome()
@@ -7,30 +10,49 @@ class Error(val message: String) : GlossOutcome()
 class Foreign(val word: String) : GlossOutcome()
 
 open class Gloss(
-    private vararg val slots: Glossable?,
+    private val slots: List<Glossable>,
     private val stressMarked: Glossable? = null,
 ) : GlossOutcome(), Glossable {
 
+    constructor(vararg slots: Glossable?, stressMarked: Glossable? = null) :
+        this(slots.filterNotNull(), stressMarked = stressMarked)
+
     override fun toString(o: GlossOptions): String {
         val mainWord = slots
-            .filterNotNull()
             .map { it.toString(o) }
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
         val stressCategory = stressMarked?.toString(o)
-            ?.let { if (it.isNotEmpty()) "$STRESS_SLOT_SEPARATOR$it" else "" } ?: ""
+            .let { if (!it.isNullOrEmpty()) "$STRESS_SLOT_SEPARATOR$it" else "" }
 
         return mainWord + stressCategory
 
     }
 
-    fun addPrefix(prefix: Glossable?): Gloss = Gloss(prefix, *slots)
+    override fun checkDictionary(r: Resources): Gloss {
+        val newSlots = slots.map { it.checkDictionary(r) }
+
+        return Gloss(newSlots, stressMarked = stressMarked)
+    }
+
+    @ExperimentalStdlibApi
+    fun addPrefix(prefix: Glossable): Gloss {
+        val newSlots = buildList {
+            add(prefix)
+            addAll(slots)
+        }
+
+        return Gloss(newSlots, stressMarked = stressMarked)
+    }
 }
 
-class GlossOptions(private val precision: Precision = Precision.REGULAR, val includeDefaults: Boolean = false) {
+class GlossOptions(
+    private val precision: Precision = Precision.REGULAR,
+    val includeDefaults: Boolean = false,
+) {
 
     fun showDefaults(condition: Boolean = true) =
-        GlossOptions(this.precision, this.includeDefaults || condition)
+        GlossOptions(precision, includeDefaults || condition)
 
     override fun toString(): String = "${precision.name} form ${if (includeDefaults) "with defaults" else ""}"
 
@@ -46,8 +68,15 @@ enum class Precision {
     FULL,
 }
 
+interface Resources {
+    fun getAffix(cs: String) : AffixData?
+    fun getRoot(cr: String) : RootData?
+}
+
 interface Glossable {
     fun toString(o: GlossOptions): String
+
+    fun checkDictionary(r: Resources) : Glossable = this // Usually just does nothing
 }
 
 
@@ -69,29 +98,23 @@ interface NoDefault : Category {
         super.toString(o.showDefaults())
 }
 
-class Slot(private vararg val values: Glossable?) : Glossable {
+class Slot(private val values: List<Glossable>) : Glossable {
 
-    var stemAvailable = false
-    var default = ""
+    constructor(vararg values: Glossable?) : this(values.filterNotNull())
 
     val size: Int
         get() = values.size
 
     override fun toString(o: GlossOptions): String {
         return values
-            .filterNotNull()
             .map {
-                val gloss = it.toString(o)
-                if (stemAvailable && it is Stem && !o.concise) "__${gloss}__" else gloss
+                it.toString(o)
             }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
-            .let { if (it.isNotEmpty()) it else default }
     }
 
-    fun getStem() : Int? {
-        return (values.find { it is Stem } as? Stem)?.ordinal
-    }
+    override fun checkDictionary(r: Resources): Slot = Slot(values.map { it.checkDictionary(r) })
 }
 
 class ConcatenationChain(private vararg val formatives: Gloss) : Gloss() {
@@ -124,5 +147,17 @@ class GlossString(
 class Shown(private val value: Glossable, private val condition : Boolean = true) : Glossable {
 
     override fun toString(o: GlossOptions): String = value.toString(o.showDefaults(condition))
+
+}
+
+class Underline<T: Glossable>(val value: T, var used: Boolean = false) : Glossable {
+
+    override fun toString(o: GlossOptions): String = value.toString(o).let { if (used) "__${it}__" else it }
+
+}
+
+class ForcedDefault(private val value: Glossable, val default: String) : Glossable {
+
+    override fun toString(o: GlossOptions): String = value.toString(o).let { if (it.isEmpty()) default else it }
 
 }

@@ -2,7 +2,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import ithkuil.iv.gloss.*
-import ithkuil.iv.gloss.interfaces.respond
+import ithkuil.iv.gloss.dispatch.respond
+import ithkuil.iv.gloss.interfaces.splitMessages
 import java.io.File
 import kotlin.test.assertFalse
 

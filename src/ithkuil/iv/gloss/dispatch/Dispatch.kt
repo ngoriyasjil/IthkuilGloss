@@ -26,7 +26,11 @@ fun parseAffixes(data: String): Map<String, AffixData> = data
     .filter    { it.size >= 11 }
     .associate { it[0] to AffixData(it[1], it.subList(2, 11)) }
 
-data class RootData(val descriptions: List<String>)
+data class RootData(val descriptions: List<String>) {
+
+    operator fun get (stem: Stem) = descriptions[stem.ordinal]
+
+}
 
 fun parseRoots(data: String): Map<String, RootData> = data
     .lineSequence()
