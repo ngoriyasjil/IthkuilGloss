@@ -34,67 +34,87 @@ fun wordTypeOf(word: Word): WordType {
     }
 }
 
-fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
-    logger.info { "-> parseWord($iword)" }
+fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> GlossOutcome) : GlossOutcome {
+    val (strippedWord, sentencePrefix) = word.stripSentencePrefix()
 
-    val (word, sentencePrefix) = iword.stripSentencePrefix()
-    
-    val result: GlossOutcome = when (wordTypeOf(word)) {
-        WordType.BIAS_ADJUNCT             -> Gloss(Bias.byGroup(word[0]) ?: return Error("Unknown bias: ${word[0]}"))
-        WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word[1])
-        WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word[1])
-        WordType.MODULAR_ADJUNCT          -> parseModular               (word, marksMood = marksMood)
-        WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(word)
-        WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (word)
-        WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (word)
-        WordType.REFERENTIAL              -> parseReferential           (word)
-        WordType.FORMATIVE                -> parseFormative             (word)
-    }
+    val result = parseFunction(strippedWord)
 
     return when {
         sentencePrefix && result is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
         else -> result
-    }.also {
-        logger.info {
-            "   parseWord($iword) -> " + when (it) {
-                is Gloss -> "Gloss(${it.toString(GlossOptions(Precision.SHORT))})"
-                is Error -> "Error(${it.message})"
-                is Foreign -> "Impossible foreign word: ${it.word})"
-            }
-        }
     }
 }
 
-fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome = chain.words
-        .also {
-            it.forEachIndexed { index, word ->
+fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
+    logger.info { "-> parseWord($iword)" }
 
-                if (word.isEmpty())
-                    return Error("Empty word concatenated (at ${index+1})")
-
-                if (wordTypeOf(word) != WordType.FORMATIVE)
-                    return Error("Non-formatives concatenated (at ${index+1})")
-
-                val (concatenation, _) = parseCc(word[0])
-
-                if ((concatenation == null) xor (index == it.lastIndex))
-                    return Error("Invalid concatenation (at ${index+1})")
-            }
+    val result = parseWithoutSentencePrefix(iword) { word ->
+        when (wordTypeOf(word)) {
+            WordType.BIAS_ADJUNCT             -> parseBiasAdjunct(word[0])
+            WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word[1])
+            WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word[1])
+            WordType.MODULAR_ADJUNCT          -> parseModular               (word, marksMood = marksMood)
+            WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(word)
+            WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (word)
+            WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (word)
+            WordType.REFERENTIAL              -> parseReferential           (word)
+            WordType.FORMATIVE                -> parseFormative             (word)
         }
-        .map { parseWord(it) }
-        .map { when(it) {
-            is Gloss -> it
-            is Error -> return it
+    }
+    logger.info {
+        "   parseWord($iword) -> " +
+            when (result) {
+                is Gloss -> "Gloss(${result.toString(GlossOptions(Precision.SHORT))})"
+                is Error -> "Error(${result.message})"
+                is Foreign -> "Impossible foreign word: ${result.word})"
+            }
+    }
+
+    return result
+
+}
+
+fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
+
+    for ((index, word) in chain.words.withIndex()) {
+        if (word.isEmpty())
+            return Error("Empty word concatenated (at ${index + 1})")
+
+        if (wordTypeOf(word) != WordType.FORMATIVE)
+            return Error("Non-formatives concatenated (at ${index + 1})")
+
+        val (concatenation, _) = parseCc(word[0])
+
+        if ((concatenation == null) xor (index == chain.words.lastIndex))
+            return Error("Invalid concatenation (at ${index + 1})")
+    }
+
+    val glosses = chain.words.map {
+        val gloss = parseWithoutSentencePrefix(it) {
+                formative -> parseFormative(formative, inConcatenationChain = true)
+        }
+
+        when (gloss) {
+            is Gloss -> gloss
+            is Error -> return gloss
             is Foreign -> throw IllegalArgumentException()
-        } }
-        .let { ConcatenationChain(*it.toTypedArray()) }
+        }
+    }
+
+    return ConcatenationChain(*glosses.toTypedArray())
+}
+
+fun parseBiasAdjunct(cb: String) : GlossOutcome {
+    return Bias.byGroup(cb)?.let { Gloss(it) } ?: Error("Unknown bias: $cb")
+}
+
 
 fun parseRegisterAdjunct(v: String): GlossOutcome {
     val (register, final) = Register.byVowel(v) ?: return Error("Unknown register adjunct vowel: $v")
     return Gloss(RegisterAdjunct(register, final))
 }
 
-fun parseFormative(word: Word): GlossOutcome {
+fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOutcome {
     val glottalIndices = word.mapIndexedNotNull { index, group ->
         if (group.contains('\'')) index else null
     }
@@ -105,7 +125,6 @@ fun parseFormative(word: Word): GlossOutcome {
         if (group.contains('\'')) {
             when {
                 group.isVowel() -> unGlottalVowel(group)?.first ?: group
-                group.startsWith('\'') && group.count { it == '\'' } == 1 -> group.drop(1)
                 else -> return Error("Unexpected glottal stop: $group")
             }
         } else group
@@ -118,6 +137,7 @@ fun parseFormative(word: Word): GlossOutcome {
         parseCc(groups[0])
     } else Pair(null, null)
 
+    if (!inConcatenationChain && concatenation != null) return Error("Lone concatenated formative")
 
     val relation = if (concatenation == null) {
         when (word.stress) {
