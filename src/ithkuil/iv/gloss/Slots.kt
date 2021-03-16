@@ -1,6 +1,6 @@
 package ithkuil.iv.gloss
 
-import ithkuil.iv.gloss.dispatch.affixData
+import ithkuil.iv.gloss.dispatch.LocalDictionary.affixes
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it isSameVowelAs v }) {
@@ -117,7 +117,7 @@ fun parseAffix(cs: String, vx: String, o: GlossOptions,
         }
     }
 
-    val aff = affixData[cs]
+    val aff = affixes[cs]
 
     val affString = when {
         aff == null -> "**$cs**$AFFIX_DEGREE_SEPARATOR$degree"

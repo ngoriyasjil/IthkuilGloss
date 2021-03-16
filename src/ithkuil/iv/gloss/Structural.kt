@@ -35,10 +35,9 @@ open class Gloss(
         return Gloss(newSlots, stressMarked = stressMarked)
     }
 
-    @ExperimentalStdlibApi
+
     fun addPrefix(prefix: Glossable): Gloss {
-        val newSlots = buildList {
-            add(prefix)
+        val newSlots = mutableListOf(prefix).apply {
             addAll(slots)
         }
 
@@ -98,12 +97,9 @@ interface NoDefault : Category {
         super.toString(o.showDefaults())
 }
 
-class Slot(private val values: List<Glossable>) : Glossable {
+class Slot(private val values: List<Glossable>) : Glossable, List<Glossable> by values {
 
     constructor(vararg values: Glossable?) : this(values.filterNotNull())
-
-    val size: Int
-        get() = values.size
 
     override fun toString(o: GlossOptions): String {
         return values

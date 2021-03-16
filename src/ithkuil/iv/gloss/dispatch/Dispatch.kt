@@ -9,13 +9,13 @@ import kotlin.time.milliseconds
 import kotlin.time.ExperimentalTime
 import mu.KotlinLogging
 import ithkuil.iv.gloss.*
+import ithkuil.iv.gloss.Resources
 
 val startTime = System.currentTimeMillis()
 
 val logger = KotlinLogging.logger { }
 
-var affixData: Map<String, AffixData> = emptyMap()
-var rootData:  Map<String, RootData>  = emptyMap()
+
 
 data class AffixData(val abbreviation: String, val descriptions: List<String>)
 
@@ -39,6 +39,16 @@ fun parseRoots(data: String): Map<String, RootData> = data
     .filter    { it.size >= 5 }
     .associate { it[0] to RootData(it.subList(1, 5)) }
 
+object LocalDictionary : Resources {
+
+    var affixes: Map<String, AffixData> = emptyMap()
+    var roots:  Map<String, RootData>  = emptyMap()
+
+    override fun getAffix(cs: String): AffixData? = affixes[cs]
+
+    override fun getRoot(cr: String): RootData? = roots[cr]
+}
+
 const val MORPHOPHONOLOGY_VERSION = "0.18.5"
 
 const val AFFIXES_URL =
@@ -49,27 +59,27 @@ const val ROOTS_URL =
 const val AFFIXES_PATH = "./resources/affixes.tsv"
 const val ROOTS_PATH = "./resources/roots.tsv"
 
-fun loadResourcesOnline() {
-    logger.info { "-> loadResourcesOnline()    (${affixData.size} affixes, ${rootData.size} roots)" }
-    val affixes = URL(AFFIXES_URL).readText()
-    val roots = URL(ROOTS_URL).readText()
+fun loadResourcesOnline() = with(LocalDictionary) {
+    logger.info { "-> loadResourcesOnline()    (${affixes.size} affixes, ${roots.size} roots)" }
+    val loadedAffixes = URL(AFFIXES_URL).readText()
+    val loadedRoots = URL(ROOTS_URL).readText()
 
-    File(AFFIXES_PATH).writeText(affixes)
-    File(ROOTS_PATH).writeText(roots)
+    File(AFFIXES_PATH).writeText(loadedAffixes)
+    File(ROOTS_PATH).writeText(loadedRoots)
 
-    affixData = parseAffixes(affixes)
-    rootData = parseRoots(roots)
-    logger.info { "   loadResourcesOnline() -> (${affixData.size} affixes, ${rootData.size} roots)" }
+    affixes = parseAffixes(loadedAffixes)
+    roots = parseRoots(loadedRoots)
+    logger.info { "   loadResourcesOnline() -> (${affixes.size} affixes, ${roots.size} roots)" }
 }
 
-fun loadResourcesLocal() {
-    logger.info { "-> loadResourcesLocal()    (${affixData.size} affixes, ${rootData.size} roots)" }
-    val affixes = File(AFFIXES_PATH).readText()
-    val roots = File(ROOTS_PATH).readText()
+fun loadResourcesLocal() = with(LocalDictionary) {
+    logger.info { "-> loadResourcesLocal()    (${affixes.size} affixes, ${roots.size} roots)" }
+    val loadedAffixes = File(AFFIXES_PATH).readText()
+    val loadedRoots = File(ROOTS_PATH).readText()
 
-    affixData = parseAffixes(affixes)
-    rootData = parseRoots(roots)
-    logger.info { "   loadResourcesLocal() -> (${affixData.size} affixes, ${rootData.size} roots)" }
+    affixes = parseAffixes(loadedAffixes)
+    roots = parseRoots(loadedRoots)
+    logger.info { "   loadResourcesLocal() -> (${affixes.size} affixes, ${roots.size} roots)" }
 }
 
 fun requestPrecision(request: String) = when {
@@ -105,14 +115,14 @@ fun respond(content: String): String? {
             1 -> {
                 val lookup = arguments[0].trim('-').toLowerCase().defaultForm()
                 val (consonantalForm, generalDescription, details) = when (request) {
-                    "root" -> rootData[lookup]?.let { root ->
+                    "root" -> LocalDictionary.roots[lookup]?.let { root ->
                         Triple(
-                            "-$lookup-",
+                            "-${lookup.toUpperCase()}-",
                             root.descriptions[0],
                             root.descriptions.drop(1)
                         )
                     }
-                    "affix" -> affixData[lookup]?.let { affix -> Triple("-$lookup", affix.abbreviation, affix.descriptions) }
+                    "affix" -> LocalDictionary.affixes[lookup]?.let { affix -> Triple("-$lookup", affix.abbreviation, affix.descriptions) }
                     else -> /* unreachable */ null
                 } ?: return "$lookup not found"
 
@@ -138,8 +148,8 @@ fun respond(content: String): String? {
             return listOf(
                 "__Status report:__",
                 "**Ithkuil Version:** $MORPHOPHONOLOGY_VERSION",
-                "**Roots:** ${rootData.size}",
-                "**Affixes:** ${affixData.size}",
+                "**Roots:** ${LocalDictionary.roots.size}",
+                "**Affixes:** ${LocalDictionary.affixes.size}",
                 "**Help file exists:** ${File("./resources/help.md").exists()}",
                 "**Uptime:** ${(System.currentTimeMillis() - startTime).milliseconds}",
                 "**Last commit:** $lastCommit"
@@ -154,13 +164,19 @@ fun respond(content: String): String? {
     }
 }
 
+
+
+
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
     val glosses = glossInContext(words.map { Word.from(it) })
         .map { (word, gloss) ->
             when (gloss) {
                 is Foreign -> "*$word*"
                 is Error -> "**$word**"
-                is Gloss -> gloss.toString(o).withZeroWidthSpaces()
+                is Gloss -> {
+                    gloss.checkDictionary(LocalDictionary)
+                    gloss.toString(o).withZeroWidthSpaces()
+                }
             }
         }
 

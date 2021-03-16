@@ -167,8 +167,8 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
-            val stem = slotII.getStem() ?: return Error("No stem found: $vv")
-            Root(groups[index], stem).also { slotII.stemAvailable = it.hasStem }
+            val stem = slotII.find { it is Stem } as? Stem ?: return Error("Stem not present")
+            Root(groups[index], Underline(stem))
         }
         RootMode.AFFIX -> {
             val vx = bySeriesAndForm(1, seriesAndForm(groups[index + 1]).second)
@@ -236,7 +236,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     var cnInVI = false
 
-    val slotVI = if (shortcut == null) {
+    val slotVI = (if (shortcut == null) {
         val ca = if (groups.getOrNull(index)?.isGeminateCa() ?: return Error("Formative ended before Ca")) {
             if (csVxAffixes.isNotEmpty()) {
                 groups[index].unGeminateCa()
@@ -248,9 +248,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         } else {
             parseCa("l")!!.also { cnInVI = true }
         }
-    } else null
-
-    if (csVxAffixes.isNotEmpty()) slotVI?.default = "{Ca}"
+    } else null)?.let { if (csVxAffixes.isNotEmpty()) ForcedDefault(it, "{Ca}") else it }
 
     val vxCsAffixes: MutableList<Glossable> = mutableListOf()
 
