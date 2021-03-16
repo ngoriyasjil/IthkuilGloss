@@ -1,5 +1,7 @@
 package ithkuil.iv.gloss
 
+import ithkuil.iv.gloss.dispatch.logger
+
 fun wordTypeOf(word: Word): WordType {
 
     return when {

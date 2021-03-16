@@ -1,6 +1,7 @@
 package ithkuil.iv.gloss
 
 import java.lang.Exception
+import ithkuil.iv.gloss.dispatch.logger
 
 fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutcome>> {
     val glossPairs = mutableListOf<Pair<String, GlossOutcome>>()

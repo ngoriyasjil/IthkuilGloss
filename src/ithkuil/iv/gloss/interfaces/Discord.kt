@@ -1,4 +1,4 @@
-package ithkuil.iv.gloss.`interface`
+package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
 import dev.kord.core.*
@@ -17,7 +17,7 @@ import dev.kord.core.live.on
 import java.io.File
 import java.lang.StringBuilder
 
-import ithkuil.iv.gloss.logger
+import ithkuil.iv.gloss.dispatch.*
 import kotlinx.coroutines.delay
 
 @KordPreview

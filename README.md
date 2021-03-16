@@ -12,7 +12,7 @@ Currently up to date to morphophonology v0.18.5.
 
 ## How to run the Command Line Interface
 
-1. Set `main.class` to `ithkuil.iv.gloss.interface.TerminalKt` in `pom.xml`
+1. Set `main.class` to `ithkuil.iv.gloss.interfaces.TerminalKt` in `pom.xml`
 2. Compile with Maven and run
 
 The CLI will by default download the lexicon locally, and then use that. To update the local lexicon, use the `?!reload` command.

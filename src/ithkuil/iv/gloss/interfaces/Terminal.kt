@@ -1,5 +1,6 @@
-package ithkuil.iv.gloss.`interface`
+package ithkuil.iv.gloss.interfaces
 
+import ithkuil.iv.gloss.dispatch.*
 import java.io.FileNotFoundException
 
 fun main() {

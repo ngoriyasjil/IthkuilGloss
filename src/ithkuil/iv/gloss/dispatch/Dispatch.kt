@@ -1,15 +1,39 @@
 @file:OptIn(ExperimentalTime::class)
 
-package ithkuil.iv.gloss.`interface`
+package ithkuil.iv.gloss.dispatch
 
 import java.io.File
 import java.net.URL
 import kotlin.system.exitProcess
 import kotlin.time.milliseconds
-import ithkuil.iv.gloss.*
 import kotlin.time.ExperimentalTime
+import mu.KotlinLogging
+import ithkuil.iv.gloss.*
 
 val startTime = System.currentTimeMillis()
+
+val logger = KotlinLogging.logger { }
+
+var affixData: Map<String, AffixData> = emptyMap()
+var rootData:  Map<String, RootData>  = emptyMap()
+
+data class AffixData(val abbreviation: String, val descriptions: List<String>)
+
+fun parseAffixes(data: String): Map<String, AffixData> = data
+    .lineSequence()
+    .drop(1)
+    .map       { it.split("\t") }
+    .filter    { it.size >= 11 }
+    .associate { it[0] to AffixData(it[1], it.subList(2, 11)) }
+
+data class RootData(val descriptions: List<String>)
+
+fun parseRoots(data: String): Map<String, RootData> = data
+    .lineSequence()
+    .drop(1)
+    .map       { it.split("\t") }
+    .filter    { it.size >= 5 }
+    .associate { it[0] to RootData(it.subList(1, 5)) }
 
 const val MORPHOPHONOLOGY_VERSION = "0.18.5"
 
@@ -49,8 +73,6 @@ fun requestPrecision(request: String) = when {
     request.contains("full") -> Precision.FULL
     else -> Precision.REGULAR
 }
-
-
 
 fun respond(content: String): String? {
     if (!content.startsWith("?")) {

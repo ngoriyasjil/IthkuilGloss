@@ -1,5 +1,8 @@
 package ithkuil.iv.gloss
 
+import ithkuil.iv.gloss.dispatch.affixData
+import ithkuil.iv.gloss.dispatch.rootData
+
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it isSameVowelAs v }) {
         -1 -> Pair(-1, -1)
