@@ -116,6 +116,9 @@ fun parseRegisterAdjunct(v: String): GlossOutcome {
     return Gloss(RegisterAdjunct(register, final))
 }
 
+
+
+@OptIn(ExperimentalStdlibApi::class)
 fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOutcome {
     val glottalIndices = word.mapIndexedNotNull { index, group ->
         if (group.contains('\'')) index else null
@@ -171,12 +174,9 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
             Root(groups[index], Underline(stem))
         }
         RootMode.AFFIX -> {
-            val vx = bySeriesAndForm(1, seriesAndForm(groups[index + 1]).second)
-                ?: if (groups[index + 1] in setOf("üa", "üe", "üo", "üö")) {
-                    "üa"
-                } else
-                    return Error("Unknown Cs-root Vr value: ${groups[index + 1]}")
-            Affix(vx, groups[index], noType = true)
+            val form = if (groups[index+1] in DEGREE_ZERO_CS_ROOT_FORMS) 0 else seriesAndForm(groups[index+1]).second
+            val degree = Degree.values().find { it.short == form } ?: return Error("Unknown Cs-root degree: $form")
+            CsAffix(groups[index], degree)
         }
         RootMode.REFERENCE -> {
             parseFullReferent(groups[index]) ?: return Error("Unknown personal reference cluster: ${groups[index]}")
@@ -231,7 +231,12 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     }
 
-    if (csVxAffixes.size == 1) csVxAffixes[0].canBeReferentialShortcut = true
+
+
+    val slotV : List<ValidAffix> = csVxAffixes.parseAll().map { when(it) {
+        is AffixError -> return Error(it.message)
+        is ValidAffix -> it }
+    }
 
 
     var cnInVI = false
@@ -246,43 +251,54 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         if (ca !in setOf("hl", "hr", "hm", "hn", "hň")) {
             parseCa(ca).also { index++ } ?: return Error("Unknown Ca value: $ca")
         } else {
-            parseCa("l")!!.also { cnInVI = true }
+            DEFAULT_CA.also { cnInVI = true }
         }
     } else null)?.let { if (csVxAffixes.isNotEmpty()) ForcedDefault(it, "{Ca}") else it }
 
-    val vxCsAffixes: MutableList<Glossable> = mutableListOf()
+    val vxCsAffixes: MutableList<Affix> = mutableListOf()
 
     var hasSlotV = false
 
-    if (!cnInVI) {
-        while (true) {
-            if (index + 1 > groups.lastIndex || groups[index + 1] in CN_CONSONANTS) {
-                break
-            }
+    var caIndex : Int? = null
 
-            val vx = groups[index]
+    val endOfSlotVMarker = GlossString("{end of slot V}", "{Ca}")
 
-            vxCsAffixes.add(Affix(vx, groups[index + 1].removePrefix("'")))
-
-
-            if (shortcut != null && (index in glottalIndices || index + 1 in glottalIndices)) {
-                if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
-                else if (!slotVFilled && vxCsAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
-
-                vxCsAffixes.add(GlossString("{end of slot V}", "{Ca}"))
-
-                hasSlotV = true
-            }
-
-            index += 2
-
+    while (true) {
+        if (index + 1 > groups.lastIndex || groups[index + 1] in CN_CONSONANTS) {
+            break
         }
+
+        val vx = groups[index]
+
+        vxCsAffixes.add(Affix(vx, groups[index + 1]))
+
+
+        if (shortcut != null && (index in glottalIndices)) {
+            if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+            else if (!slotVFilled && vxCsAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+
+            caIndex = vxCsAffixes.size
+
+            hasSlotV = true
+        }
+
+        index += 2
+
     }
+
 
     if (shortcut != null && slotVFilled && !hasSlotV) return Error("Unexpectedly few slot V affixes")
 
-    if (vxCsAffixes.size == 1) {
-            (vxCsAffixes[0] as? Affix)?.canBeReferentialShortcut = true
+    val slotVIIAndMaybeSlotV : List<Glossable> = vxCsAffixes.parseAll().map { when(it) {
+        is AffixError -> return Error(it.message)
+        is ValidAffix -> it }
+    }.let { if (caIndex != null) {
+        buildList {
+            addAll(it.subList(0, caIndex))
+            add(endOfSlotVMarker)
+            addAll(it.subList(caIndex, it.size))
+        }
+    } else it
     }
 
     val marksMood = word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC)
@@ -349,7 +365,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
     if (groups.lastIndex >= index) return Error("Formative continued unexpectedly: ${groups[index]}")
 
     val slotList: List<Glossable> = listOfNotNull(concatenation, slotII, root, slotIV) +
-            csVxAffixes + listOfNotNull(slotVI) + vxCsAffixes + listOfNotNull(slotVIII, slotIX)
+            slotV + listOfNotNull(slotVI) + slotVIIAndMaybeSlotV + listOfNotNull(slotVIII, slotIX)
 
     return Gloss(*slotList.toTypedArray(), stressMarked = relation)
 
@@ -528,13 +544,20 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
     }
     index++
 
-    val vxCsAffixes: MutableList<Glossable> = mutableListOf()
+    val vxCsAffixes: MutableList<ValidAffix> = mutableListOf()
     while (true) {
         if (index + 1 > word.lastIndex) {
             break
         }
 
-        vxCsAffixes.add(Affix(word[index], word[index + 1]))
+        val affix = Affix(word[index], word[index + 1]).parse().let {
+            when(it) {
+                is AffixError -> return Error(it.message)
+                is ValidAffix -> it
+            }
+        }
+
+        vxCsAffixes.add(affix)
         index += 2
 
     }
@@ -558,12 +581,17 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
     } else null
     var index = 0
     if (word[0] == "ë") index++
-    val firstAffix = Affix(word[index + 1], word[index])
+    val firstAffix = Affix(cs = word[index], vx = word[index + 1]).parse().let {
+        when(it) {
+            is AffixError -> return Error(it.message)
+            is ValidAffix -> it
+        }
+    }
     index += 2
     val scopeOfFirst = affixualAdjunctScope(word[index]) ?: return Error("Unknown Cz: ${word[index]}")
     index++
 
-    val vxCsAffixes: MutableList<Glossable> = mutableListOf()
+    val vxCsAffixes: MutableList<ValidAffix> = mutableListOf()
 
     while (true) {
         if (index + 1 > word.lastIndex) break
@@ -572,7 +600,14 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
 
         if (glottal) return Error("Unexpected glottal stop in affixual scoping adjunct")
 
-        vxCsAffixes.add(Affix(vx, word[index + 1]))
+        val affix = Affix(vx, word[index + 1]).parse().let {
+            when(it) {
+                is AffixError -> return Error(it.message)
+                is ValidAffix -> it
+            }
+        }
+
+        vxCsAffixes.add(affix)
         index += 2
     }
 
@@ -596,7 +631,13 @@ fun parseAffixual(word: Word): GlossOutcome {
 
     if (word.size < 2) return Error("Affixual adjunct too short: ${word.size}")
 
-    val affix = Affix(word[0], word[1])
+    val affix = Affix(word[0], word[1]).parse().let {
+        when(it) {
+            is AffixError -> return Error(it.message)
+            is ValidAffix -> it
+        }
+    }
+
     val scope = affixualAdjunctScope(word.getOrNull(2))
 
     return Gloss(affix, scope, stressMarked = concatOnly)

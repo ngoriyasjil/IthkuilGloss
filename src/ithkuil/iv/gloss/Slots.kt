@@ -1,7 +1,5 @@
 package ithkuil.iv.gloss
 
-import ithkuil.iv.gloss.dispatch.LocalDictionary.affixes
-
 fun seriesAndForm(v: String) : Pair<Int, Int> {
     return when (val index = VOWEL_FORMS.indexOfFirst { it isSameVowelAs v }) {
         -1 -> Pair(-1, -1)
@@ -48,7 +46,7 @@ class Root(private val cr: String, private val stem: Underline<Stem>) : Glossabl
 
             description = if (stemDesc.isNotEmpty()) {
                 stem.used = true
-                stemDesc
+                "“$stemDesc“"
             } else {
                 rootEntry[Stem.STEM_ZERO]
             }
@@ -62,80 +60,6 @@ class Root(private val cr: String, private val stem: Underline<Stem>) : Glossabl
 
 }
 
-
-fun parseAffix(cs: String, vx: String, o: GlossOptions,
-               canBeReferentialShortcut: Boolean = false,
-               noType: Boolean = false) : String {
-    if (vx == CA_STACKING_VOWEL) {
-        val ca = parseCa(cs)?.toString(o) ?: return "(Unknown Ca)"
-
-        return if (ca.isNotEmpty()) {
-            "($ca)"
-        } else {
-            "(${Configuration.UNIPLEX.toString(o.showDefaults())})"
-        }
-    }
-
-    if (cs in CASE_AFFIXES) {
-        val vc = when (cs) {
-            "sw", "zw", "šw", "žw", "lw" -> vx
-            "sy", "zy", "šy", "žy", "ly" -> glottalVowel(vx)?.first ?: return "(Unknown vowel: $vx)"
-            else -> return "(Unknown case affix form)"
-        }
-
-        val s = when (cs) {
-            "sw", "sy", "zw", "zy" -> if (o.verbose) "case accessor:"    else "acc:"
-            "šw", "šy", "žw", "žy" -> if (o.verbose) "inverse accessor:" else "ia:"
-            "lw", "ly"             -> if (o.verbose) "case-stacking:"    else ""
-            else -> return "(Unknown case affix form)"
-        }
-
-        val type = when (cs) {
-            "sw", "sy", "šw", "šy" -> "\u2081"
-            "zw", "zy", "žw", "žy" -> "\u2082"
-            else -> ""
-        }
-
-        val case = Case.byVowel(vc)?.toString(o.showDefaults()) ?: return "(Unknown case: $vc)"
-        return "($s$case)$type"
-
-    }
-
-    var (type, degree) = seriesAndForm(vx)
-
-    if (canBeReferentialShortcut && type == 3 || type == 4) {
-        return parseReferentialShortcut(cs, vx, o) ?: "(Unknown PRA shortcut)"
-    }
-
-    if (type == -1 && degree == -1) {
-        degree = 0
-        type = when (vx) {
-            "üa" -> 1
-            "üe" -> 2
-            "üo" -> 3
-            else -> return "(Unknown Vx: $vx)"
-        }
-    }
-
-    val aff = affixes[cs]
-
-    val affString = when {
-        aff == null -> "**$cs**$AFFIX_DEGREE_SEPARATOR$degree"
-        o.concise || degree == 0 -> "${aff.abbreviation}$AFFIX_DEGREE_SEPARATOR$degree"
-        !o.concise -> "‘${aff.descriptions.getOrNull(degree-1) ?: return "(Unknown affix degree: $degree)"}’"
-        else -> return "(Unknown affix: $cs)"
-    }
-
-    val t = if (!noType) when (type) {
-        1 -> "\u2081"
-        2 -> "\u2082"
-        3 -> "\u2083"
-        else -> return "(Unknown type)"
-    } else ""
-
-    return "$affString$t"
-
-}
 
 fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
     val concatenation = when (c) {
@@ -178,9 +102,9 @@ fun parseVv(v: String, shortcut: Shortcut?) : Slot? {
         null -> {
             additional = when (series) {
                 1 -> Slot()
-                2 -> Affix("ï", "r", noType = true)
-                3 -> Affix("ï", "t", noType = true)
-                4 -> Affix("i", "t", noType = true)
+                2 -> CsAffix("r", Degree.FOUR)
+                3 -> CsAffix("t", Degree.FOUR)
+                4 -> CsAffix("t", Degree.FIVE)
                 else -> return null
             }
         }
@@ -262,41 +186,6 @@ fun parseAffixVr(vr: String): Slot? {
     }
 
     return Slot(degree, specification)
-}
-
-fun parseReferentialShortcut(c: String, v: String, o: GlossOptions): String? {
-    val (series, form) = seriesAndForm(v)
-    val case = when (series) {
-        3 -> when (form) {
-            1 -> Case.POSSESSIVE
-            2 -> Case.PROPRIETIVE
-            3 -> Case.GENITIVE
-            4 -> Case.ATTRIBUTIVE
-            5 -> Case.PRODUCTIVE
-            6 -> Case.INTERPRETIVE
-            7 -> Case.ORIGINATIVE
-            8 -> Case.INTERDEPENDENT
-            9 -> Case.PARTITIVE
-            else -> return null
-        }
-        4 -> when (form) {
-            1 -> Case.THEMATIC
-            2 -> Case.INSTRUMENTAL
-            3 -> Case.ABSOLUTIVE
-            4 -> Case.STIMULATIVE
-            5 -> Case.AFFECTIVE
-            6 -> Case.EFFECTUATIVE
-            7 -> Case.ERGATIVE
-            8 -> Case.DATIVE
-            9 -> Case.INDUCIVE
-            else -> return null
-        }
-        else -> return null
-    }
-
-
-    val ref = parseSingleReferent(c)?.toString(o) ?: return null
-    return "($ref-${case.toString(o.showDefaults())})"
 }
 
 

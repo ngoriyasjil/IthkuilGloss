@@ -90,6 +90,8 @@ val VOWELS = setOf(
 
 val VOWELS_AND_GLOTTAL_STOP = VOWELS + "'"
 
+val DEGREE_ZERO_CS_ROOT_FORMS = setOf("üa", "üe", "üo", "üö")
+
 val CN_CONSONANTS = setOf(
         "h", "hl", "hr", "hm", "hn", "hň",
         "w", "y", "hw", "hlw", "hly", "hnw", "hny"
@@ -105,14 +107,13 @@ val ITHKUIL_CHARS = setOf(
         "'", "-"
 )
 
-class Affix(private val vx: String,
-            private val cs : String,
-            var canBeReferentialShortcut: Boolean = false,
-            private val noType: Boolean = false) : Glossable { //Definitely not final
-
-    override fun toString(o: GlossOptions): String
-            = parseAffix(cs, vx, o, canBeReferentialShortcut = canBeReferentialShortcut, noType = noType)
-}
+val DEFAULT_CA = Slot(
+    Configuration.UNIPLEX,
+    Extension.DELIMITIVE,
+    Affiliation.CONSOLIDATIVE,
+    Perspective.MONADIC,
+    Essence.NORMAL
+)
 
 enum class WordType {
     FORMATIVE,

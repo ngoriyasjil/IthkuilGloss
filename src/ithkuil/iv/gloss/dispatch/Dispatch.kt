@@ -17,7 +17,9 @@ val logger = KotlinLogging.logger { }
 
 
 
-data class AffixData(val abbreviation: String, val descriptions: List<String>)
+data class AffixData(val abbreviation: String, val descriptions: List<String>) {
+    operator fun get (degree: Degree ) = descriptions[degree.ordinal]
+}
 
 fun parseAffixes(data: String): Map<String, AffixData> = data
     .lineSequence()
@@ -187,7 +189,10 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
     val glossPairs = glossInContext(words.map { Word.from(it) })
         .map { (word, gloss) ->
             when (gloss) {
-                is Gloss -> "**$word:** ${gloss.toString(o)}"
+                is Gloss -> {
+                    gloss.checkDictionary(LocalDictionary)
+                    "**$word:** ${gloss.toString(o)}"
+                }
                 is Error -> "**$word:** *${gloss.message}*"
                 is Foreign -> "**$word**"
             }
