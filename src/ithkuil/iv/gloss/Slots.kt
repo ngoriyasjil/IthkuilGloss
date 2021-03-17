@@ -89,7 +89,9 @@ fun parseVv(v: String, shortcut: Shortcut?) : Slot? {
         9, 8 -> Stem.STEM_THREE
         7, 6 -> Stem.STEM_ZERO
         else -> return null
-    }
+    }.let { Underline(it) }
+
+
     val version = when(form) {
         1, 3, 9, 7 -> Version.PROCESSUAL
         2, 5, 4, 8, 6 -> Version.COMPLETIVE

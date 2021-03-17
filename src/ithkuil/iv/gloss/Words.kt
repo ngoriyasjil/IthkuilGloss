@@ -119,6 +119,7 @@ fun parseRegisterAdjunct(v: String): GlossOutcome {
 
 
 @OptIn(ExperimentalStdlibApi::class)
+@Suppress("UNCHECKED_CAST")
 fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOutcome {
     val glottalIndices = word.mapIndexedNotNull { index, group ->
         if (group.contains('\'')) index else null
@@ -170,8 +171,9 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
-            val stem = slotII.find { it is Stem } as? Stem ?: return Error("Stem not present")
-            Root(groups[index], Underline(stem))
+
+            val stem = slotII.find { it is Underline<*> && it.value is Stem } as? Underline<Stem> ?: return Error("Stem not present")
+            Root(groups[index], stem)
         }
         RootMode.AFFIX -> {
             val form = if (groups[index+1] in DEGREE_ZERO_CS_ROOT_FORMS) 0 else seriesAndForm(groups[index+1]).second

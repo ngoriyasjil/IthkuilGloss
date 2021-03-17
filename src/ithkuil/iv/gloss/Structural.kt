@@ -152,7 +152,7 @@ class Underline<T: Glossable>(val value: T, var used: Boolean = false) : Glossab
 
 }
 
-class ForcedDefault(private val value: Glossable, val default: String) : Glossable {
+class ForcedDefault(private val value: Glossable, private val default: String) : Glossable {
 
     override fun toString(o: GlossOptions): String = value.toString(o).let { if (it.isEmpty()) default else it }
 
