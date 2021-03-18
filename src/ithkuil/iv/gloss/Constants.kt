@@ -379,7 +379,7 @@ enum class Aspect(override val short: String, val vn: String) : NoDefault {
     SEQUENTIAL("SQN", "oa");
 
     companion object {
-        fun byVowel(vn: String) = values().find { it.vn isSameVowelAs vn }
+        fun byVowel(vn: String) = values().find { vn isSameVowelAs it.vn }
     }
 }
 
@@ -488,7 +488,7 @@ enum class Case(override val short: String, val vc: String) : Category {
     PROLIMITIVE("PLM", "o'a");
 
     companion object {
-        fun byVowel(vc: String) = values().find { it.vc isSameVowelAs vc }
+        fun byVowel(vc: String) = values().find { vc isSameVowelAs it.vc }
     }
 }
 

@@ -1,7 +1,7 @@
 package ithkuil.iv.gloss
 
 fun seriesAndForm(v: String) : Pair<Int, Int> {
-    return when (val index = VOWEL_FORMS.indexOfFirst { it isSameVowelAs v }) {
+    return when (val index = VOWEL_FORMS.indexOfFirst { v isSameVowelAs it }) {
         -1 -> Pair(-1, -1)
         else -> Pair((index / 9) + 1, (index % 9) + 1)
     }
