@@ -103,7 +103,7 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
         }
     }
 
-    return ConcatenationChain(*glosses.toTypedArray())
+    return ConcatenationChain(glosses)
 }
 
 fun parseBiasAdjunct(cb: String) : GlossOutcome {

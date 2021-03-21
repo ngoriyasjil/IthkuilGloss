@@ -113,13 +113,17 @@ class Slot(private val values: List<Glossable>) : Glossable, List<Glossable> by 
     override fun checkDictionary(r: Resources): Slot = Slot(values.map { it.checkDictionary(r) })
 }
 
-class ConcatenationChain(private vararg val formatives: Gloss) : Gloss() {
+class ConcatenationChain(private val formatives: List<Gloss>) : Gloss() {
 
     override fun toString(o: GlossOptions): String {
         return formatives
             .map { it.toString(o) }
             .filter(String::isNotEmpty)
             .joinToString(CONCATENATION_SEPARATOR)
+    }
+
+    override fun checkDictionary(r: Resources): ConcatenationChain {
+        return ConcatenationChain(formatives.map { it.checkDictionary(r) })
     }
 }
 
