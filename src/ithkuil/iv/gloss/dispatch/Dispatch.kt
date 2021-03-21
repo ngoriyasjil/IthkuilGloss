@@ -100,7 +100,7 @@ fun respond(content: String): String? {
             }
     }
 
-    val (fullRequest, arguments) = content.splitOnWhitespace().let { Pair(it[0], it.drop(1)) }
+    val (fullRequest, arguments) = content.splitOnWhitespace().let { it[0] to it.drop(1) }
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
     logger.info { "   respond($content) received options: $o" }
@@ -158,6 +158,8 @@ fun respond(content: String): String? {
             ).joinToString("\n")
         }
 
+        "ej" -> externalJuncture(arguments.format())
+
         "!whosagoodbot", "!whosacutebot" -> "(=^ェ^=✿)"
 
         "date" -> datetimeInIthkuil()
@@ -170,7 +172,7 @@ fun respond(content: String): String? {
 
 
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
-    val glosses = glossInContext(words.map { Word.from(it) })
+    val glosses = glossInContext(words.format())
         .map { (word, gloss) ->
             when (gloss) {
                 is Foreign -> "*$word*"
@@ -186,7 +188,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
 }
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
-    val glossPairs = glossInContext(words.map { Word.from(it) })
+    val glossPairs = glossInContext(words.format())
         .map { (word, gloss) ->
             when (gloss) {
                 is Gloss -> {

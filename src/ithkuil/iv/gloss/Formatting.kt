@@ -107,6 +107,8 @@ private constructor(
     }
 }
 
+fun List<String>.format() : List<FormattingOutcome> = map { Word.from(it) }
+
 enum class GroupingState {
     VOWEL,
     CONSONANT;
