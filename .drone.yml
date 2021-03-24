@@ -4,7 +4,7 @@ name: default
 
 steps:
 - name: build
-  image: maven
+  image: maven:3-openjdk-15
   commands:
   - mvn --batch-mode package test
 - name: docker
