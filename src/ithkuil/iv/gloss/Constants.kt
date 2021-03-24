@@ -562,7 +562,6 @@ enum class Bias(override val short: String, val cb: String, private val represen
     ANNUNCIATIVE("ANN", "drr", "Wait till you hear this!"),
     OPTIMAL("OPT", "ççk", "So!/Totally!"),
     CONTENSIVE("CNV", "rrj", "I told you so!"),
-    RENUNCIATIVE("RNC", "mzt", "So much for...!"),
     MANDATORY("MND", "msk", "Take it or leave it"),
     EXIGENT("EXG", "rrs", "It's now or never!"),
     INSIPID("ISP", "lçp", "How boring!"),
@@ -574,7 +573,11 @@ enum class Bias(override val short: String, val cb: String, private val represen
     ARCHETYPAL("ACH", "mçt", "Such a...!"),
     VEXATIVE("VEX", "ksk", "How annoying!"),
     CORRUPTIVE("CRP", "gžž", "What corruption!"),
-    DEJECTIVE("DEJ", "žžg", "[dejected sigh]");
+    DEJECTIVE("DEJ", "žžg", "[dejected sigh]"),
+    // Up-to-date in Roots; out-of-date in Morpho-phonology
+    RENUNCIATIVE("RNC", "mst", "So much for...!"),
+    ARBITRARY("ARB", "xtļ", "Yeah, whatever..."),
+    EXPERIENTIAL("EXP", "pss", "Well, now!");
 
     override fun toString(o: GlossOptions): String = when {
         o.concise -> short
