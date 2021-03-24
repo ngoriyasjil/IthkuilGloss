@@ -515,66 +515,72 @@ enum class Validation(override val short: String) : NoDefault {
 }
 
 @Suppress("unused")
-enum class Bias(override val short: String, val cb: String) : NoDefault {
-    DOLOROUS("DOL", "řřx"),
-    SKEPTICAL("SKP", "rnž"),
-    IMPATIENT("IPT", "žžv"),
-    REVELATIVE("RVL", "mmļ"),
-    TREPIDATIVE("TRP", "llč"),
-    REPULSIVE("RPU", "šštļ"),
-    DESPERATIVE("DES", "mřř"),
-    DISAPPROBATIVE("DPB", "ffx"),
-    PROSAIC("PSC", "žžt"),
-    COMEDIC("CMD", "pļļ"),
-    PROPOSITIVE("PPV", "sl"),
-    SUGGESTIVE("SGS", "ltç"),
-    DIFFIDENT("DFD", "cč"),
-    REFLECTIVE("RFL", "llm"),
-    EUPHEMISTIC("EUP", "vvt"),
-    CORRECTIVE("CRR", "ňţ"),
-    CONTEMPTIVE("CTP", "kšš"),
-    EXASPERATIVE("EXA", "kçç"),
-    INDIGNATIVE("IDG", "pšš"),
-    DISMISSIVE("DIS", "kff"),
-    DERISIVE("DRS", "pfc"),
-    PESSIMISTIC("PES", "ksp"),
-    DUBITATIVE("DUB", "mmf"),
-    INVIDIOUS("IVD", "řřn"),
-    DISCONCERTIVE("DCC", "gzj"),
-    STUPEFACTIVE("STU", "ļļč"),
-    FASCINATIVE("FSC", "žžj"),
-    INFATUATIVE("IFT", "vvr"),
-    EUPHORIC("EUH", "gzz"),
-    DELECTATIVE("DLC", "ẓmm"),
-    ATTENTIVE("ATE", "ňj"),
-    APPROBATIVE("APB", "řs"),
-    IRONIC("IRO", "mmž"),
-    PRESUMPTIVE("PSM", "nnţ"),
-    GRATIFICATIVE("GRT", "mmh"),
-    SATIATIVE("SAT", "ļţ"),
-    PERPLEXIVE("PPX", "llh"),
-    CONTEMPLATIVE("CTV", "gvv"),
-    PROPITIOUS("PPT", "mll"),
-    SOLLICITATIVE("SOL", "ňňs"),
-    REACTIVE("RAC", "kll"),
-    COINCIDENTAL("COI", "ššč"),
-    FORTUITOUS("FOR", "lzp"),
-    ANNUNCIATIVE("ANN", "drr"),
-    OPTIMAL("OPT", "ççk"),
-    CONTENSIVE("CNV", "rrj"),
-    RENUNCIATIVE("RNC", "mzt"),
-    MANDATORY("MND", "msk"),
-    EXIGENT("EXG", "rrs"),
-    INSIPID("ISP", "lçp"),
-    ADMISSIVE("ADM", "lļ"),
-    APPREHENSIVE("APH", "vvz"),
-    IMPLICATIVE("IPL", "vll"),
-    ACCIDENTAL("ACC", "lf"),
-    ANTICIPATIVE("ANP", "lst"),
-    ARCHETYPAL("ACH", "mçt"),
-    VEXATIVE("VEX", "ksk"),
-    CORRUPTIVE("CRP", "gžž"),
-    DEJECTIVE("DEJ", "žžg");
+enum class Bias(override val short: String, val cb: String, private val representative: String) : NoDefault {
+    DOLOROUS("DOL", "řřx", "Ow! Ouch!"),
+    SKEPTICAL("SKP", "rnž", "Yeah, right!"),
+    IMPATIENT("IPT", "žžv", "C'mon!"),
+    REVELATIVE("RVL", "mmļ", "A-ha!"),
+    TREPIDATIVE("TRP", "llč", "Oh, no!"),
+    REPULSIVE("RPU", "šštļ", "Ew! Gross!"),
+    DESPERATIVE("DES", "mřř", "I'm sorry to have to tell you..."),
+    DISAPPROBATIVE("DPB", "ffx", "I don't like that..."),
+    PROSAIC("PSC", "žžt", "Meh."),
+    COMEDIC("CMD", "pļļ", "Funny!"),
+    PROPOSITIVE("PPV", "sl", "Consider:"),
+    SUGGESTIVE("SGS", "ltç", "How about..."),
+    DIFFIDENT("DFD", "cč", "It's nothing, just..."),
+    REFLECTIVE("RFL", "llm", "Look at it this way..."),
+    EUPHEMISTIC("EUP", "vvt", "Let me put it this way..."),
+    CORRECTIVE("CRR", "ňţ", "What I meant to say is..."),
+    CONTEMPTIVE("CTP", "kšš", "What nonsense!"),
+    EXASPERATIVE("EXA", "kçç", "Don't you get it?"),
+    INDIGNATIVE("IDG", "pšš", "How dare...!?"),
+    DISMISSIVE("DIS", "kff", "So what!"),
+    DERISIVE("DRS", "pfc", "How foolish!"),
+    PESSIMISTIC("PES", "ksp", "Pfft!"),
+    DUBITATIVE("DUB", "mmf", "I doubt it"),
+    INVIDIOUS("IVD", "řřn", "How unfair!"),
+    DISCONCERTIVE("DCC", "gzj", "I don't feel confortable about this..."),
+    STUPEFACTIVE("STU", "ļļč", "What the...?"),
+    FASCINATIVE("FSC", "žžj", "Cool! Wow!"),
+    INFATUATIVE("IFT", "vvr", "Praise be to...!"),
+    EUPHORIC("EUH", "gzz", "What bliss!"),
+    DELECTATIVE("DLC", "ẓmm", "Whee!"),
+    ATTENTIVE("ATE", "ňj", "Who would have thought?"),
+    APPROBATIVE("APB", "řs", "OK"),
+    IRONIC("IRO", "mmž", "Just great!"),
+    PRESUMPTIVE("PSM", "nnţ", "It can only mean one thing..."),
+    GRATIFICATIVE("GRT", "mmh", "Ahhhh! [physical pleasure]"),
+    SATIATIVE("SAT", "ļţ", "How satisfying!"),
+    PERPLEXIVE("PPX", "llh", "Huh?"),
+    CONTEMPLATIVE("CTV", "gvv", "Hmmmm..."),
+    PROPITIOUS("PPT", "mll", "It's a wonder that..."),
+    SOLICITATIVE("SOL", "ňňs", "Please"),
+    REACTIVE("RAC", "kll", "My goodness!"),
+    COINCIDENTAL("COI", "ššč", "What a coincidence!"),
+    FORTUITOUS("FOR", "lzp", "All is well that ends well"),
+    ANNUNCIATIVE("ANN", "drr", "Wait till you hear this!"),
+    OPTIMAL("OPT", "ççk", "So!/Totally!"),
+    CONTENSIVE("CNV", "rrj", "I told you so!"),
+    RENUNCIATIVE("RNC", "mzt", "So much for...!"),
+    MANDATORY("MND", "msk", "Take it or leave it"),
+    EXIGENT("EXG", "rrs", "It's now or never!"),
+    INSIPID("ISP", "lçp", "How boring!"),
+    ADMISSIVE("ADM", "lļ", "Mm-hm"),
+    APPREHENSIVE("APH", "vvz", "I'm worried..."),
+    IMPLICATIVE("IPL", "vll", "Of course,..."),
+    ACCIDENTAL("ACC", "lf", "As luck would would have it..."),
+    ANTICIPATIVE("ANP", "lst", ""),
+    ARCHETYPAL("ACH", "mçt", "Such a...!"),
+    VEXATIVE("VEX", "ksk", "How annoying!"),
+    CORRUPTIVE("CRP", "gžž", "What corruption!"),
+    DEJECTIVE("DEJ", "žžg", "[dejected sigh]");
+
+    override fun toString(o: GlossOptions): String = when {
+        o.concise -> short
+        o.verbose -> "(${name.toLowerCase()}: “$representative“)"
+        else -> "“${representative}“"
+    }
 
     companion object {
         fun byGroup(cb: String) = values().find { it.cb == cb }
@@ -584,8 +590,8 @@ enum class Bias(override val short: String, val cb: String) : NoDefault {
 class RegisterAdjunct(private val register: Register, private val final: Boolean) : Glossable {
     override fun toString(o: GlossOptions): String {
         return when (final) {
-            false -> "<${register.toString(o)}>"
-            true -> "</${register.toString(o)}>"
+            false -> register.toString(o)
+            true -> "${register.toString(o)}_END"
         }
     }
 
