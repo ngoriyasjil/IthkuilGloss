@@ -2,40 +2,6 @@ package ithkuil.iv.gloss
 
 import ithkuil.iv.gloss.dispatch.logger
 
-fun wordTypeOf(word: Word): WordType {
-
-    return when {
-        word.size == 1 && word[0].isConsonant() -> WordType.BIAS_ADJUNCT
-
-        word[0] == "hr" && word.size == 2 -> WordType.MOOD_CASESCOPE_ADJUNCT
-
-        word[0] == "h" && word.size == 2 -> WordType.REGISTER_ADJUNCT
-
-        (word[0].isVowel() || word[0] in setOf("w", "y"))
-            && word.all { it.isVowel() || it in CN_CONSONANTS } -> WordType.MODULAR_ADJUNCT
-
-        word.size >= 4 && word[0] == "ë" && word[3] in COMBINATION_REFERENTIAL_SPECIFICATION
-            || word.size >= 3 && word[0] !in CC_CONSONANTS && word[2] in COMBINATION_REFERENTIAL_SPECIFICATION
-            || word.size >= 4 && word[0] == "ï" && word[1] in CP_CONSONANTS
-        -> WordType.COMBINATION_REFERENTIAL
-
-        word.size in 2..3 && word[1].isConsonant() && word[1] !in CN_CONSONANTS && word[0] != "ë"
-        -> WordType.AFFIXUAL_ADJUNCT
-
-        word.size >= 5 && word[0].isConsonant() && ((if (word[1].endsWith("'")) "'" else "") + word[2]) in CZ_CONSONANTS
-            || word.size >= 6 && (word[0] == "ë") && (((if (word[2].endsWith("'")) "'" else "") + word[3]) in CZ_CONSONANTS)
-        -> WordType.MULTIPLE_AFFIX_ADJUNCT
-
-        (word.last().isVowel() || word.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
-            ?.isVowel() == true)
-            && word.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.dropLast(1)
-            ?.all { it.isConsonant() || it == "ë" } == true
-        -> WordType.REFERENTIAL
-
-        else -> WordType.FORMATIVE
-    }
-}
-
 fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> GlossOutcome) : GlossOutcome {
     val (strippedWord, sentencePrefix) = word.stripSentencePrefix()
 
@@ -52,9 +18,9 @@ fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
 
     val result = parseWithoutSentencePrefix(iword) { word ->
         when (wordTypeOf(word)) {
-            WordType.BIAS_ADJUNCT             -> parseBiasAdjunct(word[0])
-            WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word[1])
-            WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word[1])
+            WordType.BIAS_ADJUNCT             -> parseBiasAdjunct           (word)
+            WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word)
+            WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word)
             WordType.MODULAR_ADJUNCT          -> parseModular               (word, marksMood = marksMood)
             WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(word)
             WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (word)
@@ -106,13 +72,13 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
     return ConcatenationChain(glosses)
 }
 
-fun parseBiasAdjunct(cb: String) : GlossOutcome {
-    return Bias.byGroup(cb)?.let { Gloss(it) } ?: Error("Unknown bias: $cb")
+fun parseBiasAdjunct(word: Word) : GlossOutcome {
+    return Bias.byGroup(word[0])?.let { Gloss(it) } ?: Error("Unknown bias: ${word[0]}")
 }
 
 
-fun parseRegisterAdjunct(v: String): GlossOutcome {
-    val (register, final) = Register.byVowel(v) ?: return Error("Unknown register adjunct vowel: $v")
+fun parseRegisterAdjunct(word: Word): GlossOutcome {
+    val (register, final) = Register.byVowel(word[1]) ?: return Error("Unknown register adjunct vowel: ${word[1]}")
     return Gloss(RegisterAdjunct(register, final))
 }
 
@@ -650,8 +616,8 @@ fun parseAffixual(word: Word): GlossOutcome {
 
 }
 
-fun parseMoodCaseScopeAdjunct(v: String) : GlossOutcome {
-    val value : Glossable = when (v) {
+fun parseMoodCaseScopeAdjunct(word: Word) : GlossOutcome {
+    val value : Glossable = when (val v = word[1]) {
         "a" -> Mood.FACTUAL
         "e" -> Mood.SUBJUNCTIVE
         "i" -> Mood.ASSUMPTIVE
