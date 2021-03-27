@@ -22,9 +22,9 @@ fun wordTypeOf(word: Word): WordType {
         word.size in 2..3 && word[1].isConsonant() && word[1] !in CN_CONSONANTS && word[0] != "ë"
         -> WordType.AFFIXUAL_ADJUNCT
 
-        word.size >= 5 && word[0].isConsonant() && word[2] in CZ_CONSONANTS
-            || word.size >= 6 && (word[0] == "ë") && (word[3] in CZ_CONSONANTS)
-        -> WordType.AFFIXUAL_SCOPING_ADJUNCT
+        word.size >= 5 && word[0].isConsonant() && ((if (word[1].endsWith("'")) "'" else "") + word[2]) in CZ_CONSONANTS
+            || word.size >= 6 && (word[0] == "ë") && (((if (word[2].endsWith("'")) "'" else "") + word[3]) in CZ_CONSONANTS)
+        -> WordType.MULTIPLE_AFFIX_ADJUNCT
 
         (word.last().isVowel() || word.takeWhile { it !in setOf("w", "y") }.takeIf { it.isNotEmpty() }?.last()
             ?.isVowel() == true)
@@ -58,7 +58,7 @@ fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
             WordType.MODULAR_ADJUNCT          -> parseModular               (word, marksMood = marksMood)
             WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(word)
             WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (word)
-            WordType.AFFIXUAL_SCOPING_ADJUNCT -> parseMultipleAffix         (word)
+            WordType.MULTIPLE_AFFIX_ADJUNCT   -> parseMultipleAffix         (word)
             WordType.REFERENTIAL              -> parseReferential           (word)
             WordType.FORMATIVE                -> parseFormative             (word)
         }
@@ -583,14 +583,22 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
     } else null
     var index = 0
     if (word[0] == "ë") index++
-    val firstAffix = Affix(cs = word[index], vx = word[index + 1]).parse().let {
+
+    val firstAffixVx = word[index+1].removeSuffix("'")
+
+    val czGlottal = firstAffixVx != word[index+1]
+
+    val firstAffix = Affix(cs = word[index], vx = firstAffixVx).parse().let {
         when(it) {
             is AffixError -> return Error(it.message)
             is ValidAffix -> it
         }
     }
     index += 2
-    val scopeOfFirst = affixualAdjunctScope(word[index]) ?: return Error("Unknown Cz: ${word[index]}")
+
+    val cz = "${if (czGlottal) "'" else ""}${word[index]}"
+
+    val scopeOfFirst = affixualAdjunctScope(cz) ?: return Error("Unknown Cz: ${word[index]}")
     index++
 
     val vxCsAffixes: MutableList<ValidAffix> = mutableListOf()
@@ -598,11 +606,7 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
     while (true) {
         if (index + 1 > word.lastIndex) break
 
-        val (vx, glottal) = unGlottalVowel(word[index]) ?: return Error("Unknown vowelform: ${word[index]}")
-
-        if (glottal) return Error("Unexpected glottal stop in affixual scoping adjunct")
-
-        val affix = Affix(vx, word[index + 1]).parse().let {
+        val affix = Affix(word[index], word[index + 1]).parse().let {
             when(it) {
                 is AffixError -> return Error(it.message)
                 is ValidAffix -> it
@@ -613,7 +617,7 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
         index += 2
     }
 
-    if (vxCsAffixes.isEmpty()) return Error("Only one affix found in affixual scoping adjunct")
+    if (vxCsAffixes.isEmpty()) return Error("Only one affix found in multiple affix adjunct")
 
     val vz = word.getOrNull(index)
 

@@ -150,7 +150,7 @@ class Affix(private val vx: String, private val cs : String) {
 
         val degree = if (vx in setOf("üa", "üe", "üo")) {
             Degree.ZERO
-        } else Degree.values().getOrNull(form-1) ?: return AffixError("Unknown vowel form $form: $vx")
+        } else Degree.values().getOrNull(form-1) ?: return AffixError("Unknown affix vowel form: $vx")
 
         val type: AffixType = if (degree == Degree.ZERO) when(vx) {
             "üa" -> AffixType.ONE
