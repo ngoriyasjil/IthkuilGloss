@@ -1,5 +1,6 @@
-package ithkuil.iv.gloss
+package ithkuil.iv.gloss.dispatch
 
+import ithkuil.iv.gloss.VOWEL_FORMS
 import java.time.LocalDateTime
 import java.time.ZoneId
 
