@@ -47,6 +47,8 @@ private constructor(
         return Word(newGroups, stress, prefixPunctuation, postfixPunctuation) to true
     }
 
+    val wordType by lazy { wordTypeOf(this) }
+
     companion object {
 
         fun from(s: String) : FormattingOutcome {

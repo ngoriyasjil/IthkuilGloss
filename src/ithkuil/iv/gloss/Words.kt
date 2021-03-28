@@ -17,7 +17,7 @@ fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
     logger.info { "-> parseWord($iword)" }
 
     val result = parseWithoutSentencePrefix(iword) { word ->
-        when (wordTypeOf(word)) {
+        when (word.wordType) {
             WordType.BIAS_ADJUNCT             -> parseBiasAdjunct           (word)
             WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word)
             WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word)
@@ -48,7 +48,7 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
         if (word.isEmpty())
             return Error("Empty word concatenated (at ${index + 1})")
 
-        if (wordTypeOf(word) != WordType.FORMATIVE)
+        if (word.wordType != WordType.FORMATIVE)
             return Error("Non-formatives concatenated (at ${index + 1})")
 
         val (concatenation, _) = parseCc(word[0])

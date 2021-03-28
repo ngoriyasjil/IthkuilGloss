@@ -78,7 +78,7 @@ fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutc
 fun isVerbal(word: Valid) : Boolean = when (word) {
     is ConcatenatedWords -> isVerbal(word.words.last())
     is Word -> {
-        (wordTypeOf(word) == WordType.FORMATIVE) && (word.stress == Stress.ULTIMATE)
+        (word.wordType == WordType.FORMATIVE) && (word.stress == Stress.ULTIMATE)
     }
 }
 
@@ -89,7 +89,7 @@ fun isCarrier(word: Valid) : Boolean {
     return when (word) {
         is ConcatenatedWords -> word.words.any { isCarrier(it) }
 
-        is Word -> when (wordTypeOf(word)) {
+        is Word -> when (word.wordType) {
             WordType.FORMATIVE -> {
                 val rootIndex = when {
                     word.getOrNull(0) in CC_CONSONANTS -> 2
