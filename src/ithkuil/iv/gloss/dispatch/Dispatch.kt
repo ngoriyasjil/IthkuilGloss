@@ -113,26 +113,9 @@ fun respond(content: String): String? {
 
         "s", "sgloss", "sshort", "sfull" -> sentenceGloss(arguments, o)
 
-        "root", "affix" -> when (arguments.size) {
-            1 -> {
-                val lookup = arguments[0].trim('-').toLowerCase().defaultForm()
-                val (consonantalForm, generalDescription, details) = when (request) {
-                    "root" -> LocalDictionary.roots[lookup]?.let { root ->
-                        Triple(
-                            "-${lookup.toUpperCase()}-",
-                            root.descriptions[0],
-                            root.descriptions.drop(1)
-                        )
-                    }
-                    "affix" -> LocalDictionary.affixes[lookup]?.let { affix -> Triple("-$lookup", affix.abbreviation, affix.descriptions) }
-                    else -> /* unreachable */ null
-                } ?: return "$lookup not found"
+        "root" -> lookupRoot(arguments)
 
-                return "$request **$consonantalForm**: $generalDescription\n" +
-                        details.mapIndexed { index, item -> "${index + 1}. $item" }.joinToString("\n")
-            }
-            else -> "*Please enter exactly one root or affix.*"
-        }
+        "affix" -> lookupAffix(arguments)
 
         "!stop" -> exitProcess(0)
 
@@ -168,7 +151,66 @@ fun respond(content: String): String? {
     }
 }
 
+fun lookupRoot(crs: List<String>): String {
+    val lookups = crs.map { it.removeSuffix(",").trim('-').defaultForm() }
 
+    val entries = mutableListOf<String>()
+
+    for (cr in lookups) {
+        val root = LocalDictionary.roots[cr]
+        if (root != null) {
+            val generalDescription = root[Stem.STEM_ZERO]
+            val stemDescriptions = root.descriptions.drop(1)
+            val titleLine = "**-${cr.toUpperCase()}-**: $generalDescription"
+
+            val descLines = stemDescriptions.mapIndexedNotNull { index, description ->
+                if (description.isNotEmpty()) "${index+1}. $description"
+                else null
+            }.joinToString("\n")
+
+            entries.add(
+                "$titleLine\n$descLines"
+            )
+
+        } else {
+            entries.add("*-${cr.toUpperCase()}- not found*")
+        }
+
+    }
+
+    return entries.joinToString("\n\n")
+
+}
+
+fun lookupAffix(cxs: List<String>): String {
+    val lookups = cxs.map { it.removeSuffix(",").trim('-').defaultForm() }
+
+    val entries = mutableListOf<String>()
+
+    for (cx in lookups) {
+        val affix = LocalDictionary.affixes[cx]
+        if (affix != null) {
+            val abbreviation = affix.abbreviation
+            val degreeDescriptions = affix.descriptions
+            val titleLine = "**-$cx**: $abbreviation"
+
+            val descLines = degreeDescriptions.mapIndexedNotNull { index, description ->
+                if (description.isNotEmpty()) "${index+1}. $description"
+                else null
+            }.joinToString("\n")
+
+            entries.add(
+                "$titleLine\n$descLines"
+            )
+
+        } else {
+            entries.add("*-$cx not found*")
+        }
+
+    }
+
+    return entries.joinToString("\n\n")
+}
 
 
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
