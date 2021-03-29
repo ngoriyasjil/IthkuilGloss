@@ -4,10 +4,11 @@ A Discord parser bot for the Ithkuil IV language.
 
 Currently up to date to morphophonology v0.18.5.
 
+See [the help file](https://github.com/ngoriyasjil/IthkuilGloss/blob/master/resources/help.md) for the list of commands!
+
 ## How to run
 
-1. If you’re running the Discord bot (rather than the CLI), place the token
-   file in `resources/token.txt`.
+1. If you’re running the Discord bot (rather than the CLI), place the bot token in the file `resources/token.txt`.
 2. Compile with Maven.
 
 ## How to run the Command Line Interface

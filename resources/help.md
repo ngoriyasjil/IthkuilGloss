@@ -15,9 +15,7 @@ Main commands (must be preceded by the proper prefix):
 
 (Sentence parsing is currently only partially functional)
 
-By default, the commands don't show default values. To show default values, use the prefix "??" (e.g. "??gloss") instead of "?".
-
-- **?root**, **?affix**: look up the definition of a root or affix by its consonantal value
+By default, the commands don't show default values. To show all values, use the prefix "??" (e.g. "??gloss") instead of "?".
 
 Precision:
   - __Regular precision__: all morphological components except affixes are abbreviated
@@ -25,6 +23,7 @@ Precision:
   - __Short precision__: all morphological components including affixes are abbreviated, roots will only display their generic title
 
 Other commands:
+  - **?root**, **?affix**: look up the definition of a root or affix by its consonantal value
   - **?!reload**: updates the root and affix dictionaries from the spreadsheet
   - **?date**: gives the current UTC time and date in Ithkuil IV
   - **?ej**: checks a text for violations of External Juncture (Sec. 1.5)
