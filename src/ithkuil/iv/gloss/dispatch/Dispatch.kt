@@ -141,7 +141,7 @@ fun respond(content: String): String? {
             ).joinToString("\n")
         }
 
-        "ej" -> externalJuncture(arguments.format())
+        "ej" -> externalJuncture(arguments.formatAll())
 
         "!whosagoodbot", "!whosacutebot" -> "(=^ェ^=✿)"
 
@@ -214,7 +214,7 @@ fun lookupAffix(cxs: List<String>): String {
 
 
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
-    val glosses = glossInContext(words.format())
+    val glosses = glossInContext(words.formatAll())
         .map { (word, gloss) ->
             when (gloss) {
                 is Foreign -> "*$word*"
@@ -230,7 +230,7 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
 }
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
-    val glossPairs = glossInContext(words.format())
+    val glossPairs = glossInContext(words.formatAll())
         .map { (word, gloss) ->
             when (gloss) {
                 is Gloss -> {

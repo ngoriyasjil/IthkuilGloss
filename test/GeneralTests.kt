@@ -9,7 +9,7 @@ import kotlin.test.assertFalse
 
 infix fun String.glossesTo(gloss: String) {
 
-    val parse = when (val word = Word.from(this)) {
+    val parse = when (val word = formatWord(this)) {
         is Word -> parseWord(word)
         is ConcatenatedWords -> parseConcatenationChain(word)
         is Invalid -> throw AssertionError(word.message)
@@ -26,7 +26,7 @@ infix fun String.glossesTo(gloss: String) {
 
 infix fun String.givesError(error: String) {
 
-    val parse = when (val word = Word.from(this)) {
+    val parse = when (val word = formatWord(this)) {
         is Word -> parseWord(word)
         is ConcatenatedWords -> parseConcatenationChain(word)
         is Invalid -> throw AssertionError(word.message)
@@ -41,18 +41,18 @@ infix fun String.givesError(error: String) {
     assertEquals(error, result, message)
 }
 
-infix fun String.hasStress(stress: Stress) = assertEquals(stress, (Word.from(this) as Word).stress, this)
+infix fun String.hasStress(stress: Stress) = assertEquals(stress, (formatWord(this) as Word).stress, this)
 
-infix fun String.givesInvalid(error: String) = assertEquals(error, (Word.from(this) as Invalid).message)
+infix fun String.givesInvalid(error: String) = assertEquals(error, (formatWord(this) as Invalid).message)
 
 infix fun String.mustBe(s: String) = assertEquals(s, this, this)
 
 fun assertCarrier(word: String) {
-    assertTrue(word) { isCarrier(Word.from(word) as Valid) }
+    assertTrue(word) { isCarrier(formatWord(word) as Valid) }
 }
 
 fun assertNotCarrier(word: String) {
-    assertFalse(word) { isCarrier(Word.from(word) as Valid) }
+    assertFalse(word) { isCarrier(formatWord(word) as Valid) }
 }
 
 class GeneralTests {

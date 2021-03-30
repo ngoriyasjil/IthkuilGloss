@@ -22,8 +22,7 @@ class ConcatenatedWords(
         postfix = postfixPunctuation) { it.toString() }
 }
 
-class Word
-private constructor(
+class Word(
     private val stressedGroups: List<String>,
     val stress: Stress,
     override val prefixPunctuation: String = "",
@@ -49,73 +48,71 @@ private constructor(
 
     val wordType by lazy { wordTypeOf(this) }
 
-    companion object {
-
-        fun from(s: String) : FormattingOutcome {
-
-            if (s.isEmpty()) return Invalid(s, "Empty word")
-
-            val punct = ".,?!:;⫶`\"*_"
-            val punctuationRegex = "^([$punct]*)([^$punct]+)([$punct]*)$".toRegex()
-
-            val (prefix, word, postfix) = punctuationRegex.find(s)?.destructured
-                ?: return Invalid(s, "Unexpected punctuation")
-
-            if ("-" in word) {
-                val words = word
-                    .split("-")
-                    .map { from(it) }
-                    .map { when(it) {
-                        is Invalid -> return Invalid(s, "${it.message} ($it)")
-                        is ConcatenatedWords -> return Invalid(s, "Nested concatenation! ($it)")
-                        is Word -> {
-                            if (it.wordType != WordType.FORMATIVE) {
-                                return Invalid(s, "Non-formative concatenated: ($it)")
-                            }
-                            it
-                        }
-                    }
-                    }
-                return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
-            }
-
-            val clean = word.defaultFormWithStress()
-
-            val nonIthkuil = clean.filter { it.toString() !in ITHKUIL_CHARS }
-            if (nonIthkuil.isNotEmpty()) {
-                var message = nonIthkuil.map { codepointString(it) }.joinToString()
-
-                if ("[qˇ^ʰ]".toRegex() in nonIthkuil) {
-                    message += " You might be writing in Ithkuil III. Try \"!gloss\" instead."
-                }
-                return Invalid(s, "Non-ithkuil characters detected: $message")
-            }
-
-            val stressedGroups = clean.splitGroups() ?: return Invalid(s, "Failed grouping")
-
-            val stress = findStress(stressedGroups)
-
-            when (stress) {
-                Stress.INVALID_PLACE -> return Invalid(s, "Unrecognized stress placement")
-                Stress.MARKED_DEFAULT -> return Invalid(s, "Marked default stress")
-                Stress.DOUBLE_MARKED -> return Invalid(s, "Double-marked stress")
-                else -> {}
-            }
-
-            return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
-        }
-
-        private fun codepointString(c : Char): String {
-            val codepoint = c.toInt()
-                .toString(16)
-                .toUpperCase()
-                .padStart(4, '0')
-            return "\"$c\" (U+$codepoint)"
-        }
-    }
 }
 
-fun List<String>.format() : List<FormattingOutcome> = map { Word.from(it) }
+fun formatWord(s: String) : FormattingOutcome {
+
+    if (s.isEmpty()) return Invalid(s, "Empty word")
+
+    val punct = ".,?!:;⫶`\"*_"
+    val punctuationRegex = "^([$punct]*)([^$punct]+)([$punct]*)$".toRegex()
+
+    val (prefix, word, postfix) = punctuationRegex.find(s)?.destructured
+        ?: return Invalid(s, "Unexpected punctuation")
+
+    if ("-" in word) {
+        val words = word
+            .split("-")
+            .map { formatWord(it) }
+            .map { when(it) {
+                is Invalid -> return Invalid(s, "${it.message} ($it)")
+                is ConcatenatedWords -> return Invalid(s, "Nested concatenation! ($it)")
+                is Word -> {
+                    if (it.wordType != WordType.FORMATIVE) {
+                        return Invalid(s, "Non-formative concatenated: ($it)")
+                    }
+                    it
+                }
+            }
+            }
+        return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
+    }
+
+    val clean = word.defaultFormWithStress()
+
+    val nonIthkuil = clean.filter { it.toString() !in ITHKUIL_CHARS }
+    if (nonIthkuil.isNotEmpty()) {
+        var message = nonIthkuil.map { codepointString(it) }.joinToString()
+
+        if ("[qˇ^ʰ]".toRegex() in nonIthkuil) {
+            message += " You might be writing in Ithkuil III. Try \"!gloss\" instead."
+        }
+        return Invalid(s, "Non-ithkuil characters detected: $message")
+    }
+
+    val stressedGroups = clean.splitGroups() ?: return Invalid(s, "Failed grouping")
+
+    val stress = findStress(stressedGroups)
+
+    when (stress) {
+        Stress.INVALID_PLACE -> return Invalid(s, "Unrecognized stress placement")
+        Stress.MARKED_DEFAULT -> return Invalid(s, "Marked default stress")
+        Stress.DOUBLE_MARKED -> return Invalid(s, "Double-marked stress")
+        else -> {}
+    }
+
+    return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
+}
+
+private fun codepointString(c : Char): String {
+    val codepoint = c.toInt()
+        .toString(16)
+        .toUpperCase()
+        .padStart(4, '0')
+    return "\"$c\" (U+$codepoint)"
+}
+
+fun List<String>.formatAll() : List<FormattingOutcome> = map { formatWord(it) }
 
 enum class GroupingState {
     VOWEL,
