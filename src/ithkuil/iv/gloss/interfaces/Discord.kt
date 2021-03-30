@@ -1,80 +1,111 @@
 package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.reply
+import dev.kord.core.behavior.respond
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.User
+import dev.kord.core.entity.interaction.OptionValue
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.message.MessageUpdateEvent
 import dev.kord.core.event.message.ReactionAddEvent
 import dev.kord.core.live.live
 import dev.kord.core.live.on
+import dev.kord.core.event.interaction.InteractionCreateEvent
 
 import java.io.File
 import java.lang.StringBuilder
 
 import ithkuil.iv.gloss.dispatch.*
+import ithkuil.iv.gloss.dispatch.respond as dispatchRespond
+
 import kotlinx.coroutines.delay
 
 @KordPreview
 suspend fun main() {
-    val token = File("./resources/token.txt").readLines()[0]
+    val (token, testServerID) = File("./resources/token.txt").readLines()
     val kord = Kord(token)
     kord.on<MessageCreateEvent> {
-        val response = message.respondTo() ?: return@on
-
-        val liveMessage = message.live()
-
-
-         liveMessage.on<MessageUpdateEvent> inner@ {
-            with(liveMessage.message) {
-                val replyTo = message.referencedMessage?.content
-
-                logger.debug { "replyTo: $replyTo" }
-
-                val contentWithReply = if (replyTo != null && content matches "^\\S*$".toRegex()) {
-                    "$content $replyTo"
-                } else {
-                    content
-                }
-
-                val editTo = respond(contentWithReply)?.splitMessages()?.first() ?: "*Unknown invocation*"
-
-                logger.info { "Edited a message to $editTo responding to $contentWithReply" }
-
-                response.edit {
-                    content = editTo
-                }
-            }
-        }
-
-        delay(60000)
-
-        liveMessage.shutDown()
+        replyAndTrackChanges()
     }
 
     kord.on<ReactionAddEvent> {
 
         val messag = message.asMessageOrNull() ?: return@on
-
         if (messag.author != kord.getSelf()) return@on
-
         if (user != messag.referencedMessage?.author) return@on
-
         if (emoji != ReactionEmoji.Unicode("\u274C")) return@on
 
         messag.delete()
     }
+
+    kord.slashCommands.createGuildApplicationCommands(Snowflake(testServerID.toLong())) {
+        command("gloss", "Gloss Ithkuil text, word by word") {
+            string("words", "The words to be glossed")
+        }
+    }
+
+
+    kord.on<InteractionCreateEvent> {
+        with(interaction) {
+            when(command.rootName) {
+                "gloss" -> {
+                    val words = (command.options["words"] as? OptionValue.StringOptionValue)?.value ?: ""
+                    val response = dispatchRespond("?gloss $words") ?: "*Command not recognized*"
+                    respond {
+                        content = response
+                    }
+                }
+            }
+
+        }
+    }
+
 
     loadResourcesOnline()
     kord.login {
         playing("?help for info")
         logger.info { "Logged in!" }
     }
+}
+
+@KordPreview
+private suspend fun MessageCreateEvent.replyAndTrackChanges() {
+    val response = message.respondTo() ?: return
+
+    val liveMessage = message.live()
+
+
+    liveMessage.on<MessageUpdateEvent> {
+        with(liveMessage.message) {
+            val replyTo = message.referencedMessage?.content
+
+            logger.debug { "replyTo: $replyTo" }
+
+            val contentWithReply = if (replyTo != null && content matches "^\\S*$".toRegex()) {
+                "$content $replyTo"
+            } else {
+                content
+            }
+
+            val editTo = dispatchRespond(contentWithReply)?.splitMessages()?.first() ?: "*Unknown invocation*"
+
+            logger.info { "Edited a message to $editTo responding to $contentWithReply" }
+
+            response.edit {
+                content = editTo
+            }
+        }
+    }
+
+    delay(60000)
+
+    liveMessage.shutDown()
 }
 
 suspend fun Message.respondTo() : Message? {
@@ -97,7 +128,7 @@ suspend fun Message.respondTo() : Message? {
 
     val replies = mutableListOf<Message>()
 
-    respond(contentWithReply)
+    dispatchRespond(contentWithReply)
         .also { logger.info { "   respond($content) ->\n$it" } }
         ?.splitMessages()
         ?.forEach {
