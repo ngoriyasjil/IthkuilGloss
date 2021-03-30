@@ -25,6 +25,8 @@ import ithkuil.iv.gloss.dispatch.*
 import ithkuil.iv.gloss.dispatch.respond as dispatchRespond
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 
 @KordPreview
 suspend fun main() {
@@ -45,33 +47,59 @@ suspend fun main() {
     }
 
     kord.slashCommands.createGuildApplicationCommands(Snowflake(testServerID.toLong())) {
-        command("gloss", "Gloss Ithkuil text, word by word") {
-            string("words", "The words to be glossed")
+        command("root", "Get the descriptions of the stems of given roots") {
+            string("crs", "The consonant forms of the roots")
         }
-    }
 
+        command("affix", "Get the descriptions of the degrees of given affixes") {
+            string("cxs", "The consonant forms of the affixes")
+        }
+
+        command("whosagoodbot", "Tells the bot how good a bot it is. :3") { }
+    }
 
     kord.on<InteractionCreateEvent> {
-        with(interaction) {
-            when(command.rootName) {
-                "gloss" -> {
-                    val words = (command.options["words"] as? OptionValue.StringOptionValue)?.value ?: ""
-                    val response = dispatchRespond("?gloss $words") ?: "*Command not recognized*"
-                    respond {
-                        content = response
-                    }
-                }
-            }
+        if (interaction.command.rootName != "root") return@on
+        logger.info { "Running slash command \"root\"" }
 
+        interaction.respond {
+            content = commandResponse("crs") { crs -> "?root $crs" }
         }
     }
 
+    kord.on<InteractionCreateEvent> {
+        if (interaction.command.rootName != "affix") return@on
+        logger.info { "Running slash command \"affix\"" }
+
+        interaction.respond {
+            content = commandResponse("cxs") { cxs -> "?affix $cxs" }
+        }
+    }
+
+    kord.on<InteractionCreateEvent> {
+        if (interaction.command.rootName != "whosagoodbot") return@on
+        logger.info { "Running slash command \"whosagoodbot\"" }
+
+        interaction.respond{
+            content = dispatchRespond("?!whosagoodbot")!!
+        }
+    }
 
     loadResourcesOnline()
     kord.login {
         playing("?help for info")
         logger.info { "Logged in!" }
     }
+}
+
+@KordPreview
+private fun InteractionCreateEvent.commandResponse(argName: String, stringCommand: (String) -> String) : String {
+    val arg = (interaction.command.options[argName]
+        as? OptionValue.StringOptionValue)?.value
+
+    return if (arg != null) {
+        dispatchRespond(stringCommand(arg)) ?: "*No response*"
+    } else "*No argument found*"
 }
 
 @KordPreview
