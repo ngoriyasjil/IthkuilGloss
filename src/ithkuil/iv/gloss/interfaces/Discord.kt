@@ -21,12 +21,11 @@ import dev.kord.core.event.interaction.InteractionCreateEvent
 import java.io.File
 import java.lang.StringBuilder
 
-import ithkuil.iv.gloss.dispatch.*
-import ithkuil.iv.gloss.dispatch.respond as dispatchRespond
+import ithkuil.iv.gloss.dispatch.loadResourcesOnline
+import ithkuil.iv.gloss.dispatch.logger
+import ithkuil.iv.gloss.dispatch.respond as terminalRespond
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
 
 @KordPreview
 suspend fun main() {
@@ -42,11 +41,22 @@ suspend fun main() {
         if (messag.author != kord.getSelf()) return@on
         if (user != messag.referencedMessage?.author) return@on
         if (emoji != ReactionEmoji.Unicode("\u274C")) return@on
-
+        
         messag.delete()
     }
 
-    kord.slashCommands.createGuildApplicationCommands(Snowflake(testServerID.toLong())) {
+    initializeSlashCommands(kord, Snowflake(testServerID.toLong()))
+
+    loadResourcesOnline()
+    kord.login {
+        playing("?help for info")
+        logger.info { "Logged in!" }
+    }
+}
+
+@KordPreview
+private suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) {
+    kord.slashCommands.createGuildApplicationCommands(testServerSnowflake) {
         command("root", "Get the descriptions of the stems of given roots") {
             string("crs", "The consonant forms of the roots")
         }
@@ -80,15 +90,9 @@ suspend fun main() {
         if (interaction.command.rootName != "whosagoodbot") return@on
         logger.info { "Running slash command \"whosagoodbot\"" }
 
-        interaction.respond{
-            content = dispatchRespond("?!whosagoodbot")!!
+        interaction.respond {
+            content = terminalRespond("?!whosagoodbot")!!
         }
-    }
-
-    loadResourcesOnline()
-    kord.login {
-        playing("?help for info")
-        logger.info { "Logged in!" }
     }
 }
 
@@ -98,7 +102,7 @@ private fun InteractionCreateEvent.commandResponse(argName: String, stringComman
         as? OptionValue.StringOptionValue)?.value
 
     return if (arg != null) {
-        dispatchRespond(stringCommand(arg)) ?: "*No response*"
+        terminalRespond(stringCommand(arg)) ?: "*No response*"
     } else "*No argument found*"
 }
 
@@ -121,7 +125,7 @@ private suspend fun MessageCreateEvent.replyAndTrackChanges() {
                 content
             }
 
-            val editTo = dispatchRespond(contentWithReply)?.splitMessages()?.first() ?: "*Unknown invocation*"
+            val editTo = terminalRespond(contentWithReply)?.splitMessages()?.first() ?: "*Unknown invocation*"
 
             logger.info { "Edited a message to $editTo responding to $contentWithReply" }
 
@@ -156,7 +160,7 @@ suspend fun Message.respondTo() : Message? {
 
     val replies = mutableListOf<Message>()
 
-    dispatchRespond(contentWithReply)
+    terminalRespond(contentWithReply)
         .also { logger.info { "   respond($content) ->\n$it" } }
         ?.splitMessages()
         ?.forEach {
