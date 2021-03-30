@@ -48,9 +48,6 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
         if (word.isEmpty())
             return Error("Empty word concatenated (at ${index + 1})")
 
-        if (word.wordType != WordType.FORMATIVE)
-            return Error("Non-formatives concatenated (at ${index + 1})")
-
         val (concatenation, _) = parseCc(word[0])
 
         if ((concatenation == null) xor (index == chain.words.lastIndex))

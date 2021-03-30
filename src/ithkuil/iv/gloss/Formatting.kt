@@ -66,10 +66,16 @@ private constructor(
                     .split("-")
                     .map { from(it) }
                     .map { when(it) {
-                        is Invalid -> return Invalid(s, it.message)
-                        is ConcatenatedWords -> return Invalid(s, "Nested concatenation, please report this as a bug")
-                        is Word -> it
-                    } }
+                        is Invalid -> return Invalid(s, "${it.message} ($it)")
+                        is ConcatenatedWords -> return Invalid(s, "Nested concatenation! ($it)")
+                        is Word -> {
+                            if (it.wordType != WordType.FORMATIVE) {
+                                return Invalid(s, "Non-formative concatenated: ($it)")
+                            }
+                            it
+                        }
+                    }
+                    }
                 return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
             }
 
