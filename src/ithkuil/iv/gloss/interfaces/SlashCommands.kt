@@ -12,10 +12,11 @@ import ithkuil.iv.gloss.dispatch.logger
 import ithkuil.iv.gloss.dispatch.respond
 import kotlinx.coroutines.flow.collect
 
+
 @KordPreview
 suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) {
 
-    kord.slashCommands.getGuildApplicationCommands(testServerSnowflake).collect { it.delete() }
+    //kord.slashCommands.getGuildApplicationCommands(testServerSnowflake).collect { it.delete() }
 
     kord.slashCommands.createGuildApplicationCommands(testServerSnowflake) {
 
@@ -53,16 +54,22 @@ suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) 
             }
         }
 
-
         command("root", "Get the descriptions of the stems of given roots") {
-            string("crs", "The consonant forms of the roots")
+            string("crs", "The consonant forms of the roots") { required = true }
         }
 
         command("affix", "Get the descriptions of the degrees of given affixes") {
-            string("cxs", "The consonant forms of the affixes")
+            string("cxs", "The consonant forms of the affixes") { required = true }
+        }
+
+        command("ej", "Check a text for External Juncture violations") {
+            string("text", "The text to be checked") { required = true }
         }
 
         command("whosagoodbot", "Tells the bot how good a bot it is. :3") { }
+
+        command("date", "Tells the current time and date (UTC) in Ithkuil") { }
+
     }
 
     kord.on<InteractionCreateEvent> {
@@ -110,6 +117,15 @@ suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) 
     }
 
     kord.on<InteractionCreateEvent> {
+        if (interaction.command.rootName != "ej") return@on
+        logger.info { "Running slash command \"ej\"" }
+
+        interaction.respond {
+            content = commandResponse("text") { text -> "?ej $text" }
+        }
+    }
+
+    kord.on<InteractionCreateEvent> {
         if (interaction.command.rootName != "whosagoodbot") return@on
         logger.info { "Running slash command \"whosagoodbot\"" }
 
@@ -117,6 +133,16 @@ suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) 
             content = respond("?!whosagoodbot")!!
         }
     }
+
+    kord.on<InteractionCreateEvent> {
+        if (interaction.command.rootName != "date") return@on
+        logger.info { "Running slash command \"date\"" }
+
+        interaction.respond {
+            content = respond("?date")!!
+        }
+    }
+
 }
 
 private fun constructCommand(showDefaults: Boolean, precision: String, sgloss : Boolean = false): String {
