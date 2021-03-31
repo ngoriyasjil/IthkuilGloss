@@ -192,7 +192,7 @@ fun String.trimWhitespace() = this.splitOnWhitespace().joinToString(" ")
 
 //Deals with series three vowels
 infix fun String.isSameVowelAs(s: String): Boolean = if ("/" in s) {
-    s.split("/").any { it isSameVowelAs this }
+    s.split("/").any { it == this }
 } else {
     s == this
 }
@@ -218,12 +218,14 @@ enum class Stress {
 
 fun findStress(groups: List<String>): Stress {
     val nuclei = groups.filter(String::isVowel)
+        .map { it.removeSuffix("'") }
         .flatMap {
-            val (series, form) = seriesAndForm(it.defaultForm())
-            if (series == 1 || series == 2 || (series == 3 && form == 5)) {
+            if (it.length == 1 || it.substituteAll(UNSTRESSED_FORMS) in DIPHTHONGS) {
                 listOf(it)
             } else {
-                it.toCharArray().map(Char::toString).filter { ch -> ch != "'" }
+                it.toCharArray()
+                    .map(Char::toString)
+                    .filter { ch -> ch != "'" }
             }
         }
 
@@ -245,8 +247,6 @@ fun findStress(groups: List<String>): Stress {
         2 -> Stress.ANTEPENULTIMATE
         else -> Stress.INVALID_PLACE
     }
-
-
 }
 
 

@@ -82,6 +82,7 @@ class GeneralTests {
         "ua" hasStress Stress.PENULTIMATE
         "ëu" hasStress Stress.MONOSYLLABIC
         "alái" hasStress Stress.ULTIMATE
+        "ái'la'sa" hasStress Stress.ANTEPENULTIMATE
         "ála'a" hasStress Stress.ANTEPENULTIMATE
     }
 

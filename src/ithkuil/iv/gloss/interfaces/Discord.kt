@@ -6,17 +6,14 @@ import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.reply
-import dev.kord.core.behavior.respond
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.User
-import dev.kord.core.entity.interaction.OptionValue
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.message.MessageUpdateEvent
 import dev.kord.core.event.message.ReactionAddEvent
 import dev.kord.core.live.live
 import dev.kord.core.live.on
-import dev.kord.core.event.interaction.InteractionCreateEvent
 
 import java.io.File
 import java.lang.StringBuilder
@@ -52,58 +49,6 @@ suspend fun main() {
         playing("?help for info")
         logger.info { "Logged in!" }
     }
-}
-
-@KordPreview
-private suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) {
-    kord.slashCommands.createGuildApplicationCommands(testServerSnowflake) {
-        command("root", "Get the descriptions of the stems of given roots") {
-            string("crs", "The consonant forms of the roots")
-        }
-
-        command("affix", "Get the descriptions of the degrees of given affixes") {
-            string("cxs", "The consonant forms of the affixes")
-        }
-
-        command("whosagoodbot", "Tells the bot how good a bot it is. :3") { }
-    }
-
-    kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "root") return@on
-        logger.info { "Running slash command \"root\"" }
-
-        interaction.respond {
-            content = commandResponse("crs") { crs -> "?root $crs" }
-        }
-    }
-
-    kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "affix") return@on
-        logger.info { "Running slash command \"affix\"" }
-
-        interaction.respond {
-            content = commandResponse("cxs") { cxs -> "?affix $cxs" }
-        }
-    }
-
-    kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "whosagoodbot") return@on
-        logger.info { "Running slash command \"whosagoodbot\"" }
-
-        interaction.respond {
-            content = terminalRespond("?!whosagoodbot")!!
-        }
-    }
-}
-
-@KordPreview
-private fun InteractionCreateEvent.commandResponse(argName: String, stringCommand: (String) -> String) : String {
-    val arg = (interaction.command.options[argName]
-        as? OptionValue.StringOptionValue)?.value
-
-    return if (arg != null) {
-        terminalRespond(stringCommand(arg)) ?: "*No response*"
-    } else "*No argument found*"
 }
 
 @KordPreview

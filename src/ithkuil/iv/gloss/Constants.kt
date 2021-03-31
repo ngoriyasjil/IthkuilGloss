@@ -82,6 +82,8 @@ val VOWELS = setOf(
 
 val VOWELS_AND_GLOTTAL_STOP = VOWELS + "'"
 
+val DIPHTHONGS = setOf("ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui", "ëu")
+
 val DEGREE_ZERO_CS_ROOT_FORMS = setOf("üa", "üe", "üo", "üö")
 
 val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
