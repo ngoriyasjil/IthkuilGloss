@@ -14,11 +14,9 @@ import kotlinx.coroutines.flow.collect
 
 
 @KordPreview
-suspend fun initializeSlashCommands(kord: Kord, testServerSnowflake: Snowflake) {
+suspend fun initializeSlashCommands(kord: Kord) {
 
-    //kord.slashCommands.getGuildApplicationCommands(testServerSnowflake).collect { it.delete() }
-
-    kord.slashCommands.createGuildApplicationCommands(testServerSnowflake) {
+    kord.slashCommands.createGlobalApplicationCommands {
 
         command("gloss", "Gloss Ithkuil text word by word") {
             string("words", "The Ithkuil text to gloss") {

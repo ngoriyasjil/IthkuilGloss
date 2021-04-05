@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 
 @KordPreview
 suspend fun main() {
-    val (token, testServerID) = File("./resources/token.txt").readLines()
+    val token = File("./resources/token.txt").readLines().first()
     val kord = Kord(token)
     kord.on<MessageCreateEvent> {
         replyAndTrackChanges()
@@ -42,7 +42,7 @@ suspend fun main() {
         messag.delete()
     }
 
-    initializeSlashCommands(kord, Snowflake(testServerID.toLong()))
+    initializeSlashCommands(kord)
 
     loadResourcesOnline()
     kord.login {
