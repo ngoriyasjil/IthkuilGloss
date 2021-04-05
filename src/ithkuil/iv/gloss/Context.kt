@@ -43,7 +43,11 @@ fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutc
                 words.subList(index+1, words.size)
                     .mapNotNull { it as? Valid }
                     .takeWhile { !(it.postfixPunctuation matches "[.?!]+".toRegex()) }
-                    .any { isVerbal(it) }
+                    .find { when (it) {
+                        is ConcatenatedWords -> true
+                        is Word -> it.wordType == WordType.FORMATIVE }
+                    }
+                    ?.let { isVerbal(it) }
             }
 
             gloss = try {
