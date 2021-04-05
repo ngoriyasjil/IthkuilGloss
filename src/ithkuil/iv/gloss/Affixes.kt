@@ -169,6 +169,11 @@ class Affix(private val vx: String, private val cs : String) {
     }
 }
 
+inline fun AffixOutcome.validate(dealWithError: (AffixError) -> Nothing) : ValidAffix = when(this) {
+    is ValidAffix -> this
+    is AffixError -> dealWithError(this)
+}
+
 fun List<Affix>.parseAll() : List<AffixOutcome> = if (size == 1) {
         this[0]
             .parse(canBeReferentialShortcut = true)
@@ -176,3 +181,7 @@ fun List<Affix>.parseAll() : List<AffixOutcome> = if (size == 1) {
     } else {
         map(Affix::parse)
 }
+
+inline fun List<AffixOutcome>.validateAll(
+    dealWithError: (AffixError) -> Nothing
+) : List<ValidAffix> = map { it.validate(dealWithError) }

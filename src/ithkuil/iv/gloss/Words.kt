@@ -198,10 +198,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
 
 
-    val slotV : List<ValidAffix> = csVxAffixes.parseAll().map { when(it) {
-        is AffixError -> return Error(it.message)
-        is ValidAffix -> it }
-    }
+    val slotV : List<ValidAffix> = csVxAffixes.parseAll().validateAll { return Error(it.message) }
 
 
     var cnInVI = false
@@ -254,17 +251,18 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     if (shortcut != null && slotVFilled && !hasSlotV) return Error("Unexpectedly few slot V affixes")
 
-    val slotVIIAndMaybeSlotV : List<Glossable> = vxCsAffixes.parseAll().map { when(it) {
-        is AffixError -> return Error(it.message)
-        is ValidAffix -> it }
-    }.let { if (caIndex != null) {
-        buildList {
-            addAll(it.subList(0, caIndex))
-            add(endOfSlotVMarker)
-            addAll(it.subList(caIndex, it.size))
+    val slotVIIAndMaybeSlotV: List<Glossable> = vxCsAffixes
+        .parseAll()
+        .validateAll { return Error(it.message) }
+        .let {
+            if (caIndex != null) {
+                buildList {
+                    addAll(it.subList(0, caIndex))
+                    add(endOfSlotVMarker)
+                    addAll(it.subList(caIndex, it.size))
+                }
+            } else it
         }
-    } else it
-    }
 
     val marksMood = word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC)
 
@@ -515,12 +513,7 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
             break
         }
 
-        val affix = Affix(word[index], word[index + 1]).parse().let {
-            when(it) {
-                is AffixError -> return Error(it.message)
-                is ValidAffix -> it
-            }
-        }
+        val affix = Affix(word[index], word[index + 1]).parse().validate { return Error(it.message) }
 
         vxCsAffixes.add(affix)
         index += 2
@@ -551,12 +544,7 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
 
     val czGlottal = firstAffixVx != word[index+1]
 
-    val firstAffix = Affix(cs = word[index], vx = firstAffixVx).parse().let {
-        when(it) {
-            is AffixError -> return Error(it.message)
-            is ValidAffix -> it
-        }
-    }
+    val firstAffix = Affix(cs = word[index], vx = firstAffixVx).parse().validate { return Error(it.message) }
     index += 2
 
     val cz = "${if (czGlottal) "'" else ""}${word[index]}"
@@ -569,13 +557,7 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
     while (true) {
         if (index + 1 > word.lastIndex) break
 
-        val affix = Affix(word[index], word[index + 1]).parse().let {
-            when(it) {
-                is AffixError -> return Error(it.message)
-                is ValidAffix -> it
-            }
-        }
-
+        val affix = Affix(word[index], word[index + 1]).parse().validate { return Error(it.message) }
         vxCsAffixes.add(affix)
         index += 2
     }
@@ -600,12 +582,7 @@ fun parseAffixual(word: Word): GlossOutcome {
 
     if (word.size < 2) return Error("Affixual adjunct too short: ${word.size}")
 
-    val affix = Affix(word[0], word[1]).parse().let {
-        when(it) {
-            is AffixError -> return Error(it.message)
-            is ValidAffix -> it
-        }
-    }
+    val affix = Affix(word[0], word[1]).parse().validate { return Error(it.message) }
 
     val scope = affixualAdjunctScope(word.getOrNull(2))
 
