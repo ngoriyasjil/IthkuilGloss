@@ -16,35 +16,34 @@ val startTime = System.currentTimeMillis()
 val logger = KotlinLogging.logger { }
 
 
-
 data class AffixData(val abbreviation: String, val descriptions: List<String>) {
-    operator fun get (degree: Degree ) = descriptions[degree.ordinal]
+    operator fun get(degree: Degree) = descriptions[degree.ordinal]
 }
 
 fun parseAffixes(data: String): Map<String, AffixData> = data
     .lineSequence()
     .drop(1)
-    .map       { it.split("\t") }
-    .filter    { it.size >= 11 }
+    .map { it.split("\t") }
+    .filter { it.size >= 11 }
     .associate { it[0] to AffixData(it[1], it.subList(2, 11)) }
 
 data class RootData(val descriptions: List<String>) {
 
-    operator fun get (stem: Stem) = descriptions[stem.ordinal]
+    operator fun get(stem: Stem) = descriptions[stem.ordinal]
 
 }
 
 fun parseRoots(data: String): Map<String, RootData> = data
     .lineSequence()
     .drop(1)
-    .map       { it.split("\t") }
-    .filter    { it.size >= 5 }
+    .map { it.split("\t") }
+    .filter { it.size >= 5 }
     .associate { it[0] to RootData(it.subList(1, 5)) }
 
 object LocalDictionary : Resources {
 
     var affixes: Map<String, AffixData> = emptyMap()
-    var roots:  Map<String, RootData>  = emptyMap()
+    var roots: Map<String, RootData> = emptyMap()
 
     override fun getAffix(cs: String): AffixData? = affixes[cs]
 
@@ -104,9 +103,11 @@ fun respond(content: String): String? {
     val request = fullRequest.removePrefix("??").removePrefix("?")
     val o = GlossOptions(requestPrecision(request), fullRequest.startsWith("??"))
     logger.info { "   respond($content) received options: $o" }
-    logger.info { "   respond($content) received arguments: ${ 
-        arguments.mapIndexed { index, it -> "$index: $it" }
-    }" }
+    logger.info {
+        "   respond($content) received arguments: ${
+            arguments.mapIndexed { index, it -> "$index: $it" }
+        }"
+    }
 
     return when (request) {
         "gloss", "short", "full" -> wordByWord(arguments, o)
@@ -164,7 +165,7 @@ fun lookupRoot(crs: List<String>): String {
             val titleLine = "**-${cr.toUpperCase()}-**: $generalDescription"
 
             val descLines = stemDescriptions.mapIndexedNotNull { index, description ->
-                if (description.isNotEmpty()) "${index+1}. $description"
+                if (description.isNotEmpty()) "${index + 1}. $description"
                 else null
             }.joinToString("\n")
 
@@ -195,7 +196,7 @@ fun lookupAffix(cxs: List<String>): String {
             val titleLine = "**-$cx**: $abbreviation"
 
             val descLines = degreeDescriptions.mapIndexedNotNull { index, description ->
-                if (description.isNotEmpty()) "${index+1}. $description"
+                if (description.isNotEmpty()) "${index + 1}. $description"
                 else null
             }.joinToString("\n")
 

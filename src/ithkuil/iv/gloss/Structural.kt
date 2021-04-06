@@ -4,9 +4,7 @@ import ithkuil.iv.gloss.dispatch.AffixData
 import ithkuil.iv.gloss.dispatch.RootData
 
 sealed class GlossOutcome
-
 class Error(val message: String) : GlossOutcome()
-
 class Foreign(val word: String) : GlossOutcome()
 
 open class Gloss(
@@ -68,16 +66,15 @@ enum class Precision {
 }
 
 interface Resources {
-    fun getAffix(cs: String) : AffixData?
-    fun getRoot(cr: String) : RootData?
+    fun getAffix(cs: String): AffixData?
+    fun getRoot(cr: String): RootData?
 }
 
 interface Glossable {
     fun toString(o: GlossOptions): String
 
-    fun checkDictionary(r: Resources) : Glossable = this // Usually just does nothing
+    fun checkDictionary(r: Resources): Glossable = this
 }
-
 
 
 interface Category : Glossable {
@@ -139,25 +136,27 @@ class GlossString(
             ignorable && !o.includeDefaults -> ""
             o.concise -> short
             o.verbose -> full
-            else      -> normal
+            else -> normal
         }
     }
 }
 
-class Shown(private val value: Glossable, private val condition : Boolean = true) : Glossable {
+class Shown(private val value: Glossable, private val condition: Boolean = true) : Glossable {
 
     override fun toString(o: GlossOptions): String = value.toString(o.showDefaults(condition))
 
 }
 
-class Underline<T: Glossable>(val value: T, var used: Boolean = false) : Glossable {
+class Underlineable<T : Glossable>(val value: T, var used: Boolean = false) : Glossable {
 
     override fun toString(o: GlossOptions): String = value.toString(o).let { if (used) "__${it}__" else it }
 
 }
 
-class ForcedDefault(private val value: Glossable, private val default: String, private val condition: Boolean = true) : Glossable {
+class ForcedDefault(private val value: Glossable, private val default: String, private val condition: Boolean = true) :
+    Glossable {
 
-    override fun toString(o: GlossOptions): String = value.toString(o).let { if (it.isEmpty() && condition) default else it }
+    override fun toString(o: GlossOptions): String =
+        value.toString(o).let { if (it.isEmpty() && condition) default else it }
 
 }

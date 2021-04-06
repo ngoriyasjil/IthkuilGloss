@@ -3,7 +3,7 @@ package ithkuil.iv.gloss
 import java.lang.Exception
 import ithkuil.iv.gloss.dispatch.logger
 
-fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutcome>> {
+fun glossInContext(words: List<FormattingOutcome>): List<Pair<String, GlossOutcome>> {
     val glossPairs = mutableListOf<Pair<String, GlossOutcome>>()
 
     var withinQuotes = false
@@ -39,13 +39,15 @@ fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutc
 
             }
 
-            val nextFormativeIsVerbal : Boolean? by lazy {
-                words.subList(index+1, words.size)
+            val nextFormativeIsVerbal: Boolean? by lazy {
+                words.subList(index + 1, words.size)
                     .mapNotNull { it as? Valid }
                     .takeWhile { !(it.postfixPunctuation matches "[.?!]+".toRegex()) }
-                    .find { when (it) {
-                        is ConcatenatedWords -> true
-                        is Word -> it.wordType == WordType.FORMATIVE }
+                    .find {
+                        when (it) {
+                            is ConcatenatedWords -> true
+                            is Word -> it.wordType == WordType.FORMATIVE
+                        }
                     }
                     ?.let { isVerbal(it) }
             }
@@ -79,7 +81,7 @@ fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutc
 
 }
 
-fun isVerbal(word: Valid) : Boolean = when (word) {
+fun isVerbal(word: Valid): Boolean = when (word) {
     is ConcatenatedWords -> isVerbal(word.words.last())
     is Word -> {
         (word.wordType == WordType.FORMATIVE)
@@ -87,9 +89,9 @@ fun isVerbal(word: Valid) : Boolean = when (word) {
     }
 }
 
-private fun isTerminator(word: Valid) = word == listOf("h","ü") || word.prefixPunctuation == LOW_TONE_MARKER
+private fun isTerminator(word: Valid) = word == listOf("h", "ü") || word.prefixPunctuation == LOW_TONE_MARKER
 
-fun isCarrier(word: Valid) : Boolean {
+fun isCarrier(word: Valid): Boolean {
 
     return when (word) {
         is ConcatenatedWords -> word.words.any { isCarrier(it) }

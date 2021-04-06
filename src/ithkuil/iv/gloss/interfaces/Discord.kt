@@ -1,7 +1,6 @@
 package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
-import dev.kord.common.entity.Snowflake
 import dev.kord.core.*
 import dev.kord.core.behavior.channel.MessageChannelBehavior
 import dev.kord.core.behavior.edit
@@ -14,15 +13,11 @@ import dev.kord.core.event.message.MessageUpdateEvent
 import dev.kord.core.event.message.ReactionAddEvent
 import dev.kord.core.live.live
 import dev.kord.core.live.on
-
-import java.io.File
-import java.lang.StringBuilder
-
 import ithkuil.iv.gloss.dispatch.loadResourcesOnline
 import ithkuil.iv.gloss.dispatch.logger
-import ithkuil.iv.gloss.dispatch.respond as terminalRespond
-
 import kotlinx.coroutines.delay
+import java.io.File
+import ithkuil.iv.gloss.dispatch.respond as terminalRespond
 
 @KordPreview
 suspend fun main() {
@@ -38,7 +33,7 @@ suspend fun main() {
         if (messag.author != kord.getSelf()) return@on
         if (user != messag.referencedMessage?.author) return@on
         if (emoji != ReactionEmoji.Unicode("\u274C")) return@on
-        
+
         messag.delete()
     }
 
@@ -85,7 +80,7 @@ private suspend fun MessageCreateEvent.replyAndTrackChanges() {
     liveMessage.shutDown()
 }
 
-suspend fun Message.respondTo() : Message? {
+suspend fun Message.respondTo(): Message? {
     val user = author ?: return null
     if (user.isBot || !(content.startsWith("?") || content.contains(":?"))) return null
     if (content == "?help") {

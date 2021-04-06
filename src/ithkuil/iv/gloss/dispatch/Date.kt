@@ -34,26 +34,26 @@ private val NUMBER_AFFIXES = listOf(
     "jd"
 )
 
-fun  main() {
+fun main() {
     println(datetimeInIthkuil(LocalDateTime.now()))
 }
 
-private fun digitPart(n: Int) : String {
+private fun digitPart(n: Int): String {
     val units = n % 10
     val tens = n / 10
     val u = NUMBER_ROOTS[units]
-    val t = if (tens > 0) "${VOWEL_FORMS[tens-1]}rs" else ""
+    val t = if (tens > 0) "${VOWEL_FORMS[tens - 1]}rs" else ""
 
     return "${u}${t}"
 }
 
-fun datetimeInIthkuil(date: LocalDateTime? = null) : String {
+fun datetimeInIthkuil(date: LocalDateTime? = null): String {
 
     val datetime = date ?: LocalDateTime.now(ZoneId.of("UTC"))
 
     val day = datetime.dayOfMonth
 
-    val month =  datetime.monthValue
+    val month = datetime.monthValue
 
     val ardhal = "Wu${digitPart(day)}irwia${NUMBER_AFFIXES[month]}ó"
 

@@ -14,7 +14,7 @@ enum class Degree(val numeral: Int) {
     ZERO(0);
 
     companion object {
-        fun byForm(n: Int) : Degree? = values().find { it.numeral == n }
+        fun byForm(n: Int): Degree? = values().find { it.numeral == n }
     }
 }
 
@@ -81,11 +81,8 @@ class ReferentialShortcut(private val referents: Referential, private val case: 
 }
 
 
-
-
-
-class Affix(private val vx: String, private val cs : String) {
-    fun parse(canBeReferentialShortcut: Boolean = false) : AffixOutcome {
+class Affix(private val vx: String, private val cs: String) {
+    fun parse(canBeReferentialShortcut: Boolean = false): AffixOutcome {
         if (vx == CA_STACKING_VOWEL) {
             val ca = parseCa(cs) ?: return AffixError("Unknown stacked Ca: $cs")
             return CaStacker(ca)
@@ -103,7 +100,7 @@ class Affix(private val vx: String, private val cs : String) {
             val kind = when (cs) {
                 "sw", "sy", "zw", "zy" -> CaseAffixKind.CASE_ACCESSOR
                 "šw", "šy", "žw", "žy" -> CaseAffixKind.INVERSE_ACCESSOR
-                "lw", "ly"             -> CaseAffixKind.CASE_STACKING
+                "lw", "ly" -> CaseAffixKind.CASE_STACKING
                 else -> return AffixError("Unknown case affix form: $cs")
             }
 
@@ -154,9 +151,9 @@ class Affix(private val vx: String, private val cs : String) {
 
         val degree = if (vx in setOf("üa", "üe", "üo")) {
             Degree.ZERO
-        } else Degree.values().getOrNull(form-1) ?: return AffixError("Unknown affix vowel form: $vx")
+        } else Degree.values().getOrNull(form - 1) ?: return AffixError("Unknown affix vowel form: $vx")
 
-        val type: AffixType = if (degree == Degree.ZERO) when(vx) {
+        val type: AffixType = if (degree == Degree.ZERO) when (vx) {
             "üa" -> AffixType.ONE
             "üe" -> AffixType.TWO
             "üo" -> AffixType.THREE
@@ -173,19 +170,19 @@ class Affix(private val vx: String, private val cs : String) {
     }
 }
 
-inline fun AffixOutcome.validate(dealWithError: (AffixError) -> Nothing) : ValidAffix = when(this) {
+inline fun AffixOutcome.validate(dealWithError: (AffixError) -> Nothing): ValidAffix = when (this) {
     is ValidAffix -> this
     is AffixError -> dealWithError(this)
 }
 
-fun List<Affix>.parseAll() : List<AffixOutcome> = if (size == 1) {
-        this[0]
-            .parse(canBeReferentialShortcut = true)
-            .let { listOf(it) }
-    } else {
-        map(Affix::parse)
+fun List<Affix>.parseAll(): List<AffixOutcome> = if (size == 1) {
+    this[0]
+        .parse(canBeReferentialShortcut = true)
+        .let { listOf(it) }
+} else {
+    map(Affix::parse)
 }
 
 inline fun List<AffixOutcome>.validateAll(
     dealWithError: (AffixError) -> Nothing
-) : List<ValidAffix> = map { it.validate(dealWithError) }
+): List<ValidAffix> = map { it.validate(dealWithError) }

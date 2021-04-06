@@ -54,8 +54,8 @@ val CA_SUBSTITUTIONS = listOf(
     "^nd" to "tt", "^ng" to "kk", "^mb" to "pp", "nz" to "nn", "mz" to "mm",
     "ẓ" to "ňy", "ž" to "çy", "j" to "tçy", "gž" to "kçy", "bž" to "pçy",
     "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
-    "c" to "ts", "č" to "tš", "ḑ" to "tţ")
-
+    "c" to "ts", "č" to "tš", "ḑ" to "tţ"
+)
 
 
 val UNSTRESSED_FORMS = listOf(
@@ -69,10 +69,10 @@ val UNSTRESSED_FORMS = listOf(
 //Vowels
 
 val VOWEL_FORMS = listOf(
-        "a", "ä", "e", "ï", "i", "ö", "o", "ü", "u",
-        "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-        "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
-        "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa"
+    "a", "ä", "e", "ï", "i", "ö", "o", "ü", "u",
+    "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
+    "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
+    "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa"
 )
 
 val VOWELS = setOf(
@@ -107,8 +107,8 @@ val CASE_AFFIXES = setOf(
 )
 
 val CN_CONSONANTS = setOf(
-        "h", "hl", "hr", "hm", "hn", "hň",
-        "w", "y", "hw", "hlw", "hly", "hnw", "hny"
+    "h", "hl", "hr", "hm", "hn", "hň",
+    "w", "y", "hw", "hlw", "hly", "hnw", "hny"
 )
 
 val CN_PATTERN_ONE = setOf(
@@ -118,13 +118,5 @@ val CN_PATTERN_ONE = setOf(
 val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "hw", "'hw")
 
 //Other
-
-val DEFAULT_CA = Slot(
-    Configuration.UNIPLEX,
-    Extension.DELIMITIVE,
-    Affiliation.CONSOLIDATIVE,
-    Perspective.MONADIC,
-    Essence.NORMAL
-)
 
 val SENTENCE_START_GLOSS = GlossString("[sentence start]", "[sentence:]", "[S]")

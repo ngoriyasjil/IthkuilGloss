@@ -60,10 +60,10 @@ class GeneralTests {
     @Test
     fun poemTest() {
         "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN.CSV-RPV-STM"
-        "khe" glossesTo  "Obv.DET-ABS"
-        "adnilö'ö" glossesTo  "S1-**dn**-OBJ-UTL"
-        "yeilaišeu" glossesTo  "S2.RPV-**l**-**š**/1₂-ATT"
-        "aiňļavu'u" glossesTo  "S1.**r**/4-**ňļ**-N-RLT"
+        "khe" glossesTo "Obv.DET-ABS"
+        "adnilö'ö" glossesTo "S1-**dn**-OBJ-UTL"
+        "yeilaišeu" glossesTo "S2.RPV-**l**-**š**/1₂-ATT"
+        "aiňļavu'u" glossesTo "S1.**r**/4-**ňļ**-N-RLT"
     }
 
     @Test

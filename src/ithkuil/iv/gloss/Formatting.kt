@@ -2,7 +2,7 @@ package ithkuil.iv.gloss
 
 sealed class FormattingOutcome
 
-class Invalid(private val word : String, val message: String) : FormattingOutcome() {
+class Invalid(private val word: String, val message: String) : FormattingOutcome() {
     override fun toString(): String = word
 }
 
@@ -12,14 +12,16 @@ sealed class Valid : FormattingOutcome() {
 }
 
 class ConcatenatedWords(
-    val words : List<Word>,
+    val words: List<Word>,
     override val prefixPunctuation: String = "",
     override val postfixPunctuation: String = "",
 ) : Valid() {
     override fun toString(): String = words
-        .joinToString("-",
-        prefix = prefixPunctuation,
-        postfix = postfixPunctuation) { it.toString() }
+        .joinToString(
+            "-",
+            prefix = prefixPunctuation,
+            postfix = postfixPunctuation
+        ) { it.toString() }
 }
 
 class Word(
@@ -27,11 +29,11 @@ class Word(
     val stress: Stress,
     override val prefixPunctuation: String = "",
     override val postfixPunctuation: String = "",
-    private val groups : List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
+    private val groups: List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
     // ^ Should never be specified; class delegation doesn't accept properties, only parameters
 ) : List<String> by groups, Valid() {
 
-    override fun toString() : String {
+    override fun toString(): String {
         return stressedGroups.joinToString("", prefix = prefixPunctuation, postfix = postfixPunctuation)
     }
 
@@ -50,7 +52,7 @@ class Word(
 
 }
 
-fun formatWord(s: String) : FormattingOutcome {
+fun formatWord(s: String): FormattingOutcome {
 
     if (s.isEmpty()) return Invalid(s, "Empty word")
 
@@ -64,16 +66,17 @@ fun formatWord(s: String) : FormattingOutcome {
         val words = word
             .split("-")
             .map { formatWord(it) }
-            .map { when(it) {
-                is Invalid -> return Invalid(s, "${it.message} ($it)")
-                is ConcatenatedWords -> return Invalid(s, "Nested concatenation! ($it)")
-                is Word -> {
-                    if (it.wordType != WordType.FORMATIVE) {
-                        return Invalid(s, "Non-formative concatenated: ($it)")
+            .map {
+                when (it) {
+                    is Invalid -> return Invalid(s, "${it.message} ($it)")
+                    is ConcatenatedWords -> return Invalid(s, "Nested concatenation! ($it)")
+                    is Word -> {
+                        if (it.wordType != WordType.FORMATIVE) {
+                            return Invalid(s, "Non-formative concatenated: ($it)")
+                        }
+                        it
                     }
-                    it
                 }
-            }
             }
         return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
     }
@@ -98,13 +101,14 @@ fun formatWord(s: String) : FormattingOutcome {
         Stress.INVALID_PLACE -> return Invalid(s, "Unrecognized stress placement")
         Stress.MARKED_DEFAULT -> return Invalid(s, "Marked default stress")
         Stress.DOUBLE_MARKED -> return Invalid(s, "Double-marked stress")
-        else -> {}
+        else -> {
+        }
     }
 
     return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
 }
 
-private fun codepointString(c : Char): String {
+private fun codepointString(c: Char): String {
     val codepoint = c.toInt()
         .toString(16)
         .toUpperCase()
@@ -112,7 +116,7 @@ private fun codepointString(c : Char): String {
     return "\"$c\" (U+$codepoint)"
 }
 
-fun List<String>.formatAll() : List<FormattingOutcome> = map { formatWord(it) }
+fun List<String>.formatAll(): List<FormattingOutcome> = map { formatWord(it) }
 
 enum class GroupingState {
     VOWEL,
@@ -134,10 +138,10 @@ fun String.splitGroups(): List<String>? {
     var state = if (chars[index] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
 
     while (index <= lastIndex) {
-        val group : String
+        val group: String
 
         if (chars[index] == "-") {
-            state = if (chars[index+1] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
+            state = if (chars[index + 1] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
             group = "-"
         } else {
             val cluster = when (state) {
@@ -175,9 +179,9 @@ fun String.isVowel() = when (length) {
 
 fun String.isConsonant() = this.all { it.toString() in CONSONANTS }
 
-val STRESSED_VOWELS = setOf('á','â','é', 'ê', 'í', 'î', 'ô', 'ó', 'û', 'ú')
+val STRESSED_VOWELS = setOf('á', 'â', 'é', 'ê', 'í', 'î', 'ô', 'ó', 'û', 'ú')
 
-fun String.hasStress() : Boolean? = when {
+fun String.hasStress(): Boolean? = when {
     this.getOrNull(1) in STRESSED_VOWELS -> null
     this[0] in STRESSED_VOWELS -> true
     else -> false
@@ -197,8 +201,8 @@ infix fun String.isSameVowelAs(s: String): Boolean = if ("/" in s) {
     s == this
 }
 
-fun String.substituteAll(substitutions : List<Pair<String, String>>) = substitutions.fold(this) {
-        current, (allo, sub) -> current.replace(allo.toRegex(), sub)
+fun String.substituteAll(substitutions: List<Pair<String, String>>) = substitutions.fold(this) { current, (allo, sub) ->
+    current.replace(allo.toRegex(), sub)
 }
 
 fun String.defaultFormWithStress() = toLowerCase().substituteAll(ALLOGRAPHS)
@@ -240,7 +244,7 @@ fun findStress(groups: List<String>): Stress {
         return if (count == 0) Stress.MONOSYLLABIC else Stress.MARKED_DEFAULT
     }
 
-    return when (stresses.indexOfFirst { it } ) {
+    return when (stresses.indexOfFirst { it }) {
         -1 -> Stress.PENULTIMATE
         0 -> Stress.ULTIMATE
         1 -> Stress.MARKED_DEFAULT

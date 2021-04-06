@@ -1,15 +1,15 @@
 package ithkuil.iv.gloss
 
 
-fun externalJuncture(formatted : List<FormattingOutcome>) : String {
+fun externalJuncture(formatted: List<FormattingOutcome>): String {
 
     val (valids, invalids) = formatted.partition { it is Valid }
         .let { (valids, invalids) ->
             Pair(
-            valids.map { it as Valid },
-            invalids.map { it as Invalid }
-        )
-    }
+                valids.map { it as Valid },
+                invalids.map { it as Invalid }
+            )
+        }
 
     if (invalids.isNotEmpty()) {
         return invalids.joinToString("\n") { "**$it**: *${it.message}*" }
@@ -17,7 +17,7 @@ fun externalJuncture(formatted : List<FormattingOutcome>) : String {
 
 
     val words: List<Word> = valids.flatMap {
-        when(it) {
+        when (it) {
             is Word -> listOf(it)
             is ConcatenatedWords -> it.words
         }
@@ -38,12 +38,12 @@ fun externalJuncture(formatted : List<FormattingOutcome>) : String {
     return violations.joinToString("\n")
 }
 
-private fun <T> Iterable<T>.pairs() : Sequence<Pair<T, T>> = sequence {
+private fun <T> Iterable<T>.pairs(): Sequence<Pair<T, T>> = sequence {
 
     val iterator = iterator()
 
     var e1 = if (iterator.hasNext()) {
-         iterator.next()
+        iterator.next()
     } else return@sequence
 
     for (e2 in iterator) {

@@ -51,6 +51,7 @@ enum class Specification(override val short: String) : Category {
     CONSTITUTIVE("CSV"),
     OBJECTIVE("OBJ");
 }
+
 enum class Function(override val short: String) : Category {
     STATIVE("STA"),
     DYNAMIC("DYN");
@@ -80,8 +81,8 @@ enum class Configuration(override val short: String) : Category {
     MULTIPLEX_FUZZY_FUSED("MFF");
 
     companion object {
-        fun byAbbreviation(s: String) : Configuration? {
-            return values().find { it.short == s  }
+        fun byAbbreviation(s: String): Configuration? {
+            return values().find { it.short == s }
         }
     }
 
@@ -135,7 +136,7 @@ enum class Valence(override val short: String) : Category {
     PARTICIPATIVE("PTI");
 
     companion object {
-        fun byForm(form: Int) = values()[form-1]
+        fun byForm(form: Int) = values()[form - 1]
     }
 }
 
@@ -152,7 +153,7 @@ enum class Phase(override val short: String) : NoDefault {
     FLUCTUATIVE("FLC");
 
     companion object {
-        fun byForm(form: Int) = values()[form-1]
+        fun byForm(form: Int) = values()[form - 1]
     }
 
 }
@@ -203,7 +204,7 @@ enum class Level(override val short: String) : NoDefault {
     MAXIMAL("MAX");
 
     companion object {
-        fun byForm(form: Int) = values()[form-1]
+        fun byForm(form: Int) = values()[form - 1]
     }
 }
 
@@ -459,6 +460,7 @@ enum class Bias(override val short: String, val cb: String, private val represen
     VEXATIVE("VEX", "ksk", "How annoying!"),
     CORRUPTIVE("CRP", "gžž", "What corruption!"),
     DEJECTIVE("DEJ", "žžg", "[dejected sigh]"),
+
     // Up-to-date in Roots; out-of-date in Morpho-phonology
     RENUNCIATIVE("RNC", "mst", "So much for...!"),
     ARBITRARY("ARB", "xtļ", "Yeah, whatever..."),

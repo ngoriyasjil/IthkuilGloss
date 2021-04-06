@@ -2,7 +2,7 @@ package ithkuil.iv.gloss
 
 import ithkuil.iv.gloss.dispatch.logger
 
-fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> GlossOutcome) : GlossOutcome {
+fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> GlossOutcome): GlossOutcome {
     val (strippedWord, sentencePrefix) = word.stripSentencePrefix()
 
     val result = parseFunction(strippedWord)
@@ -13,20 +13,21 @@ fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> GlossOutcome
     }
 }
 
-fun parseWord(iword: Word, marksMood : Boolean? = null): GlossOutcome {
+@Suppress("Reformat") // This looks like dogshit without the vertical alignment.
+fun parseWord(iword: Word, marksMood: Boolean? = null): GlossOutcome {
     logger.info { "-> parseWord($iword)" }
 
     val result = parseWithoutSentencePrefix(iword) { word ->
         when (word.wordType) {
-            WordType.BIAS_ADJUNCT             -> parseBiasAdjunct           (word)
-            WordType.MOOD_CASESCOPE_ADJUNCT   -> parseMoodCaseScopeAdjunct  (word)
-            WordType.REGISTER_ADJUNCT         -> parseRegisterAdjunct       (word)
-            WordType.MODULAR_ADJUNCT          -> parseModular               (word, marksMood = marksMood)
-            WordType.COMBINATION_REFERENTIAL  -> parseCombinationReferential(word)
-            WordType.AFFIXUAL_ADJUNCT         -> parseAffixual              (word)
-            WordType.MULTIPLE_AFFIX_ADJUNCT   -> parseMultipleAffix         (word)
-            WordType.REFERENTIAL              -> parseReferential           (word)
-            WordType.FORMATIVE                -> parseFormative             (word)
+            WordType.BIAS_ADJUNCT            -> parseBiasAdjunct           (word)
+            WordType.MOOD_CASESCOPE_ADJUNCT  -> parseMoodCaseScopeAdjunct  (word)
+            WordType.REGISTER_ADJUNCT        -> parseRegisterAdjunct       (word)
+            WordType.MODULAR_ADJUNCT         -> parseModular               (word, marksMood = marksMood)
+            WordType.COMBINATION_REFERENTIAL -> parseCombinationReferential(word)
+            WordType.AFFIXUAL_ADJUNCT        -> parseAffixual              (word)
+            WordType.MULTIPLE_AFFIX_ADJUNCT  -> parseMultipleAffix         (word)
+            WordType.REFERENTIAL             -> parseReferential           (word)
+            WordType.FORMATIVE               -> parseFormative             (word)
         }
     }
     logger.info {
@@ -55,8 +56,8 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
     }
 
     val glosses = chain.words.map {
-        val gloss = parseWithoutSentencePrefix(it) {
-                formative -> parseFormative(formative, inConcatenationChain = true)
+        val gloss = parseWithoutSentencePrefix(it) { formative ->
+            parseFormative(formative, inConcatenationChain = true)
         }
 
         when (gloss) {
@@ -69,7 +70,7 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
     return ConcatenationChain(glosses)
 }
 
-fun parseBiasAdjunct(word: Word) : GlossOutcome {
+fun parseBiasAdjunct(word: Word): GlossOutcome {
     val bias = Bias.byCb(word[0]) ?: return Error("Unknown bias: ${word[0]}")
 
     return Gloss(bias)
@@ -84,7 +85,7 @@ fun parseRegisterAdjunct(word: Word): GlossOutcome {
 
 @OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
-fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOutcome {
+fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutcome {
     val glottalIndices = word.mapIndexedNotNull { index, group ->
         if ('\'' in group) index else null
     }
@@ -129,15 +130,15 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
-            val stem = slotII.find { it is Underline<*> && it.value is Stem } as? Underline<Stem>
+            val stem = slotII.find { it is Underlineable<*> && it.value is Stem } as? Underlineable<Stem>
                 ?: return Error("Stem not found")
             Root(groups[index], stem)
         }
         RootMode.AFFIX -> {
-            val form = if (groups[index+1] in DEGREE_ZERO_CS_ROOT_FORMS) {
+            val form = if (groups[index + 1] in DEGREE_ZERO_CS_ROOT_FORMS) {
                 0
-            } else  {
-                seriesAndForm(groups[index+1]).second
+            } else {
+                seriesAndForm(groups[index + 1]).second
             }
             val degree = Degree.byForm(form) ?: return Error("Unknown Cs-root degree: $form")
             CsAffix(groups[index], degree)
@@ -163,7 +164,6 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         RootMode.ROOT, RootMode.REFERENCE -> parseVr(vr) ?: return Error("Unknown Vr value: $vr")
         RootMode.AFFIX -> parseAffixVr(vr) ?: return Error("Unknown Cs-root Vr value: $vr")
     }
-
 
 
     val csVxAffixes = if (shortcut == null) {
@@ -217,7 +217,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
     }
 
 
-    var endOfVxCsSlotVIndex : Int? = null
+    var endOfVxCsSlotVIndex: Int? = null
 
     val vxCsAffixes = buildList {
         while (true) {
@@ -260,24 +260,26 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         }
 
     val absoluteLevel = groups.getOrNull(index + 1) == "y" &&
-            groups.getOrNull(index + 3) in CN_PATTERN_ONE
+        groups.getOrNull(index + 3) in CN_PATTERN_ONE
 
     val slotVIII: Slot? = when {
         absoluteLevel -> {
-                    parseVnCn(groups[index] + groups[index+2],
-                        groups[index + 3],
-                        isVerbal,
-                        absoluteLevel = true)
-                            .also { index += 4 }
+            parseVnCn(
+                groups[index] + groups[index + 2],
+                groups[index + 3],
+                isVerbal,
+                absoluteLevel = true
+            )
+                .also { index += 4 }
 
-                        ?: return Error(
-                            "Unknown VnCn value: ${
-                                groups
-                                    .subList(index, index + 4)
-                                    .joinToString("")
-                            }"
-                        )
-                }
+                ?: return Error(
+                    "Unknown VnCn value: ${
+                        groups
+                            .subList(index, index + 4)
+                            .joinToString("")
+                    }"
+                )
+        }
 
         groups.getOrNull(index + 1) in CN_CONSONANTS -> {
             parseVnCn(groups[index], groups[index + 1], isVerbal, false).also { index += 2 }
@@ -303,8 +305,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         when (word.stress) {
             Stress.PENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
             Stress.MONOSYLLABIC, Stress.ULTIMATE -> {
-                val glottalified = glottalizeVowel(vcVk)
-                Case.byVowel(glottalified) ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
+                Case.byVowel(glottalizeVowel(vcVk)) ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
             }
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress in concatenated formative")
             else -> return Error("Stress error")
@@ -312,10 +313,10 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
     }
     index++
 
-    if (groups.lastIndex >= index) return Error("Formative continued unexpectedly: ${groups[index]}")
+    if (groups.lastIndex >= index) return Error("Formative continued unexpectedly: ${groups.drop(index - 1)}")
 
     val slotList: List<Glossable> = listOfNotNull(concatenation, slotII, root, slotIV) +
-            slotV + listOfNotNull(slotVI) + slotVIIAndMaybeSlotV + listOfNotNull(slotVIII, slotIX)
+        slotV + listOfNotNull(slotVI) + slotVIIAndMaybeSlotV + listOfNotNull(slotVIII, slotIX)
 
     return Gloss(slotList, stressMarked = relation)
 
@@ -381,7 +382,7 @@ class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot
 
 fun parseFullReferent(clusters: List<String>): Referential? {
 
-    val reflist : List<Slot> = clusters.flatMap { c ->
+    val reflist: List<Slot> = clusters.flatMap { c ->
         parseFullReferent(c) ?: return null
     }
 
@@ -514,9 +515,11 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
     }
 
 
-    return Gloss(ref, Shown(caseA, condition = caseB != null), specification,
+    return Gloss(
+        ref, Shown(caseA, condition = caseB != null), specification,
         *vxCsAffixes.toTypedArray(),
-        caseB?.let { Shown(it) }, stressMarked = essence)
+        caseB?.let { Shown(it) }, stressMarked = essence
+    )
 
 }
 
@@ -527,9 +530,9 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
     var index = 0
     if (word[0] == "ë") index++
 
-    val firstAffixVx = word[index+1].removeSuffix("'")
+    val firstAffixVx = word[index + 1].removeSuffix("'")
 
-    val czGlottal = firstAffixVx != word[index+1]
+    val czGlottal = firstAffixVx != word[index + 1]
 
     val firstAffix = Affix(cs = word[index], vx = firstAffixVx).parse().validate { return Error(it.message) }
     index += 2
@@ -577,8 +580,8 @@ fun parseAffixual(word: Word): GlossOutcome {
 
 }
 
-fun parseMoodCaseScopeAdjunct(word: Word) : GlossOutcome {
-    val value : Glossable = when (val v = word[1]) {
+fun parseMoodCaseScopeAdjunct(word: Word): GlossOutcome {
+    val value: Glossable = when (val v = word[1]) {
         "a" -> Mood.FACTUAL
         "e" -> Mood.SUBJUNCTIVE
         "i" -> Mood.ASSUMPTIVE

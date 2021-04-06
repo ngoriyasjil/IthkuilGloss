@@ -87,8 +87,7 @@ fun wordTypeOf(word: Word): WordType {
 }
 
 
-
-fun pattern(word: Word, pattern : Matcher.() -> Unit) : Boolean {
+fun pattern(word: Word, pattern: Matcher.() -> Unit): Boolean {
     val matcher = Matcher(word)
     matcher.pattern()
     if (matcher.slots.isNotEmpty()) {
@@ -97,11 +96,11 @@ fun pattern(word: Word, pattern : Matcher.() -> Unit) : Boolean {
     return matcher.matching
 }
 
-class Matcher(var slots : List<String>, var matching : Boolean = true) {
+class Matcher(var slots: List<String>, var matching: Boolean = true) {
 
     fun current() = slots.getOrNull(0)
 
-    private fun fulfills(c : (String) -> Boolean) {
+    private fun fulfills(c: (String) -> Boolean) {
         if (!matching) return
 
         if (current()?.let { c(it) } == true) {
@@ -115,9 +114,9 @@ class Matcher(var slots : List<String>, var matching : Boolean = true) {
 
     fun referentialConsonant() = fulfills { it.isConsonant() || it in CP_CONSONANTS }
 
-    fun oneOf(set : Collection<String>) = fulfills { it in set }
+    fun oneOf(set: Collection<String>) = fulfills { it in set }
 
-    fun oneOf(vararg options : String) = fulfills { it in options }
+    fun oneOf(vararg options: String) = fulfills { it in options }
 
     fun maybe(pattern: Matcher.() -> Unit) {
         if (!matching) return
@@ -129,9 +128,9 @@ class Matcher(var slots : List<String>, var matching : Boolean = true) {
         if (fork.matching) this.slots = fork.slots
     }
 
-    fun maybe(vararg options : String) = maybe { oneOf(*options) }
+    fun maybe(vararg options: String) = maybe { oneOf(*options) }
 
-    fun either(first : Matcher.() -> Unit, second : Matcher.() -> Unit) {
+    fun either(first: Matcher.() -> Unit, second: Matcher.() -> Unit) {
         if (!matching) return
 
         val fork1 = Matcher(slots, true)
@@ -165,7 +164,7 @@ class Matcher(var slots : List<String>, var matching : Boolean = true) {
         val cur = current()
 
         if (cur != null) {
-            slots = listOf(transform(cur)) +  slots.drop(1)
+            slots = listOf(transform(cur)) + slots.drop(1)
         } else {
             matching = false
         }

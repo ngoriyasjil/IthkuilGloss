@@ -143,7 +143,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
 
 }
 
-private fun constructCommand(showDefaults: Boolean, precision: String, sgloss : Boolean = false): String {
+private fun constructCommand(showDefaults: Boolean, precision: String, sgloss: Boolean = false): String {
     val prefix = if (showDefaults) "??" else "?"
     val command = when (precision) {
         "full" -> "full"
@@ -156,7 +156,7 @@ private fun constructCommand(showDefaults: Boolean, precision: String, sgloss : 
 }
 
 @KordPreview
-private fun InteractionCreateEvent.commandResponse(argName: String, stringCommand: (String) -> String) : String {
+private fun InteractionCreateEvent.commandResponse(argName: String, stringCommand: (String) -> String): String {
     val arg = interaction.command.options[argName]?.string()
 
     return if (arg != null) {
