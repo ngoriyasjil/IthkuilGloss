@@ -111,6 +111,10 @@ val CN_CONSONANTS = setOf(
         "w", "y", "hw", "hlw", "hly", "hnw", "hny"
 )
 
+val CN_PATTERN_ONE = setOf(
+    "h", "hl", "hr", "hm", "hn", "hň"
+)
+
 val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "hw", "'hw")
 
 //Other

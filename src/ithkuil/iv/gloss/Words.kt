@@ -70,7 +70,9 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
 }
 
 fun parseBiasAdjunct(word: Word) : GlossOutcome {
-    return Bias.byGroup(word[0])?.let { Gloss(it) } ?: Error("Unknown bias: ${word[0]}")
+    val bias = Bias.byCb(word[0]) ?: return Error("Unknown bias: ${word[0]}")
+
+    return Gloss(bias)
 }
 
 
@@ -80,22 +82,18 @@ fun parseRegisterAdjunct(word: Word): GlossOutcome {
 }
 
 
-
 @OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOutcome {
     val glottalIndices = word.mapIndexedNotNull { index, group ->
-        if (group.contains('\'')) index else null
+        if ('\'' in group) index else null
     }
 
     if (glottalIndices.size > 2) return Error("Too many glottal stops found")
 
     val groups = word.map { group ->
-        if (group.contains('\'')) {
-            when {
-                group.isVowel() -> unGlottalVowel(group)?.first ?: group
-                else -> return Error("Unexpected glottal stop: $group")
-            }
+        if ('\'' in group) {
+            unGlottalizeVowel(group)
         } else group
     }
 
@@ -115,32 +113,33 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         }
     } else null
 
-    val slotVFilled = groups[index].isVowel() && (index in glottalIndices || index + 1 in glottalIndices)
+    val slotVFilledMarker = groups[index].isVowel() && (index in glottalIndices || index + 1 in glottalIndices)
 
     val vv: String = if (index == 0 && groups[0].isConsonant()) "a" else groups[index].also { index++ }
 
-    var rootMode = RootMode.ROOT
+    val rootMode = when (vv) {
+        "ëi", "eë", "ëu", "öë" -> RootMode.AFFIX
+        "eä", "öä" -> RootMode.REFERENCE
+        else -> RootMode.ROOT
+    }
 
-    val slotII = if (vv in SPECIAL_VV_VOWELS) {
-        when (vv) {
-            "ëi", "eë", "ëu", "öë" -> {
-                rootMode = RootMode.AFFIX
-                if (shortcut != null) return Error("Shortcuts can't be used with a Cs-root")
-            }
-            "eä", "öä" -> rootMode = RootMode.REFERENCE
-        }
-        parseSpecialVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
-    } else parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
+    val slotII = parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
+
+    if (rootMode == RootMode.AFFIX && shortcut != null) return Error("Shortcuts can't be used with a Cs-root")
 
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
-
-            val stem = slotII.find { it is Underline<*> && it.value is Stem } as? Underline<Stem> ?: return Error("Stem not present")
+            val stem = slotII.find { it is Underline<*> && it.value is Stem } as? Underline<Stem>
+                ?: return Error("Stem not found")
             Root(groups[index], stem)
         }
         RootMode.AFFIX -> {
-            val form = if (groups[index+1] in DEGREE_ZERO_CS_ROOT_FORMS) 0 else seriesAndForm(groups[index+1]).second
-            val degree = Degree.values().find { it.short == form } ?: return Error("Unknown Cs-root degree: $form")
+            val form = if (groups[index+1] in DEGREE_ZERO_CS_ROOT_FORMS) {
+                0
+            } else  {
+                seriesAndForm(groups[index+1]).second
+            }
+            val degree = Degree.byForm(form) ?: return Error("Unknown Cs-root degree: $form")
             CsAffix(groups[index], degree)
         }
         RootMode.REFERENCE -> {
@@ -157,8 +156,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
     if (concatenation != null && caseGlottal) return Error("Unexpected glottal stop in concatenated formative")
 
     val vr = if (shortcut != null) "a" else {
-        groups.getOrNull(index).also { index++ }
-            ?: return Error("Formative ended unexpectedly: ${groups.joinToString("")}")
+        groups.getOrNull(index).also { index++ } ?: return Error("Formative ended unexpectedly")
     }
 
     val slotIV = when (rootMode) {
@@ -166,130 +164,123 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
         RootMode.AFFIX -> parseAffixVr(vr) ?: return Error("Unknown Cs-root Vr value: $vr")
     }
 
-    val csVxAffixes: MutableList<Affix> = mutableListOf()
 
-    if (shortcut == null) {
+
+    val csVxAffixes = if (shortcut == null) {
         var indexV = index
-        while (true) {
-            if (groups.getOrNull(indexV)?.isGeminateCa() == true) {
-                break
-            } else if (indexV + 1 > groups.lastIndex || groups[indexV] in CN_CONSONANTS || groups[indexV] == "-") {
-                csVxAffixes.clear()
-                indexV = index
-                break
+
+        buildList {
+            while (true) {
+                if (groups.getOrNull(indexV)?.isGeminateCa() == true) {
+                    index = indexV
+                    break
+                } else if (indexV + 1 > groups.lastIndex || groups[indexV] in CN_CONSONANTS) {
+                    clear()
+                    indexV = index
+                    break
+                }
+                add(Affix(cs = groups[indexV], vx = groups[indexV + 1]))
+                indexV += 2
+            }
+        }
+
+    } else emptyList()
+
+    if (!slotVFilledMarker && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+    if (slotVFilledMarker && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+
+    val slotV = csVxAffixes.parseAll().validateAll { return Error(it.message) }
+
+    val isVerbal = word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC)
+
+    val slotVI = if (shortcut != null) null else {
+        val caForm = groups.getOrNull(index) ?: return Error("Formative ended unexpectedly")
+
+        val caValue = when {
+            caForm in CN_PATTERN_ONE -> {
+                parseVnCn("a", caForm, isVerbal, false)
+                    ?: return Error("Unknown Cn value in Ca: $caForm")
             }
 
-            val vx = groups[indexV + 1]
+            caForm.isGeminateCa() -> {
+                if (csVxAffixes.isEmpty()) return Error("Unexpected glottal Ca: $caForm")
+                val ungeminated = caForm.unGeminateCa()
+                parseCa(ungeminated) ?: return Error("Unknown Ca value: $ungeminated")
+            }
 
-            if (!vx.isVowel()) return Error("Unknown vowelform: $vx")
-
-            csVxAffixes.add(Affix(cs = groups[indexV], vx = vx))
-            indexV += 2
-
+            else -> parseCa(caForm) ?: return Error("Unknown Ca value: $caForm")
 
         }
 
-        index = indexV
-
-        if (!slotVFilled && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
-        if (slotVFilled && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
-
+        index++
+        ForcedDefault(caValue, "{Ca}", condition = csVxAffixes.isNotEmpty())
     }
 
 
+    var endOfVxCsSlotVIndex : Int? = null
 
-    val slotV : List<ValidAffix> = csVxAffixes.parseAll().validateAll { return Error(it.message) }
+    val vxCsAffixes = buildList {
+        while (true) {
+            if (index + 1 > groups.lastIndex || groups[index + 1] in CN_CONSONANTS)
+                break
+
+            add(Affix(vx = groups[index], cs = groups[index + 1]))
 
 
-    var cnInVI = false
+            if (shortcut != null && index in glottalIndices) {
 
-    val slotVI = (if (shortcut == null) {
-        val ca = if (groups.getOrNull(index)?.isGeminateCa() ?: return Error("Formative ended before Ca")) {
-            if (csVxAffixes.isNotEmpty()) {
-                groups[index].unGeminateCa()
-            } else return Error("Unexpected glottal Ca: ${groups[index]}")
-        } else groups[index]
+                if (slotVFilledMarker && size < 2) return Error("Unexpectedly few slot V affixes")
+                else if (!slotVFilledMarker && size >= 2) return Error("Unexpectedly many slot V affixes")
 
-        if (ca !in setOf("hl", "hr", "hm", "hn", "hň")) {
-            parseCa(ca).also { index++ } ?: return Error("Unknown Ca value: $ca")
-        } else {
-            DEFAULT_CA.also { cnInVI = true }
+                endOfVxCsSlotVIndex = size
+            }
+
+            index += 2
         }
-    } else null)?.let { if (csVxAffixes.isNotEmpty()) ForcedDefault(it, "{Ca}") else it }
-
-    val vxCsAffixes: MutableList<Affix> = mutableListOf()
-
-    var hasSlotV = false
-
-    var caIndex : Int? = null
-
-    val endOfSlotVMarker = GlossString("{end of slot V}", "{Ca}")
-
-    while (true) {
-        if (index + 1 > groups.lastIndex || groups[index + 1] in CN_CONSONANTS) {
-            break
-        }
-
-        val vx = groups[index]
-
-        vxCsAffixes.add(Affix(vx, groups[index + 1]))
-
-
-        if (shortcut != null && (index in glottalIndices)) {
-            if (slotVFilled && vxCsAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
-            else if (!slotVFilled && vxCsAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
-
-            caIndex = vxCsAffixes.size
-
-            hasSlotV = true
-        }
-
-        index += 2
-
     }
 
+    if (shortcut != null && slotVFilledMarker && endOfVxCsSlotVIndex == null) return Error("Unexpectedly few slot V affixes")
 
-    if (shortcut != null && slotVFilled && !hasSlotV) return Error("Unexpectedly few slot V affixes")
+    val endOfSlotVGloss = GlossString("{end of slot V}", "{Ca}")
 
     val slotVIIAndMaybeSlotV: List<Glossable> = vxCsAffixes
         .parseAll()
         .validateAll { return Error(it.message) }
-        .let {
-            if (caIndex != null) {
-                buildList {
-                    addAll(it.subList(0, caIndex))
-                    add(endOfSlotVMarker)
-                    addAll(it.subList(caIndex, it.size))
-                }
-            } else it
-        }
+        .let { affixList ->
 
-    val marksMood = word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC)
+            val unClosuredEndOfSlotVIndex = endOfVxCsSlotVIndex // Necessary for smart casting (KT-7186)
+
+            if (unClosuredEndOfSlotVIndex != null) {
+                buildList {
+                    addAll(affixList.subList(0, unClosuredEndOfSlotVIndex))
+                    add(endOfSlotVGloss)
+                    addAll(affixList.subList(unClosuredEndOfSlotVIndex, affixList.size))
+                }
+            } else affixList
+        }
 
     val absoluteLevel = groups.getOrNull(index + 1) == "y" &&
-            groups.getOrNull(index + 3) in setOf("h", "hl", "hr", "hm", "hn", "hň")
+            groups.getOrNull(index + 3) in CN_PATTERN_ONE
 
     val slotVIII: Slot? = when {
-        cnInVI -> {
-            parseVnCn("a", groups[index], marksMood, false).also { index++ }
-                ?: return Error("Unknown Cn value in Ca: ${groups[index]}")
-        }
-
         absoluteLevel -> {
                     parseVnCn(groups[index] + groups[index+2],
                         groups[index + 3],
-                        marksMood,
+                        isVerbal,
                         absoluteLevel = true)
                             .also { index += 4 }
 
-                        ?: return Error("Unknown VnCn value: ${groups
-                            .subList(index, index + 4)
-                            .joinToString("")
-                        }")
+                        ?: return Error(
+                            "Unknown VnCn value: ${
+                                groups
+                                    .subList(index, index + 4)
+                                    .joinToString("")
+                            }"
+                        )
                 }
 
         groups.getOrNull(index + 1) in CN_CONSONANTS -> {
-            parseVnCn(groups[index], groups[index + 1], marksMood, false).also { index += 2 }
+            parseVnCn(groups[index], groups[index + 1], isVerbal, false).also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
         else -> null
@@ -297,26 +288,22 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
 
     val vcVk = (groups.getOrNull(index) ?: "a").let {
         if (caseGlottal) {
-            glottalVowel(it)?.first ?: return Error("Unknown slot IX vowel: $it")
+            glottalizeVowel(it)
         } else it
     }
 
 
     val slotIX: Glossable = if (concatenation == null) {
-        when (word.stress) {
-            Stress.MONOSYLLABIC, Stress.ULTIMATE -> parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
-            Stress.PENULTIMATE, Stress.ANTEPENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
-            else -> return Error("Stress error during formative parsing. Please report")
+        if (isVerbal) {
+            parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
+        } else {
+            Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
         }
     } else {
         when (word.stress) {
             Stress.PENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
             Stress.MONOSYLLABIC, Stress.ULTIMATE -> {
-                val glottalified = when (vcVk.length) {
-                    1 -> "$vcVk'$vcVk"
-                    2 -> "${vcVk[0]}'${vcVk[1]}"
-                    else -> return Error("Vf form is too long: $vcVk")
-                }
+                val glottalified = glottalizeVowel(vcVk)
                 Case.byVowel(glottalified) ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
             }
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress in concatenated formative")
@@ -330,7 +317,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false) : GlossOut
     val slotList: List<Glossable> = listOfNotNull(concatenation, slotII, root, slotIV) +
             slotV + listOfNotNull(slotVI) + slotVIIAndMaybeSlotV + listOfNotNull(slotVIII, slotIX)
 
-    return Gloss(*slotList.toTypedArray(), stressMarked = relation)
+    return Gloss(slotList, stressMarked = relation)
 
 }
 

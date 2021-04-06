@@ -82,7 +82,8 @@ fun glossInContext(words: List<FormattingOutcome>) : List<Pair<String, GlossOutc
 fun isVerbal(word: Valid) : Boolean = when (word) {
     is ConcatenatedWords -> isVerbal(word.words.last())
     is Word -> {
-        (word.wordType == WordType.FORMATIVE) && (word.stress == Stress.ULTIMATE)
+        (word.wordType == WordType.FORMATIVE)
+            && (word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC))
     }
 }
 

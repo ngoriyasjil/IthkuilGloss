@@ -7,28 +7,18 @@ fun seriesAndForm(v: String) : Pair<Int, Int> {
     }
 }
 
-fun bySeriesAndForm(series: Int, form: Int) : String? = if (series in 1..8 && form in 1..9) {
-    VOWEL_FORMS.getOrNull(9 * (series-1) + (form-1))
-}  else null
-
-fun unGlottalVowel(v: String) : Pair<String, Boolean>? {
-    if (!v.isVowel()) return null
-
-    return if ('\'' in v) {
-        v.filter { it != '\'' }
+fun unGlottalizeVowel(v: String) : String {
+    return v.filter { it != '\'' }
             .let {
-                if (it.length == 2 && it[0] == it[1]) it.substring(0, 1) else it
-            } to true
-    } else v to false
+                if (it.length == 2 && it[0] == it[1]) it.take(1) else it
+            }
 }
 
-fun glottalVowel(v: String) : Pair<String, Boolean>? {
-    if (!v.isVowel()) return null
-
+fun glottalizeVowel(v: String) : String {
     return when (v.length) {
-        1 -> "$v'$v" to true
-        2 -> "${v[0]}'${v[1]}" to true
-        else -> v to false
+        1 -> "$v'$v"
+        2 -> "${v[0]}'${v[1]}"
+        else -> v
     }
 }
 
@@ -77,7 +67,15 @@ fun parseCc(c: String) : Pair<Concatenation?, Shortcut?> {
     return Pair(concatenation, shortcut)
 }
 
-fun parseVv(v: String, shortcut: Shortcut?) : Slot? {
+fun parseVv(vv: String, shortcut: Shortcut?): Slot? {
+    return if (vv in SPECIAL_VV_VOWELS) {
+        parseSpecialVv(vv, shortcut)
+    } else {
+        parseNormalVv(vv, shortcut)
+    }
+}
+
+fun parseNormalVv(v: String, shortcut: Shortcut?) : Slot? {
 
     val (series, form) = seriesAndForm(v)
 

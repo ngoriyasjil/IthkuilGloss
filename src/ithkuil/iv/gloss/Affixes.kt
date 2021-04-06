@@ -1,7 +1,7 @@
 package ithkuil.iv.gloss
 
 
-enum class Degree(val short: Int) {
+enum class Degree(val numeral: Int) {
     ONE(1),
     TWO(2),
     THREE(3),
@@ -12,6 +12,10 @@ enum class Degree(val short: Int) {
     EIGHT(8),
     NINE(9),
     ZERO(0);
+
+    companion object {
+        fun byForm(n: Int) : Degree? = values().find { it.numeral == n }
+    }
 }
 
 enum class AffixType(val subscript: String) {
@@ -55,7 +59,7 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
     override fun toString(o: GlossOptions): String {
 
         return if (o.concise || degree == Degree.ZERO || description == null) {
-            "$abbreviation$AFFIX_DEGREE_SEPARATOR${degree.short}${type?.subscript ?: ""}"
+            "$abbreviation$AFFIX_DEGREE_SEPARATOR${degree.numeral}${type?.subscript ?: ""}"
         } else {
             "‘$description‘${type?.subscript ?: ""}"
         }
@@ -90,7 +94,7 @@ class Affix(private val vx: String, private val cs : String) {
         if (cs in CASE_AFFIXES) {
             val vc = when (cs) {
                 "sw", "zw", "šw", "žw", "lw" -> vx
-                "sy", "zy", "šy", "žy", "ly" -> glottalVowel(vx)?.first ?: return AffixError("Unknown vowel: $vx")
+                "sy", "zy", "šy", "žy", "ly" -> glottalizeVowel(vx)
                 else -> return AffixError("Unknown case affix form: $cs")
             }
 

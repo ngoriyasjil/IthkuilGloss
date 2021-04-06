@@ -471,7 +471,7 @@ enum class Bias(override val short: String, val cb: String, private val represen
     }
 
     companion object {
-        fun byGroup(cb: String) = values().find { it.cb == cb }
+        fun byCb(cb: String) = values().find { it.cb == cb }
     }
 }
 
