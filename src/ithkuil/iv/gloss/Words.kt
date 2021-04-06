@@ -380,42 +380,6 @@ class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot
 
 }
 
-fun parseFullReferent(clusters: List<String>): Referential? {
-
-    val reflist: List<Slot> = clusters.flatMap { c ->
-        parseFullReferent(c) ?: return null
-    }
-
-    return when (reflist.size) {
-        0 -> null
-        else -> Referential(*reflist.toTypedArray())
-    }
-}
-
-private fun parseFullReferent(c: String): Referential? {
-    val referents = sequence {
-        var index = 0
-
-        while (index <= c.lastIndex) {
-
-            val referent = if (index + 2 <= c.length && c.substring(index, index + 2) in BICONSONANTAL_PRS) {
-                parseSingleReferent(c.substring(index, index + 2)).also { index += 2 }
-            } else {
-                parseSingleReferent(c.substring(index, index + 1)).also { index++ }
-            }
-
-            if (referent != null) yield(referent)
-        }
-
-    }.toList()
-
-    return when (referents.size) {
-        0 -> null
-        else -> Referential(*referents.toTypedArray())
-    }
-
-}
-
 fun parseReferential(word: Word): GlossOutcome {
     val essence = when (word.stress) {
         Stress.ULTIMATE -> Essence.REPRESENTATIVE

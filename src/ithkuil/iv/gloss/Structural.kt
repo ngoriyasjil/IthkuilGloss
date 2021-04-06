@@ -124,6 +124,33 @@ class ConcatenationChain(private val formatives: List<Gloss>) : Gloss() {
     }
 }
 
+class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glossable {
+
+    private var description: String = "**$cr**"
+
+    override fun checkDictionary(r: Resources): Root {
+
+        val rootEntry = r.getRoot(cr)
+
+        if (rootEntry != null) {
+
+            val stemDesc = rootEntry[stem.value]
+
+            description = if (stemDesc.isNotEmpty()) {
+                stem.used = true
+                "“$stemDesc“"
+            } else {
+                "“${rootEntry[Stem.STEM_ZERO]}“"
+            }
+
+        }
+
+        return this
+    }
+
+    override fun toString(o: GlossOptions): String = description
+}
+
 class GlossString(
     private val full: String,
     private val normal: String = full,

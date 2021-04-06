@@ -1,55 +1,6 @@
 package ithkuil.iv.gloss
 
-fun seriesAndForm(v: String): Pair<Int, Int> {
-    return when (val index = VOWEL_FORMS.indexOfFirst { v isSameVowelAs it }) {
-        -1 -> Pair(-1, -1)
-        else -> Pair((index / 9) + 1, (index % 9) + 1)
-    }
-}
-
-fun unGlottalizeVowel(v: String): String {
-    return v.filter { it != '\'' }
-        .let {
-            if (it.length == 2 && it[0] == it[1]) it.take(1) else it
-        }
-}
-
-fun glottalizeVowel(v: String): String {
-    return when (v.length) {
-        1 -> "$v'$v"
-        2 -> "${v[0]}'${v[1]}"
-        else -> v
-    }
-}
-
-class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glossable {
-
-    private var description: String = "**$cr**"
-
-    override fun checkDictionary(r: Resources): Root {
-
-        val rootEntry = r.getRoot(cr)
-
-        if (rootEntry != null) {
-
-            val stemDesc = rootEntry[stem.value]
-
-            description = if (stemDesc.isNotEmpty()) {
-                stem.used = true
-                "“$stemDesc“"
-            } else {
-                "“${rootEntry[Stem.STEM_ZERO]}“"
-            }
-
-        }
-
-        return this
-    }
-
-    override fun toString(o: GlossOptions): String = description
-
-}
-
+// Formative slots
 
 fun parseCc(c: String): Pair<Concatenation?, Shortcut?> {
     val concatenation = when (c) {
@@ -158,6 +109,36 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
 
 }
 
+fun parseVr(vr: String): Slot? {
+    val (series, form) = seriesAndForm(vr)
+
+    if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
+
+    val specification = when (form) {
+        1, 9 -> Specification.BASIC
+        2, 8 -> Specification.CONTENTIAL
+        3, 7 -> Specification.CONSTITUTIVE
+        5, 4, 6 -> Specification.OBJECTIVE
+        else -> return null
+    }
+    val function = when (form) {
+        1, 2, 3, 5, 4 -> Function.STATIVE
+        9, 8, 7, 6 -> Function.DYNAMIC
+        else -> return null
+    }
+
+    val context = when (series) {
+        1 -> Context.EXISTENTIAL
+        2 -> Context.FUNCTIONAL
+        3 -> Context.REPRESENTATIONAL
+        4 -> Context.AMALGAMATIVE
+        else -> return null
+    }
+
+    return Slot(function, specification, context)
+
+}
+
 fun parseAffixVr(vr: String): Slot? {
     val (series, form) = seriesAndForm(vr)
         .let {
@@ -188,72 +169,136 @@ fun parseAffixVr(vr: String): Slot? {
     return Slot(degree, specification)
 }
 
+val UNGEMINATE_MAP = mapOf(
+    "bḑḑ" to "pt", "bvv" to "pk", "gḑḑ" to "kt", "gvv" to "kp", "ḑvv" to "tk", "dvv" to "tp",
+    "bzzm" to "pm", "bzzn" to "pn", "gzzm" to "km", "gzzn" to "kn", "zzm" to "tm", "zzn" to "tn",
+    "bžžm" to "bm", "bžžn" to "bn", "gžžm" to "gm", "gžžn" to "gn", "žžm" to "dm", "žžn" to "dn",
+)
 
-fun parseVh(vh: String): GlossString? = when (vh.defaultForm()) {
-    "a" -> GlossString("{scope over formative}", "{form.}")
-    "e" -> GlossString("{scope over case/mood}", "{mood}")
-    "i", "u" -> GlossString("{scope over formative, but not adjacent adjuncts}", "{under adj.}")
-    "o" -> GlossString("{scope over formative and adjacent adjuncts}", "{over adj.}")
-    else -> null
+fun String.isGeminateCa(): Boolean = when {
+    withIndex().any { (index, ch) -> ch == getOrNull(index + 1) } -> true
+    this in UNGEMINATE_MAP.keys -> true
+    else -> false
 }
 
 
-fun parseVk(s: String): Slot? {
-    val (series, form) = seriesAndForm(s)
-
-    val illocution = if (form == 5) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
-    val expectation = when (series) {
-        1 -> Expectation.COGNITIVE
-        2 -> Expectation.RESPONSIVE
-        3 -> Expectation.EXECUTIVE
-        else -> null
-    }
-    val validation = when (form) {
-        1 -> Validation.OBSERVATIONAL
-        2 -> Validation.RECOLLECTIVE
-        3 -> Validation.REPORTIVE
-        4 -> Validation.PURPORTIVE
-        5 -> null
-        6 -> Validation.IMAGINARY
-        7 -> Validation.CONVENTIONAL
-        8 -> Validation.INTUITIVE
-        9 -> Validation.INFERENTIAL
-        else -> null
-    }
-    val values = Slot(illocution, expectation, validation)
-
-    return if (values.size > 1) values else null
+fun String.unGeminateCa(): String = when {
+    this in UNGEMINATE_MAP.keys -> UNGEMINATE_MAP[this] ?: this
+    withIndex().any { (index, letter) -> letter == getOrNull(index + 1) } -> mapIndexed { index, letter ->
+        if (letter == getOrNull(index + 1)) "" else letter
+    }.joinToString("")
+    else -> this
 }
 
+fun parseCa(s: String): Slot? {
+    if (s.isEmpty())
+        return null
 
-fun parseVr(v: String): Slot? {
-    val (series, form) = seriesAndForm(v)
+    var configuration = Configuration.UNIPLEX
+    var extension = Extension.DELIMITIVE
+    var affiliation = Affiliation.CONSOLIDATIVE
+    var perspective = Perspective.MONADIC
+    var essence = Essence.NORMAL
 
-    if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
+    var standaloneForm = true
 
-    val specification = when (form) {
-        1, 9 -> Specification.BASIC
-        2, 8 -> Specification.CONTENTIAL
-        3, 7 -> Specification.CONSTITUTIVE
-        5, 4, 6 -> Specification.OBJECTIVE
-        else -> return null
-    }
-    val function = when (form) {
-        1, 2, 3, 5, 4 -> Function.STATIVE
-        9, 8, 7, 6 -> Function.DYNAMIC
-        else -> return null
-    }
-
-    val context = when (series) {
-        1 -> Context.EXISTENTIAL
-        2 -> Context.FUNCTIONAL
-        3 -> Context.REPRESENTATIONAL
-        4 -> Context.AMALGAMATIVE
-        else -> return null
+    when (s) {
+        "d" -> affiliation = Affiliation.ASSOCIATIVE
+        "g" -> affiliation = Affiliation.COALESCENT
+        "b" -> affiliation = Affiliation.VARIATIVE
+        "l", "ř" -> {
+        }
+        "r", "tļ" -> perspective = Perspective.POLYADIC
+        "v", "lm" -> perspective = Perspective.NOMIC
+        "z", "ln" -> perspective = Perspective.ABSTRACT
+        else -> standaloneForm = false
     }
 
-    return Slot(function, specification, context)
+    if (standaloneForm) {
+        if (s in setOf("ř", "tļ", "lm", "ln")) {
+            essence = Essence.REPRESENTATIVE
+        }
+        return Slot(configuration, extension, affiliation, perspective, essence)
+    }
 
+    val normal = CA_SUBSTITUTIONS.fold(s) { it, (substitution, normal) -> it.replace(substitution, normal) }
+    var index = 0
+
+    var configurationAbbreviation: String
+
+    when (normal[0]) {
+        'l' -> {
+            configurationAbbreviation = "MF"
+            index++
+        }
+        'r', 'ř' -> {
+            configurationAbbreviation = when (normal.take(2)) {
+                "rt", "rk", "rp" -> "DS"
+                "rn", "rň", "rm" -> "DD"
+                "řt", "řk", "řp" -> "DF"
+                else -> return null
+            }
+            index++
+        }
+        else -> {
+            configurationAbbreviation = when (normal[0]) {
+                't', 'k', 'p' -> "MS"
+                'n', 'ň', 'm' -> "MD"
+                else -> "UNI"
+            }
+        }
+    }
+
+    configurationAbbreviation += when (normal[index]) {
+        't', 'n' -> "S"
+        'k', 'ň' -> "C"
+        'p', 'm' -> "F"
+        else -> ""
+    }
+
+    if (configurationAbbreviation matches "..[SCF]".toRegex()) index++
+
+    configuration = Configuration.byAbbreviation(configurationAbbreviation) ?: return null
+
+    if (normal.getOrNull(index) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
+        extension = when (normal[index]) {
+            's' -> Extension.PROXIMAL
+            'š' -> Extension.INCIPIENT
+            'f' -> Extension.ATTENUATIVE
+            'ţ' -> Extension.GRADUATIVE
+            'ç' -> Extension.DEPLETIVE
+            else -> return null
+        }
+        index++
+    }
+
+    if (normal.getOrNull(index) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
+        affiliation = when (normal[index]) {
+            't', 'd' -> Affiliation.ASSOCIATIVE
+            'k', 'g' -> Affiliation.COALESCENT
+            'p', 'b' -> Affiliation.VARIATIVE
+            else -> return null
+        }
+        index++
+    }
+
+    if (normal.drop(index).isNotEmpty() && index > 0) {
+        perspective = when (normal[index]) {
+            'ř' -> Perspective.MONADIC
+            'r', 'v', 'l' -> Perspective.POLYADIC
+            'w', 'm', 'h' -> Perspective.NOMIC
+            'y', 'n', 'ç' -> Perspective.ABSTRACT
+            else -> return null
+        }
+        essence = when (normal[index]) {
+            'ř', 'l', 'm', 'h', 'n', 'ç' -> Essence.REPRESENTATIVE
+            else -> Essence.NORMAL
+        }
+        index++
+    }
+    return if (normal.drop(index).isNotEmpty()) null else {
+        Slot(configuration, extension, affiliation, perspective, essence)
+    }
 }
 
 fun parseVnCn(vn: String, cn: String, marksMood: Boolean, absoluteLevel: Boolean): Slot? {
@@ -308,6 +353,36 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean, absoluteLevel: Boolean
 
 }
 
+fun parseVk(s: String): Slot? {
+    val (series, form) = seriesAndForm(s)
+
+    val illocution = if (form == 5) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
+
+    val expectation = when (series) {
+        1 -> Expectation.COGNITIVE
+        2 -> Expectation.RESPONSIVE
+        3 -> Expectation.EXECUTIVE
+        else -> null
+    }
+    val validation = when (form) {
+        1 -> Validation.OBSERVATIONAL
+        2 -> Validation.RECOLLECTIVE
+        3 -> Validation.REPORTIVE
+        4 -> Validation.PURPORTIVE
+        5 -> null
+        6 -> Validation.IMAGINARY
+        7 -> Validation.CONVENTIONAL
+        8 -> Validation.INTUITIVE
+        9 -> Validation.INFERENTIAL
+        else -> null
+    }
+    val values = Slot(illocution, expectation, validation)
+
+    return if (values.size > 1) values else null
+}
+
+// Referentials
+
 fun parseSingleReferent(s: String): Slot? {
     val referent: Category = when (s) {
         "ç", "x" -> Perspective.NOMIC
@@ -325,144 +400,54 @@ fun parseSingleReferent(s: String): Slot? {
     return Slot(referent, effect)
 }
 
+fun parseFullReferent(clusters: List<String>): Referential? {
 
-val UNGEMINATE_MAP = mapOf(
-    "bḑḑ" to "pt", "bvv" to "pk", "gḑḑ" to "kt", "gvv" to "kp", "ḑvv" to "tk", "dvv" to "tp",
-    "bzzm" to "pm", "bzzn" to "pn", "gzzm" to "km", "gzzn" to "kn", "zzm" to "tm", "zzn" to "tn",
-    "bžžm" to "bm", "bžžn" to "bn", "gžžm" to "gm", "gžžn" to "gn", "žžm" to "dm", "žžn" to "dn",
-)
-
-fun String.isGeminateCa(): Boolean = when {
-    withIndex().any { (index, ch) -> ch == getOrNull(index + 1) } -> true
-    this in UNGEMINATE_MAP.keys -> true
-    else -> false
-}
-
-
-fun String.unGeminateCa(): String = when {
-    this in UNGEMINATE_MAP.keys -> UNGEMINATE_MAP[this] ?: this
-    withIndex().any { (index, letter) -> letter == getOrNull(index + 1) } -> mapIndexed { index, letter ->
-        if (letter == getOrNull(index + 1)) "" else letter
-    }.joinToString("")
-    else -> this
-}
-
-
-fun parseCa(s: String): Slot? {
-    val original = s.defaultForm()
-    if (original.isEmpty())
-        return null
-
-    var configuration = Configuration.UNIPLEX
-    var extension = Extension.DELIMITIVE
-    var affiliation = Affiliation.CONSOLIDATIVE
-    var perspective = Perspective.MONADIC
-    var essence = Essence.NORMAL
-
-    var standaloneForm = true
-
-    when (original) {
-        "d" -> affiliation = Affiliation.ASSOCIATIVE
-        "g" -> affiliation = Affiliation.COALESCENT
-        "b" -> affiliation = Affiliation.VARIATIVE
-        "l", "ř" -> {
-        }
-        "r", "tļ" -> perspective = Perspective.POLYADIC
-        "v", "lm" -> perspective = Perspective.NOMIC
-        "z", "ln" -> perspective = Perspective.ABSTRACT
-        else -> standaloneForm = false
+    val reflist: List<Slot> = clusters.flatMap { c ->
+        parseFullReferent(c) ?: return null
     }
 
-    if (standaloneForm) {
-        if (original in setOf("ř", "tļ", "lm", "ln")) {
-            essence = Essence.REPRESENTATIVE
-        }
-        return Slot(configuration, extension, affiliation, perspective, essence)
+    return when (reflist.size) {
+        0 -> null
+        else -> Referential(*reflist.toTypedArray())
     }
+}
 
-    val normal = CA_SUBSTITUTIONS.fold(original) { it, (substitution, normal) -> it.replace(substitution, normal) }
-    var index = 0
+fun parseFullReferent(c: String): Referential? {
+    val referents = sequence {
+        var index = 0
 
-    var conf: String
+        while (index <= c.lastIndex) {
 
-    when (normal[0]) {
-        'l' -> {
-            conf = "MF"
-            index++
-        }
-        'r', 'ř' -> {
-            conf = when (normal.take(2)) {
-                "rt", "rk", "rp" -> "DS"
-                "rn", "rň", "rm" -> "DD"
-                "řt", "řk", "řp" -> "DF"
-                else -> return null
+            val referent = if (index + 2 <= c.length && c.substring(index, index + 2) in BICONSONANTAL_PRS) {
+                parseSingleReferent(c.substring(index, index + 2)).also { index += 2 }
+            } else {
+                parseSingleReferent(c.substring(index, index + 1)).also { index++ }
             }
-            index++
+
+            if (referent != null) yield(referent)
         }
-        else -> {
-            conf = when (normal[0]) {
-                't', 'k', 'p' -> "MS"
-                'n', 'ň', 'm' -> "MD"
-                else -> "UNI"
-            }
-        }
+
+    }.toList()
+
+    return when (referents.size) {
+        0 -> null
+        else -> Referential(*referents.toTypedArray())
     }
 
-    conf += when (normal[index]) {
-        't', 'n' -> "S"
-        'k', 'ň' -> "C"
-        'p', 'm' -> "F"
-        else -> ""
-    }
-
-    if (conf matches "..[SCF]".toRegex()) index++
-
-    configuration = Configuration.byAbbreviation(conf) ?: return null
-
-    if (normal.getOrNull(index) in setOf('s', 'š', 'f', 'ţ', 'ç')) {
-        extension = when (normal[index]) {
-            's' -> Extension.PROXIMAL
-            'š' -> Extension.INCIPIENT
-            'f' -> Extension.ATTENUATIVE
-            'ţ' -> Extension.GRADUATIVE
-            'ç' -> Extension.DEPLETIVE
-            else -> return null
-        }
-        index++
-    }
-
-    if (normal.getOrNull(index) in setOf('d', 'g', 'b', 't', 'k', 'p')) {
-        affiliation = when (normal[index]) {
-            't', 'd' -> Affiliation.ASSOCIATIVE
-            'k', 'g' -> Affiliation.COALESCENT
-            'p', 'b' -> Affiliation.VARIATIVE
-            else -> return null
-        }
-        index++
-    }
-
-    if (normal.drop(index).isNotEmpty() && index > 0) {
-        perspective = when (normal[index]) {
-            'ř' -> Perspective.MONADIC
-            'r', 'v', 'l' -> Perspective.POLYADIC
-            'w', 'm', 'h' -> Perspective.NOMIC
-            'y', 'n', 'ç' -> Perspective.ABSTRACT
-            else -> return null
-        }
-        essence = when (normal[index]) {
-            'ř', 'l', 'm', 'h', 'n', 'ç' -> Essence.REPRESENTATIVE
-            else -> Essence.NORMAL
-        }
-        index++
-    }
-    return if (normal.drop(index).isNotEmpty()) null else {
-        Slot(configuration, extension, affiliation, perspective, essence)
-    }
 }
 
+// Adjunct slots
 
-fun affixualAdjunctScope(s: String?, isMultipleAdjunctVowel: Boolean = false): GlossString? {
-    val scope = when (s?.defaultForm()) {
+fun parseVh(vh: String): GlossString? = when (vh) {
+    "a" -> GlossString("{scope over formative}", "{form.}")
+    "e" -> GlossString("{scope over case/mood}", "{mood}")
+    "i", "u" -> GlossString("{scope over formative, but not adjacent adjuncts}", "{under adj.}")
+    "o" -> GlossString("{scope over formative and adjacent adjuncts}", "{over adj.}")
+    else -> null
+}
+
+fun affixualAdjunctScope(vsCzVz: String?, isMultipleAdjunctVowel: Boolean = false): GlossString? {
+    val scope = when (vsCzVz) {
         null -> if (isMultipleAdjunctVowel) "{same}" else "{VDom}"
         "h", "a" -> "{VDom}"
         "'h", "u" -> "{VSub}"

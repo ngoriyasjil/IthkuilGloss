@@ -29,7 +29,7 @@ class Word(
     val stress: Stress,
     override val prefixPunctuation: String = "",
     override val postfixPunctuation: String = "",
-    private val groups: List<String> = stressedGroups.map { it.substituteAll(UNSTRESSED_FORMS) }
+    private val groups: List<String> = stressedGroups.map { it.clearStress() }
     // ^ Should never be specified; class delegation doesn't accept properties, only parameters
 ) : List<String> by groups, Valid() {
 
@@ -83,6 +83,14 @@ fun formatWord(s: String): FormattingOutcome {
 
     val clean = word.defaultFormWithStress()
 
+    fun codepointString(c: Char): String {
+        val codepoint = c.toInt()
+            .toString(16)
+            .toUpperCase()
+            .padStart(4, '0')
+        return "\"$c\" (U+$codepoint)"
+    }
+
     val nonIthkuil = clean.filter { it.toString() !in ITHKUIL_CHARS }
     if (nonIthkuil.isNotEmpty()) {
         var message = nonIthkuil.map { codepointString(it) }.joinToString()
@@ -106,14 +114,6 @@ fun formatWord(s: String): FormattingOutcome {
     }
 
     return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
-}
-
-private fun codepointString(c: Char): String {
-    val codepoint = c.toInt()
-        .toString(16)
-        .toUpperCase()
-        .padStart(4, '0')
-    return "\"$c\" (U+$codepoint)"
 }
 
 fun List<String>.formatAll(): List<FormattingOutcome> = map { formatWord(it) }
@@ -169,7 +169,7 @@ fun String.splitGroups(): List<String>? {
     return groups
 }
 
-//Matches strings of the form "a", "ai", "a'" "a'i" and "ai'". Doesn't guarantee a valid vowelform.
+// Matches strings of the form "a", "ai", "a'" "a'i" and "ai'". Doesn't guarantee a valid vowelform.
 fun String.isVowel() = when (length) {
     1 -> this in VOWELS
     2 -> this[0].toString() in VOWELS && this[1].toString() in VOWELS_AND_GLOTTAL_STOP
@@ -187,7 +187,27 @@ fun String.hasStress(): Boolean? = when {
     else -> false
 }
 
+fun seriesAndForm(v: String): Pair<Int, Int> {
+    return when (val index = VOWEL_FORMS.indexOfFirst { v isSameVowelAs it }) {
+        -1 -> Pair(-1, -1)
+        else -> Pair((index / 9) + 1, (index % 9) + 1)
+    }
+}
 
+fun unGlottalizeVowel(v: String): String {
+    return v.filter { it != '\'' }
+        .let {
+            if (it.length == 2 && it[0] == it[1]) it.take(1) else it
+        }
+}
+
+fun glottalizeVowel(v: String): String {
+    return when (v.length) {
+        1 -> "$v'$v"
+        2 -> "${v[0]}'${v[1]}"
+        else -> v
+    }
+}
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
 fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter { it.isNotEmpty() }
@@ -205,9 +225,11 @@ fun String.substituteAll(substitutions: List<Pair<String, String>>) = substituti
     current.replace(allo.toRegex(), sub)
 }
 
+fun String.clearStress() = substituteAll(UNSTRESSED_FORMS)
+
 fun String.defaultFormWithStress() = toLowerCase().substituteAll(ALLOGRAPHS)
 
-fun String.defaultForm() = defaultFormWithStress().substituteAll(UNSTRESSED_FORMS)
+fun String.defaultForm() = defaultFormWithStress().clearStress()
 
 enum class Stress {
     ULTIMATE,
@@ -224,7 +246,7 @@ fun findStress(groups: List<String>): Stress {
     val nuclei = groups.filter(String::isVowel)
         .map { it.removeSuffix("'") }
         .flatMap {
-            if (it.length == 1 || it.substituteAll(UNSTRESSED_FORMS) in DIPHTHONGS) {
+            if (it.length == 1 || it.clearStress() in DIPHTHONGS) {
                 listOf(it)
             } else {
                 it.toCharArray()
