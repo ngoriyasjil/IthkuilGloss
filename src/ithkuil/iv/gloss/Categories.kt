@@ -57,9 +57,10 @@ enum class Function(override val short: String) : Category {
     DYNAMIC("DYN");
 }
 
+interface CaCategory : Category // Should ideally be sealed, but that feature isn't yet implemented
 
 @Suppress("unused")
-enum class Configuration(override val short: String) : Category {
+enum class Configuration(override val short: String) : CaCategory {
     UNIPLEX("UNI"),
     DUPLEX_SIMILAR_SEPARATE("DSS"),
     DUPLEX_SIMILAR_CONNECTED("DSC"),
@@ -88,14 +89,14 @@ enum class Configuration(override val short: String) : Category {
 
 }
 
-enum class Affiliation(override val short: String) : Category {
+enum class Affiliation(override val short: String) : CaCategory {
     CONSOLIDATIVE("CSL"),
     ASSOCIATIVE("ASO"),
     VARIATIVE("VAR"),
     COALESCENT("COA");
 }
 
-enum class Extension(override val short: String) : Category {
+enum class Extension(override val short: String) : CaCategory {
     DELIMITIVE("DEL"),
     PROXIMAL("PRX"),
     INCIPIENT("ICP"),
@@ -104,14 +105,14 @@ enum class Extension(override val short: String) : Category {
     DEPLETIVE("DPL");
 }
 
-enum class Perspective(override val short: String) : Category {
+enum class Perspective(override val short: String) : CaCategory {
     MONADIC("M"),
     POLYADIC("P"),
     NOMIC("N"),
     ABSTRACT("A");
 }
 
-enum class Essence(override val short: String) : Category {
+enum class Essence(override val short: String) : CaCategory {
     NORMAL("NRM"),
     REPRESENTATIVE("RPV");
 }

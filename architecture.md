@@ -1,6 +1,6 @@
 Hi. If you are reading this, you probably want to develop the bot, or just figure out how it works. The code should be readable if you want to dive right in, but I hope an overview will help.
 
-The bot has a layered structure, with IO on the top and the raw language categories on the bottom. The code is mostly functional in style, apart from a few mutating indices here and there. The layers are as follows:
+The bot has a layered structure, with IO on the top and the raw language categories on the bottom. The code is mostly functional in style, apart from a few mutating indices and such here and there. The layers are as follows:
 
 ### Layer 6: Interfaces
 

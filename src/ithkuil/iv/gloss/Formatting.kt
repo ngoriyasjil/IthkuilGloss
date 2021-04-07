@@ -221,8 +221,9 @@ infix fun String.isSameVowelAs(s: String): Boolean = if ("/" in s) {
     s == this
 }
 
-fun String.substituteAll(substitutions: List<Pair<String, String>>) = substitutions.fold(this) { current, (allo, sub) ->
-    current.replace(allo.toRegex(), sub)
+fun String.substituteAll(substitutions: List<Pair<String, String>>) =
+    substitutions.fold(this) { current, (allo, sub) ->
+        current.replace(allo.toRegex(), sub)
 }
 
 fun String.clearStress() = substituteAll(UNSTRESSED_FORMS)
