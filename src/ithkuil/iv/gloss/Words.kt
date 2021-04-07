@@ -204,7 +204,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
 
             caForm.isGeminateCa() -> {
                 if (csVxAffixes.isEmpty()) return Error("Unexpected glottal Ca: $caForm")
-                val ungeminated = caForm.unGeminateCa()
+                val ungeminated = caForm.degeminateCa()
                 parseCa(ungeminated) ?: return Error("Unknown Ca value: $ungeminated")
             }
 

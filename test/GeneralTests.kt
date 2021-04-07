@@ -108,14 +108,14 @@ class GeneralTests {
 
     @Test
     fun caUnGeminationTest() {
-        "pp".unGeminateCa() mustBe "p"
-        "ggw".unGeminateCa() mustBe "gw"
-        "mmtw".unGeminateCa() mustBe "mtw"
-        "tççkl".unGeminateCa() mustBe "tçkl"
-        "ccw".unGeminateCa() mustBe "cw"
-        "ččtw".unGeminateCa() mustBe "čtw"
-        "gḑḑ".unGeminateCa() mustBe "kt"
-        "žžn".unGeminateCa() mustBe "dn"
+        "pp".degeminateCa() mustBe "p"
+        "ggw".degeminateCa() mustBe "gw"
+        "mmtw".degeminateCa() mustBe "mtw"
+        "tççkl".degeminateCa() mustBe "tçkl"
+        "ccw".degeminateCa() mustBe "cw"
+        "ččtw".degeminateCa() mustBe "čtw"
+        "gḑḑ".degeminateCa() mustBe "kt"
+        "žžn".degeminateCa() mustBe "dn"
     }
 
     @Test
