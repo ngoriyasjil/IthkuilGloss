@@ -46,9 +46,6 @@ fun parseWord(iword: Word, marksMood: Boolean? = null): GlossOutcome {
 fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
 
     for ((index, word) in chain.words.withIndex()) {
-        if (word.isEmpty())
-            return Error("Empty word concatenated (at ${index + 1})")
-
         val (concatenation, _) = parseCc(word[0])
 
         if ((concatenation == null) xor (index == chain.words.lastIndex))
@@ -78,8 +75,9 @@ fun parseBiasAdjunct(word: Word): GlossOutcome {
 
 
 fun parseRegisterAdjunct(word: Word): GlossOutcome {
-    val (register, final) = Register.byVowel(word[1]) ?: return Error("Unknown register adjunct vowel: ${word[1]}")
-    return Gloss(RegisterAdjunct(register, final))
+    val adjunct = Register.adjunctByVowel(word[1]) ?: return Error("Unknown register adjunct vowel: ${word[1]}")
+
+    return Gloss(adjunct)
 }
 
 
@@ -353,7 +351,7 @@ fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
                 ?: return Error("Unknown non-aspect Vn: ${word[index]}")
             Stress.ULTIMATE -> parseVh(word[index]) ?: return Error("Unknown Vh: ${word[index]}")
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress on modular adjunct")
-            else -> return Error("Stress error")
+            else -> return Error("Stress error: ${word.stress.name}")
         }
 
     }

@@ -52,27 +52,27 @@ class Word(
 
 }
 
-fun formatWord(s: String): FormattingOutcome {
+fun formatWord(word: String): FormattingOutcome {
 
-    if (s.isEmpty()) return Invalid(s, "Empty word")
+    if (word.isEmpty()) return Invalid(word, "Empty word")
 
     val punct = ".,?!:;⫶`\"*_"
-    val punctuationRegex = "^([$punct]*)([^$punct]+)([$punct]*)$".toRegex()
+    val punctuationRegex = "([$punct]*)([^$punct]+)([$punct]*)".toRegex()
 
-    val (prefix, word, postfix) = punctuationRegex.find(s)?.destructured
-        ?: return Invalid(s, "Unexpected punctuation")
+    val (prefix, word, postfix) = punctuationRegex.matchEntire(word)?.destructured
+        ?: return Invalid(word, "Unexpected punctuation")
 
     if ("-" in word) {
         val words = word
             .split("-")
-            .map { formatWord(it) }
+            .formatAll()
             .map {
                 when (it) {
-                    is Invalid -> return Invalid(s, "${it.message} ($it)")
-                    is ConcatenatedWords -> return Invalid(s, "Nested concatenation! ($it)")
+                    is Invalid -> return Invalid(word, "${it.message} ($it)")
+                    is ConcatenatedWords -> return Invalid(word, "Nested concatenation! ($it)")
                     is Word -> {
                         if (it.wordType != WordType.FORMATIVE) {
-                            return Invalid(s, "Non-formative concatenated: ($it)")
+                            return Invalid(word, "Non-formative concatenated: ($it)")
                         }
                         it
                     }
@@ -98,17 +98,17 @@ fun formatWord(s: String): FormattingOutcome {
         if ("[qˇ^ʰ]".toRegex() in nonIthkuil) {
             message += " You might be writing in Ithkuil III. Try \"!gloss\" instead."
         }
-        return Invalid(s, "Non-ithkuil characters detected: $message")
+        return Invalid(word, "Non-ithkuil characters detected: $message")
     }
 
-    val stressedGroups = clean.splitGroups() ?: return Invalid(s, "Failed grouping")
+    val stressedGroups = clean.splitGroups() ?: return Invalid(word, "Failed grouping")
 
     val stress = findStress(stressedGroups)
 
     when (stress) {
-        Stress.INVALID_PLACE -> return Invalid(s, "Unrecognized stress placement")
-        Stress.MARKED_DEFAULT -> return Invalid(s, "Marked default stress")
-        Stress.DOUBLE_MARKED -> return Invalid(s, "Double-marked stress")
+        Stress.INVALID_PLACE -> return Invalid(word, "Unrecognized stress placement")
+        Stress.MARKED_DEFAULT -> return Invalid(word, "Marked default stress")
+        Stress.DOUBLE_MARKED -> return Invalid(word, "Double-marked stress")
         else -> {
         }
     }

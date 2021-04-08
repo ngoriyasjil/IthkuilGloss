@@ -219,6 +219,11 @@ class LevelAndRelativity(
     private val relativity: LevelRelativity
 ) : Glossable {
 
+    constructor(form: Int, absoluteLevel: Boolean) : this(
+        Level.byForm(form),
+        if (absoluteLevel) LevelRelativity.ABSOLUTE else LevelRelativity.RELATIVE
+    )
+
     override fun toString(o: GlossOptions): String {
         return level.toString(o) +
             (if (!o.verbose) "" else CATEGORY_SEPARATOR) +
@@ -499,13 +504,13 @@ enum class Register(override val short: String, val initial: String, val final: 
     CARRIER_END("CAR", "", "ü");
 
     companion object {
-        fun byVowel(v: String): Pair<Register, Boolean>? {
+        fun adjunctByVowel(v: String): RegisterAdjunct? {
 
-            val matchInitial = values().find { it.initial == v }
-            if (matchInitial != null) return matchInitial to false
+            val matchesInitial = values().find { it.initial == v }
+            if (matchesInitial != null) return RegisterAdjunct(matchesInitial, false)
 
-            val matchFinal = values().find { it.final == v }
-            if (matchFinal != null) return matchFinal to true
+            val matchesFinal = values().find { it.final == v }
+            if (matchesFinal != null) return RegisterAdjunct(matchesFinal, true)
 
             return null
         }

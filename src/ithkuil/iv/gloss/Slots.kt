@@ -289,25 +289,19 @@ fun parseCa(ca: String): Slot? {
 }
 
 fun parseVnCn(vn: String, cn: String, marksMood: Boolean, absoluteLevel: Boolean): Slot? {
-    val pattern = when (cn) {
-        "h", "hl", "hr", "hm", "hn", "hň" -> 1
-        "w", "y", "hw", "hlw", "hly", "hnw", "hny" -> 2
-        else -> return null
-    }
+
+    if (cn !in CN_CONSONANTS) return null
 
     val (series, form) = seriesAndForm(vn)
 
-    if (absoluteLevel && (series != 4 || pattern != 1)) return null
+    if (absoluteLevel && (series != 4 || cn !in CN_PATTERN_ONE)) return null
 
-    val vnValue: Glossable = if (pattern == 1) {
+    val vnValue: Glossable = if (cn in CN_PATTERN_ONE) {
         when (series) {
             1 -> Valence.byForm(form)
             2 -> Phase.byForm(form)
             3 -> EffectAndPerson.byForm(form)
-            4 -> LevelAndRelativity(
-                Level.byForm(form),
-                if (absoluteLevel) LevelRelativity.ABSOLUTE else LevelRelativity.RELATIVE
-            )
+            4 -> LevelAndRelativity(form, absoluteLevel)
             else -> return null
         }
     } else {

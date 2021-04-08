@@ -8,12 +8,12 @@ fun wordTypeOf(word: Word): WordType {
         } -> WordType.BIAS_ADJUNCT
 
         pattern(word) {
-            oneOf("hr")
+            "hr"()
             vowel()
         } -> WordType.MOOD_CASESCOPE_ADJUNCT
 
         pattern(word) {
-            oneOf("h")
+            "h"()
             vowel()
         } -> WordType.REGISTER_ADJUNCT
 
@@ -35,7 +35,7 @@ fun wordTypeOf(word: Word): WordType {
                     consonant()
                 },
                 {
-                    oneOf("ï")
+                    "ï"()
                     oneOf(CP_CONSONANTS)
                 }
             )
@@ -68,7 +68,7 @@ fun wordTypeOf(word: Word): WordType {
             maybe("ë")
             referentialConsonant()
             while (current() == "ë") {
-                oneOf("ë")
+                "ë"()
                 referentialConsonant()
             }
             vowel()
@@ -107,6 +107,8 @@ class Matcher(var slots: List<String>, var matching: Boolean = true) {
             slots = slots.drop(1)
         } else matching = false
     }
+
+    operator fun String.invoke() = fulfills { it == this } // Blursed string invocation :D
 
     fun vowel() = fulfills { it.isVowel() }
 

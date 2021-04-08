@@ -3,6 +3,37 @@ package ithkuil.iv.gloss
 import ithkuil.iv.gloss.dispatch.AffixData
 import ithkuil.iv.gloss.dispatch.RootData
 
+interface Resources {
+    fun getAffix(cs: String): AffixData?
+    fun getRoot(cr: String): RootData?
+}
+
+
+
+interface Glossable {
+    fun toString(o: GlossOptions): String
+    fun checkDictionary(r: Resources): Glossable = this
+}
+
+interface Category : Glossable {
+    val ordinal: Int
+    val name: String
+    val short: String
+
+    override fun toString(o: GlossOptions) = when {
+        !o.includeDefaults && this.ordinal == 0 -> ""
+        o.verbose -> this.name.toLowerCase()
+        else -> short
+    }
+}
+
+interface NoDefault : Category {
+    override fun toString(o: GlossOptions): String =
+        super.toString(o.showDefaults())
+}
+
+
+
 sealed class GlossOutcome
 class Error(val message: String) : GlossOutcome()
 class Foreign(val word: String) : GlossOutcome()
@@ -24,7 +55,6 @@ open class Gloss(
             .let { if (!it.isNullOrEmpty()) "$STRESS_SLOT_SEPARATOR$it" else "" }
 
         return mainWord + stressCategory
-
     }
 
     override fun checkDictionary(r: Resources): Gloss {
@@ -34,13 +64,21 @@ open class Gloss(
     }
 
 
+    @OptIn(ExperimentalStdlibApi::class)
     fun addPrefix(prefix: Glossable): Gloss {
-        val newSlots = mutableListOf(prefix).apply {
+        val newSlots = buildList {
+            add(prefix)
             addAll(slots)
         }
 
         return Gloss(newSlots, stressMarked = stressMarked)
     }
+}
+
+enum class Precision {
+    REGULAR,
+    SHORT,
+    FULL,
 }
 
 class GlossOptions(
@@ -59,40 +97,7 @@ class GlossOptions(
         get() = (precision == Precision.FULL)
 }
 
-enum class Precision {
-    REGULAR,
-    SHORT,
-    FULL,
-}
 
-interface Resources {
-    fun getAffix(cs: String): AffixData?
-    fun getRoot(cr: String): RootData?
-}
-
-interface Glossable {
-    fun toString(o: GlossOptions): String
-
-    fun checkDictionary(r: Resources): Glossable = this
-}
-
-
-interface Category : Glossable {
-    val ordinal: Int
-    val name: String
-    val short: String
-
-    override fun toString(o: GlossOptions) = when {
-        !o.includeDefaults && this.ordinal == 0 -> ""
-        o.verbose -> this.name.toLowerCase()
-        else -> short
-    }
-}
-
-interface NoDefault : Category {
-    override fun toString(o: GlossOptions): String =
-        super.toString(o.showDefaults())
-}
 
 class Slot(private val values: List<Glossable>) : Glossable, List<Glossable> by values {
 
@@ -100,9 +105,7 @@ class Slot(private val values: List<Glossable>) : Glossable, List<Glossable> by 
 
     override fun toString(o: GlossOptions): String {
         return values
-            .map {
-                it.toString(o)
-            }
+            .map { it.toString(o) }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
     }
@@ -122,33 +125,6 @@ class ConcatenationChain(private val formatives: List<Gloss>) : Gloss() {
     override fun checkDictionary(r: Resources): ConcatenationChain {
         return ConcatenationChain(formatives.map { it.checkDictionary(r) })
     }
-}
-
-class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glossable {
-
-    private var description: String = "**$cr**"
-
-    override fun checkDictionary(r: Resources): Root {
-
-        val rootEntry = r.getRoot(cr)
-
-        if (rootEntry != null) {
-
-            val stemDesc = rootEntry[stem.value]
-
-            description = if (stemDesc.isNotEmpty()) {
-                stem.used = true
-                "“$stemDesc“"
-            } else {
-                "“${rootEntry[Stem.STEM_ZERO]}“"
-            }
-
-        }
-
-        return this
-    }
-
-    override fun toString(o: GlossOptions): String = description
 }
 
 class GlossString(
@@ -186,4 +162,29 @@ class ForcedDefault(private val value: Glossable, private val default: String, p
     override fun toString(o: GlossOptions): String =
         value.toString(o).let { if (it.isEmpty() && condition) default else it }
 
+}
+
+class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glossable {
+
+    private var description: String = "**$cr**"
+
+    override fun checkDictionary(r: Resources): Root {
+
+        val rootEntry = r.getRoot(cr)
+
+        if (rootEntry != null) {
+
+            val stemDesc = rootEntry[stem.value]
+
+            description = if (stemDesc.isNotEmpty()) {
+                stem.used = true
+                "“$stemDesc“"
+            } else {
+                "“${rootEntry[Stem.STEM_ZERO]}“"
+            }
+        }
+        return this
+    }
+
+    override fun toString(o: GlossOptions): String = description
 }
