@@ -74,10 +74,10 @@ val UNSTRESSED_FORMS = listOf(
 //Vowels
 
 val VOWEL_FORMS = listOf(
-    "a", "ä", "e", "ï", "i", "ö", "o", "ü", "u",
-    "ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui",
-    "ia/oä", "iä/uä", "ie/oë", "ië/uë", "ëu", "uö/iö", "uo/io", "ue/eö", "ua/aö",
-    "ao", "ae", "ea", "eo", "eë", "öe", "oe", "öa", "oa"
+    "a", "ä", "e", "i", "ëi", "ö", "o", "ü", "u",
+    "ai", "au", "ei", "eu", "ëu", "ou", "oi", "iu", "ui",
+    "ia/uä", "ie/uë", "io/üä", "iö/üë", "eë", "uö/öë", "uo/öä", "ue/ië", "ua/iä",
+    "ao", "aö", "eo", "eö", "oë", "öe", "oe", "öa", "oa",
 )
 
 val VOWELS = setOf(

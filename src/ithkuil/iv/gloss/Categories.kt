@@ -294,93 +294,101 @@ enum class CaseScope(override val short: String) : Category {
 }
 
 @Suppress("unused")
-enum class Case(override val short: String, val vc: String) : Category {
+enum class Case(override val short: String, val series: Int, val form: Int, val glottal: Boolean = false) : Category {
     //  Transrelative
-    THEMATIC("THM", "a"),
-    INSTRUMENTAL("INS", "ä"),
-    ABSOLUTIVE("ABS", "e"),
-    STIMULATIVE("STM", "ï"),
-    AFFECTIVE("AFF", "i"),
-    EFFECTUATIVE("EFF", "ö"),
-    ERGATIVE("ERG", "o"),
-    DATIVE("DAT", "ü"),
-    INDUCIVE("IND", "u"),
+    THEMATIC("THM", 1, 1),
+    INSTRUMENTAL("INS", 1, 2),
+    ABSOLUTIVE("ABS", 1, 3),
+    AFFECTIVE("AFF", 1, 5),
+    STIMULATIVE("STM", 1, 4),
+    EFFECTUATIVE("EFF", 1, 6),
+    ERGATIVE("ERG", 1, 7),
+    DATIVE("DAT", 1, 8),
+    INDUCIVE("IND", 1, 9),
 
     //  Appositive
-    POSSESSIVE("POS", "ai"),
-    PROPRIETIVE("PRP", "au"),
-    GENITIVE("GEN", "ei"),
-    ATTRIBUTIVE("ATT", "eu"),
-    PRODUCTIVE("PDC", "ëi"),
-    INTERPRETIVE("ITP", "ou"),
-    ORIGINATIVE("OGN", "oi"),
-    INTERDEPENDENT("IDP", "iu"),
-    PARTITIVE("PAR", "ui"),
+    POSSESSIVE("POS", 2, 1),
+    PROPRIETIVE("PRP", 2, 2),
+    GENITIVE("GEN", 2, 3),
+    ATTRIBUTIVE("ATT", 2, 4),
+    PRODUCTIVE("PDC", 2, 5),
+    INTERPRETIVE("ITP", 2, 6),
+    ORIGINATIVE("OGN", 2, 7),
+    INTERDEPENDENT("IDP", 2, 8),
+    PARTITIVE("PAR", 2, 9),
 
     //  Associative
-    APPLICATIVE("APL", "ia/oä"),
-    PURPOSIVE("PUR", "iä/uä"),
-    TRANSMISSIVE("TRA", "ie/oë"),
-    DEFERENTIAL("DFR", "ië/uë"),
-    CONTRASTIVE("CRS", "ëu"),
-    TRANSPOSITIVE("TSP", "uö/iö"),
-    COMMUTATIVE("CMM", "uo/io"),
-    COMPARATIVE("CMP", "ue/eö"),
-    CONSIDERATIVE("CSD", "ua/aö"),
+    APPLICATIVE("APL", 3, 1),
+    PURPOSIVE("PUR", 3, 2),
+    TRANSMISSIVE("TRA", 3, 3),
+    DEFERENTIAL("DFR", 3, 4),
+    CONTRASTIVE("CRS", 3, 5),
+    TRANSPOSITIVE("TSP", 3, 6),
+    COMMUTATIVE("CMM", 3, 7),
+    COMPARATIVE("CMP", 3, 8),
+    CONSIDERATIVE("CSD", 3, 9),
 
     // Adverbial
-    FUNCTIVE("FUN", "ao"),
-    TRANSFORMATIVE("TFM", "ae"),
-    CLASSIFICATIVE("CLA", "ea"),
-    RESULTATIVE("RSL", "eo"),
-    CONSUMPTIVE("CSM", "eë"),
-    CONCESSIVE("CON", "öe"),
-    AVERSIVE("AVS", "oe"),
-    CONVERSIVE("CVS", "öa"),
-    SITUATIVE("SIT", "oa"),
+    FUNCTIVE("FUN", 4, 1),
+    TRANSFORMATIVE("TFM", 4, 2),
+    CLASSIFICATIVE("CLA", 4, 3),
+    RESULTATIVE("RSL", 4, 4),
+    CONSUMPTIVE("CSM", 4, 5),
+    CONCESSIVE("CON", 4, 6),
+    AVERSIVE("AVS", 4, 7),
+    CONVERSIVE("CVS", 4, 8),
+    SITUATIVE("SIT", 4, 9),
 
     // Relational
-    PERTINENTIAL("PRN", "a'a"),
-    DESCRIPTIVE("DSP", "ä'ä"),
-    CORRELATIVE("COR", "e'e"),
-    COMPOSITIVE("CPS", "ï'ï"),
-    COMITATIVE("COM", "i'i"),
-    UTILITATIVE("UTL", "ö'ö"),
-    PREDICATIVE("PRD", "o'o"),
-    RELATIVE("RLT", "u'u"),
+    PERTINENTIAL("PRN", 1, 1, true),
+    DESCRIPTIVE("DSP", 1, 2, true),
+    CORRELATIVE("COR", 1, 3, true),
+    COMPOSITIVE("CPS", 1, 4, true),
+    COMITATIVE("COM", 1, 5, true),
+    UTILITATIVE("UTL", 1, 6, true),
+    PREDICATIVE("PRD", 1, 7, true),
+    RELATIVE("RLT", 1, 9, true),
 
     // Affinitive
-    ACTIVATIVE("ACT", "a'i"),
-    ASSIMILATIVE("ASI", "a'u"),
-    ESSIVE("ESS", "e'i"),
-    TERMINATIVE("TRM", "e'u"),
-    SELECTIVE("SEL", "ë'i"),
-    CONFORMATIVE("CFM", "o'u"),
-    DEPENDENT("DEP", "o'i"),
-    VOCATIVE("VOC", "u'i"),
+    ACTIVATIVE("ACT", 2, 1, true),
+    ASSIMILATIVE("ASI", 2, 2, true),
+    ESSIVE("ESS", 2, 3, true),
+    TERMINATIVE("TRM", 2, 4, true),
+    SELECTIVE("SEL", 2, 5, true),
+    CONFORMATIVE("CFM", 2, 6, true),
+    DEPENDENT("DEP", 2, 7, true),
+    VOCATIVE("VOC", 2, 9, true),
 
     //  Spatio-Temporal I
-    LOCATIVE("LOC", "i'a"),
-    ATTENDANT("ATD", "i'ä"),
-    ALLATIVE("ALL", "i'e"),
-    ABLATIVE("ABL", "i'ë"),
-    ORIENTATIVE("ORI", "ë'u"),
-    INTERRELATIVE("IRL", "u'ö"),
-    INTRATIVE("INV", "u'o"),
-    NAVIGATIVE("NAV", "u'a"),
+    LOCATIVE("LOC", 3, 1, true),
+    ATTENDANT("ATD", 3, 2, true),
+    ALLATIVE("ALL", 3, 3, true),
+    ABLATIVE("ABL", 3, 4, true),
+    ORIENTATIVE("ORI", 3, 5, true),
+    INTERRELATIVE("IRL", 3, 6, true),
+    INTRATIVE("INV", 3, 7, true),
+    NAVIGATIVE("NAV", 3, 9, true),
 
     // Spatio-Temporal II
-    CONCURSIVE("CNR", "a'o"),
-    ASSESSIVE("ASS", "a'e"),
-    PERIODIC("PER", "e'a"),
-    PROLAPSIVE("PRO", "e'o"),
-    PRECURSIVE("PCV", "e'ë"),
-    POSTCURSIVE("PCR", "ö'e"),
-    ELAPSIVE("ELP", "o'e"),
-    PROLIMITIVE("PLM", "o'a");
+    CONCURSIVE("CNR", 4, 1, true),
+    ASSESSIVE("ASS", 4, 2, true),
+    PERIODIC("PER", 4, 3, true),
+    PROLAPSIVE("PRO", 4, 4, true),
+    PRECURSIVE("PCV", 4, 5, true),
+    POSTCURSIVE("PCR", 4, 6, true),
+    ELAPSIVE("ELP", 4, 7, true),
+    PROLIMITIVE("PLM", 4, 9, true);
 
     companion object {
-        fun byVowel(vc: String) = values().find { vc isSameVowelAs it.vc }
+        fun byVowel(vc: String): Case? {
+            val glottal = '\'' in vc
+            val (series, form) = seriesAndForm(vc)
+            return values().find {
+                it.form == form
+                    && it.series == series
+                    && it.glottal == glottal
+            }
+        }
     }
 }
 
