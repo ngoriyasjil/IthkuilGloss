@@ -11,14 +11,14 @@ const val REFERENT_START = "["
 const val REFERENT_END = "]"
 const val CONCATENATION_SEPARATOR = "—"
 const val LOW_TONE_MARKER = "_"
-const val CA_STACKING_VOWEL = "üä"
+const val CA_STACKING_VOWEL = "öi"
 const val CARRIER_ROOT_CR = "s"
 
 val ITHKUIL_CHARS = setOf(
     "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
     "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř",
-    "a", "ä", "e", "ë", "i", "ï", "u", "ü", "o", "ö",
-    "á", "â", "é", "ê", "í", "î", "ú", "û", "ó", "ô",
+    "a", "ä", "e", "ë", "i", "u", "ü", "o", "ö",
+    "á", "â", "é", "ê", "í", "ú", "û", "ó", "ô",
     "'", "-"
 )
 
@@ -32,7 +32,6 @@ val ALLOGRAPHS = listOf(
     "ä" to "ä", "â" to "â",
     "é" to "é",
     "ë" to "ë", "ê" to "ê",
-    "ï" to "ï", "î" to "î",
     "[ìı]|ì" to "i", "í" to "í",
     "ó" to "ó", "ö" to "ö", "ô" to "ô",
     "ù|ù" to "u", "ú" to "ú", "ü" to "ü", "û" to "û",
@@ -66,7 +65,7 @@ val CA_DEGEMINATIONS = mapOf(
 val UNSTRESSED_FORMS = listOf(
     "á" to "a", "â" to "ä",
     "é" to "e", "ê" to "ë",
-    "í" to "i", "î" to "ï",
+    "í" to "i",
     "ô" to "ö", "ó" to "o",
     "û" to "ü", "ú" to "u"
 )
@@ -81,34 +80,37 @@ val VOWEL_FORMS = listOf(
 )
 
 val VOWELS = setOf(
-    "a", "ä", "e", "ë", "i", "ï", "ö", "o", "ü", "u",
-    "á", "â", "é", "ê", "í", "î", "ú", "û", "ó", "ô"
+    "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
+    "á", "â", "é", "ê", "í", "ú", "û", "ó", "ô",
 )
 
 val VOWELS_AND_GLOTTAL_STOP = VOWELS + "'"
 
-val DIPHTHONGS = setOf("ai", "au", "ei", "eu", "ëi", "ou", "oi", "iu", "ui", "ëu")
+val DIPHTHONGS = setOf("ai", "äi", "ei", "ëi", "oi", "öi", "ui", "au", "eu", "ëu", "ou", "iu")
 
-val DEGREE_ZERO_CS_ROOT_FORMS = setOf("üa", "üe", "üo", "üö")
+val DEGREE_ZERO_CS_ROOT_FORMS = setOf("ae", "ea", "äi", "öi")
 
-val SPECIAL_VV_VOWELS = setOf("ëi", "eë", "ëu", "öë", "eä", "öä")
+val SPECIAL_VV_VOWELS = setOf(
+    "ëi", "eë", "ëu", "oë",
+    "ae", "ea",
+)
 
 //Consonants
 
 val CONSONANTS = listOf(
-    "p", "b", "t", "d", "k", "g", "'", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
-    "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř", "'"
+    "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
+    "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř"
 )
 
 val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")
 
 val CP_CONSONANTS = setOf("hl", "hm", "hn", "hň")
 
-val COMBINATION_REFERENTIAL_SPECIFICATION = listOf("x", "xx", "lx", "rx")
+val COMBINATION_REFERENTIAL_SPECIFICATION = listOf("x", "xt", "xp", "xx")
 
 val CASE_AFFIXES = setOf(
-    "sw", "zw", "šw", "žw", "lw",
-    "sy", "zy", "šy", "žy", "ly"
+    "sw", "zw", "čw", "šw", "žw", "jw", "lw",
+    "sy", "zy", "čy", "šy", "žy", "jy", "ly"
 )
 
 val CN_CONSONANTS = setOf(
@@ -120,7 +122,7 @@ val CN_PATTERN_ONE = setOf(
     "h", "hl", "hr", "hm", "hn", "hň"
 )
 
-val CZ_CONSONANTS = setOf("h", "'h", "'w", "'y", "hw", "'hw")
+val CZ_CONSONANTS = setOf("h", "'h", "'hl", "'hr", "hw", "'hw")
 
 //Other
 
