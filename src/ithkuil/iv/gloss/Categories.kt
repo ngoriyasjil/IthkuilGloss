@@ -233,46 +233,52 @@ class LevelAndRelativity(
 }
 
 @Suppress("unused")
-enum class Aspect(override val short: String, val vn: String) : NoDefault {
-    RETROSPECTIVE("RTR", "a"),
-    PROSPECTIVE("PRS", "ä"),
-    HABITUAL("HAB", "e"),
-    PROGRESSIVE("PRG", "ï"),
-    IMMINENT("IMM", "i"),
-    PRECESSIVE("PCS", "ö"),
-    REGULATIVE("REG", "o"),
-    SUMMATIVE("SMM", "ü"),
-    ANTICIPATORY("ATP", "u"),
-    RESUMPTIVE("RSM", "ai"),
-    CESSATIVE("CSS", "au"),
-    PAUSAL("PAU", "ei"),
-    REGRESSIVE("RGR", "eu"),
-    PRECLUSIVE("PCL", "ëi"),
-    CONTINUATIVE("CNT", "ou"),
-    INCESSATIVE("ICS", "oi"),
-    EXPERIENTIAL("EXP", "iu"),
-    INTERRUPTIVE("IRP", "ui"),
-    PREEMPTIVE("PMP", "ia/oä"),
-    CLIMACTIC("CLM", "iä/uä"),
-    DILATORY("DLT", "ie/oë"),
-    TEMPORARY("TMP", "ië/uë"),
-    EXPENDITIVE("XPD", "ëu"),
-    LIMITATIVE("LIM", "uö/iö"),
-    EXPEDITIVE("EPD", "uo/io"),
-    PROTRACTIVE("PTC", "ue/eö"),
-    PREPARATORY("PPR", "ua/aö"),
-    DISCLUSIVE("DCL", "ao"),
-    CONCLUSIVE("CCL", "ae"),
-    CULMINATIVE("CUL", "ea"),
-    INTERMEDIATIVE("IMD", "eo"),
-    TARDATIVE("TRD", "eë"),
-    TRANSITIONAL("TNS", "öe"),
-    INTERCOMMUTATIVE("ITC", "oe"),
-    MOTIVE("MTV", "öa"),
-    SEQUENTIAL("SQN", "oa");
+enum class Aspect(override val short: String, val series: Int, val form: Int) : NoDefault {
+    RETROSPECTIVE("RTR", 1, 1),
+    PROSPECTIVE("PRS", 1, 2),
+    HABITUAL("HAB", 1, 3),
+    PROGRESSIVE("PRG", 1, 4),
+    IMMINENT("IMM", 1, 5),
+    PRECESSIVE("PCS", 1, 6),
+    REGULATIVE("REG", 1, 7),
+    SUMMATIVE("SMM", 1, 8),
+    ANTICIPATORY("ATP", 1, 9),
+
+    RESUMPTIVE("RSM", 2, 1),
+    CESSATIVE("CSS", 2, 2),
+    PAUSAL("PAU", 2, 3),
+    REGRESSIVE("RGR", 2, 4),
+    PRECLUSIVE("PCL", 2, 5),
+    CONTINUATIVE("CNT", 2, 6),
+    INCESSATIVE("ICS", 2, 7),
+    EXPERIENTIAL("EXP", 2, 8),
+    INTERRUPTIVE("IRP", 2, 9),
+
+    PREEMPTIVE("PMP", 3, 1),
+    CLIMACTIC("CLM", 3, 2),
+    DILATORY("DLT", 3, 3),
+    TEMPORARY("TMP", 3, 4),
+    EXPENDITIVE("XPD", 3, 5),
+    LIMITATIVE("LIM", 3, 6),
+    EXPEDITIVE("EPD", 3, 7),
+    PROTRACTIVE("PTC", 3, 8),
+    PREPARATORY("PPR", 3, 9),
+
+    DISCLUSIVE("DCL", 4, 1),
+    CONCLUSIVE("CCL", 4, 2),
+    CULMINATIVE("CUL", 4, 3),
+    INTERMEDIATIVE("IMD", 4, 4),
+    TARDATIVE("TRD", 4, 5),
+    TRANSITIONAL("TNS", 4, 6),
+    INTERCOMMUTATIVE("ITC", 4, 7),
+    MOTIVE("MTV", 4, 8),
+    SEQUENTIAL("SQN", 4, 9);
 
     companion object {
-        fun byVowel(vn: String) = values().find { vn isSameVowelAs it.vn }
+        fun byVowel(vn: String) = values().find {
+            val (series, form) = seriesAndForm(vn)
+            it.series == series && it.form == form
+        }
     }
 }
 
@@ -383,7 +389,7 @@ enum class Case(override val short: String, val series: Int, val form: Int, val 
     companion object {
         fun byVowel(vc: String): Case? {
             val glottal = '\'' in vc
-            val (series, form) = seriesAndForm(vc)
+            val (series, form) = seriesAndForm(unglottalizeVowel(vc))
             return values().find {
                 it.form == form
                     && it.series == series
@@ -407,8 +413,8 @@ enum class Expectation(override val short: String) : Category {
 enum class Validation(override val short: String) : NoDefault {
     OBSERVATIONAL("OBS"),
     RECOLLECTIVE("REC"),
-    PURPORTIVE("PUP"),
     REPORTIVE("RPR"),
+    PURPORTIVE("PUP"),
     CONVENTIONAL("CVN"),
     INFERENTIAL("INF"),
     INTUITIVE("ITU"),
@@ -537,7 +543,8 @@ enum class Referent(override val short: String, private vararg val forms: String
     POLYADIC_INANIMATE_THIRD_PARTY("pi", "ẓ", "ļ", "f", "v"),
     MIXED_THIRD_PARTY("Mx", "c", "č", "j"),
     OBVIATIVE("Obv", "th", "ph", "kh"),
-    PROVISIONAL("PVS", "ll", "rr", "řř"),
+    REDUPLICATIVE("Rdp", "ll", "rr", "řř"),
+    PROVISIONAL("PVS", "mm", "nn", "ňň"),
     CARRIER("[CAR]", "hl"),
     QUOTATIVE("[QUO]", "hm"),
     NAMING("[NAM]", "hn"),

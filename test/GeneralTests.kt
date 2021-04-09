@@ -1,4 +1,3 @@
-
 import ithkuil.iv.gloss.*
 import ithkuil.iv.gloss.dispatch.respond
 import ithkuil.iv.gloss.interfaces.splitMessages

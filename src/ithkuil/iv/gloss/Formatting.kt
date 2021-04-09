@@ -52,15 +52,15 @@ class Word(
 
 }
 
-fun formatWord(word: String): FormattingOutcome {
+fun formatWord(fullWord: String): FormattingOutcome {
 
-    if (word.isEmpty()) return Invalid(word, "Empty word")
+    if (fullWord.isEmpty()) return Invalid(fullWord, "Empty word")
 
     val punct = ".,?!:;⫶`\"*_"
     val punctuationRegex = "([$punct]*)([^$punct]+)([$punct]*)".toRegex()
 
-    val (prefix, word, postfix) = punctuationRegex.matchEntire(word)?.destructured
-        ?: return Invalid(word, "Unexpected punctuation")
+    val (prefix, word, postfix) = punctuationRegex.matchEntire(fullWord)?.destructured
+        ?: return Invalid(fullWord, "Unexpected punctuation")
 
     if ("-" in word) {
         val words = word
@@ -194,7 +194,7 @@ fun seriesAndForm(v: String): Pair<Int, Int> {
     }
 }
 
-fun unGlottalizeVowel(v: String): String {
+fun unglottalizeVowel(v: String): String {
     return v.filter { it != '\'' }
         .let {
             if (it.length == 2 && it[0] == it[1]) it.take(1) else it
@@ -208,6 +208,7 @@ fun glottalizeVowel(v: String): String {
         else -> v
     }
 }
+
 fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
 
 fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter { it.isNotEmpty() }
@@ -224,7 +225,7 @@ infix fun String.isSameVowelAs(s: String): Boolean = if ("/" in s) {
 fun String.substituteAll(substitutions: List<Pair<String, String>>) =
     substitutions.fold(this) { current, (allo, sub) ->
         current.replace(allo.toRegex(), sub)
-}
+    }
 
 fun String.clearStress() = substituteAll(UNSTRESSED_FORMS)
 

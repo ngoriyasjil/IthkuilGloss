@@ -92,7 +92,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
 
     val groups = word.map { group ->
         if ('\'' in group) {
-            unGlottalizeVowel(group)
+            unglottalizeVowel(group)
         } else group
     }
 
@@ -360,9 +360,9 @@ fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
 
 }
 
-val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř", "hl", "hm", "hn", "hň")
+val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř", "mm", "nn", "ňň", "hl", "hm", "hn", "hň")
 
-class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot> {
+class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot> by referents.toList() {
     override fun toString(o: GlossOptions): String {
         return when (referents.size) {
             0 -> ""
@@ -372,10 +372,6 @@ class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot
                 { it.toString(o) }
         }
     }
-
-    override fun iterator(): Iterator<Slot> = referents.iterator()
-
-
 }
 
 fun parseReferential(word: Word): GlossOutcome {

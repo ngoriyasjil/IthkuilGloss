@@ -376,8 +376,8 @@ fun parseVk(s: String): Slot? {
     val validation = when (form) {
         1 -> Validation.OBSERVATIONAL
         2 -> Validation.RECOLLECTIVE
-        3 -> Validation.REPORTIVE
-        4 -> Validation.PURPORTIVE
+        3 -> Validation.PURPORTIVE
+        4 -> Validation.REPORTIVE
         5 -> null
         6 -> Validation.IMAGINARY
         7 -> Validation.CONVENTIONAL
@@ -392,17 +392,18 @@ fun parseVk(s: String): Slot? {
 
 // Referentials
 
-fun parseSingleReferent(s: String): Slot? {
-    val referent: Category = when (s) {
+fun parseSingleReferent(r: String): Slot? {
+    val referent: Category = when (r) {
+        "tļ" -> Perspective.AGGLOMERATIVE
         "ç", "x" -> Perspective.NOMIC
         "w", "y" -> Perspective.ABSTRACT
-        else -> Referent.byForm(s) ?: return null
+        else -> Referent.byForm(r) ?: return null
     }
 
-    val effect = when (s) {
-        "l", "s", "n", "m", "ň", "z", "ẓ", "ļ", "c", "th", "ll" -> Effect.NEUTRAL
-        "r", "š", "t", "p", "k", "ţ", "f", "č", "ph", "rr" -> Effect.BENEFICIAL
-        "ř", "ž", "d", "b", "g", "ḑ", "v", "j", "kh", "řř" -> Effect.DETRIMENTAL
+    val effect = when (r) {
+        "l", "s", "n", "m", "ň", "z", "ẓ", "ļ", "c", "th", "ll", "mm" -> Effect.NEUTRAL
+        "r", "š", "t", "p", "k", "ţ", "f", "č", "ph", "rr", "nn" -> Effect.BENEFICIAL
+        "ř", "ž", "d", "b", "g", "ḑ", "v", "j", "kh", "řř", "ňň" -> Effect.DETRIMENTAL
         else -> null
     }
 

@@ -9,7 +9,6 @@ interface Resources {
 }
 
 
-
 interface Glossable {
     fun toString(o: GlossOptions): String
     fun checkDictionary(r: Resources): Glossable = this
@@ -31,7 +30,6 @@ interface NoDefault : Category {
     override fun toString(o: GlossOptions): String =
         super.toString(o.showDefaults())
 }
-
 
 
 sealed class GlossOutcome
@@ -96,7 +94,6 @@ class GlossOptions(
     val verbose: Boolean
         get() = (precision == Precision.FULL)
 }
-
 
 
 class Slot(private val values: List<Glossable>) : Glossable, List<Glossable> by values {

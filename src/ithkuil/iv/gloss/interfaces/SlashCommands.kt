@@ -1,7 +1,6 @@
 package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
-import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.respond
 import dev.kord.core.entity.interaction.boolean
@@ -10,7 +9,6 @@ import dev.kord.core.event.interaction.InteractionCreateEvent
 import dev.kord.core.on
 import ithkuil.iv.gloss.dispatch.logger
 import ithkuil.iv.gloss.dispatch.respond
-import kotlinx.coroutines.flow.collect
 
 
 @KordPreview
