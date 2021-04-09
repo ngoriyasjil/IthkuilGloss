@@ -15,7 +15,7 @@ private val NUMBER_ROOTS = listOf(
     "ns",
     "čk",
     "lẓ",
-    "šš",
+    "j",
 )
 
 private val NUMBER_AFFIXES = listOf(
@@ -34,17 +34,13 @@ private val NUMBER_AFFIXES = listOf(
     "jd"
 )
 
-fun main() {
-    println(datetimeInIthkuil(LocalDateTime.now()))
-}
-
 private fun digitPart(n: Int): String {
     val units = n % 10
     val tens = n / 10
     val u = NUMBER_ROOTS[units]
     val t = if (tens > 0) "${VOWEL_FORMS[tens - 1]}rs" else ""
 
-    return "${u}${t}"
+    return "$u$t"
 }
 
 fun datetimeInIthkuil(date: LocalDateTime? = null): String {
