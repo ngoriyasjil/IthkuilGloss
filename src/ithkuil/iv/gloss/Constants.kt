@@ -46,21 +46,15 @@ val ALLOGRAPHS = listOf(
     "ṛ|ř|ŗ|r͕|ŗ|ṛ" to "ř",
 )
 
-val CA_SUBSTITUTIONS = listOf(
-    "řd" to "řtt", "řg" to "řkk", "řb" to "řpp",
-    "rd" to "rtt", "rg" to "rkk", "rb" to "rpp", "ňv" to "rňm", "ňḑ" to "rňn",
-    "ld" to "ltt", "lg" to "lkk", "lb" to "lpp", "nḑ" to "rnm", "mḑ" to "rmn",
-    "^nd" to "tt", "^ng" to "kk", "^mb" to "pp", "nz" to "nn", "mz" to "mm",
-    "ẓ" to "ňy", "ž" to "çy", "j" to "tçy", "gž" to "kçy", "bž" to "pçy",
-    "mv" to "np", "ňz" to "ňk", "v(?=.)" to "nf", "fs" to "tf", "fš" to "kf",
-    "c" to "ts", "č" to "tš", "ḑ" to "tţ"
+val CA_DESUBSTITUTIONS = listOf(
+    "ḑy" to "ţţ", "vw" to "ff", "\\B[ţḑ]" to "bn", "\\B[fv]" to "bm",
+    "\\Bxw" to "çx", "ňn" to "ngn", "\\Bň" to "gn", "\\Bx" to "gm",
+    "ňš" to "řř", "ňs" to "řr", "nš" to "rř", "ns" to "rr",
+    "nd" to "çy", "ng" to "kg", "mb" to "pb",
+    "pļ" to "ll", "nk" to "kk", "nt" to "tt", "mp" to "pp"
 )
 
-val CA_DEGEMINATIONS = mapOf(
-    "bḑḑ" to "pt", "bvv" to "pk", "gḑḑ" to "kt", "gvv" to "kp", "ḑvv" to "tk", "dvv" to "tp",
-    "bzzm" to "pm", "bzzn" to "pn", "gzzm" to "km", "gzzn" to "kn", "zzm" to "tm", "zzn" to "tn",
-    "bžžm" to "bm", "bžžn" to "bn", "gžžm" to "gm", "gžžn" to "gn", "žžm" to "dm", "žžn" to "dn",
-)
+val CA_DEGEMINATIONS = mapOf<String, String>()
 
 val UNSTRESSED_FORMS = listOf(
     "á" to "a", "â" to "ä",

@@ -1,11 +1,12 @@
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+
 import ithkuil.iv.gloss.*
 import ithkuil.iv.gloss.dispatch.respond
 import ithkuil.iv.gloss.interfaces.splitMessages
 import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 infix fun String.glossesTo(gloss: String) {
 
@@ -45,7 +46,7 @@ infix fun String.hasStress(stress: Stress) = assertEquals(stress, (formatWord(th
 
 infix fun String.givesInvalid(error: String) = assertEquals(error, (formatWord(this) as Invalid).message)
 
-infix fun String.mustBe(s: String) = assertEquals(s, this, this)
+infix fun String.isCaOf(gloss: String) = assertEquals(gloss, parseCa(this)?.toString(GlossOptions()), this)
 
 fun assertCarrier(word: String) {
     assertTrue(word) { isCarrier(formatWord(word) as Valid) }
@@ -107,15 +108,15 @@ class GeneralTests {
     }
 
     @Test
-    fun caUnGeminationTest() {
-        "pp".degeminateCa() mustBe "p"
-        "ggw".degeminateCa() mustBe "gw"
-        "mmtw".degeminateCa() mustBe "mtw"
-        "tççkl".degeminateCa() mustBe "tçkl"
-        "ccw".degeminateCa() mustBe "cw"
-        "ččtw".degeminateCa() mustBe "čtw"
-        "gḑḑ".degeminateCa() mustBe "kt"
-        "žžn".degeminateCa() mustBe "dn"
+    fun caTest() {
+        "l" isCaOf ""
+        "s" isCaOf "DPX"
+        "nļ" isCaOf "ASO"
+        "tļ" isCaOf "RPV"
+        "řktç" isCaOf "VAR.MSC.PRX.A.RPV"
+        "nš" isCaOf "COA.G.RPV"
+        "zḑ" isCaOf "MFS.DPL.A.RPV"
+        "nx" isCaOf "MSC.GRA.N.RPV"
     }
 
     @Test
@@ -143,20 +144,6 @@ class GeneralTests {
     }
 
     @Test
-    fun caTest() {
-        "alartřa" glossesTo "S1-**l**-DSS.RPV"
-    }
-
-    @Test
-    fun longMessageTest() {
-        val longText = File("./resources/longtest.txt").readText()
-        val messages = respond("?gloss $longText")!!.splitMessages().toList()
-        assertTrue("Is empty!") { messages.isNotEmpty() }
-        assertTrue("Wrong size: ${messages.size}") { messages.size == 2 }
-        assertTrue("Are longer than 2000 chars ${messages.map { it.length }}") { messages.all { it.length <= 2000 } }
-    }
-
-    @Test
     fun stressMarkingTest() {
         "lála'a" glossesTo "S1-**l**-PRN\\FRA"
         "layá" glossesTo "1m-THM-THM\\RPV"
@@ -181,6 +168,15 @@ class GeneralTests {
         assertNotCarrier("hma")
         assertNotCarrier("ëisala")
     }
+}
 
-
+class DiscordTests {
+    @Test
+    fun longMessageTest() {
+        val longText = File("./resources/longtest.txt").readText()
+        val messages = respond("?gloss $longText")!!.splitMessages().toList()
+        assertTrue("Is empty!") { messages.isNotEmpty() }
+        assertTrue("Wrong size: ${messages.size}") { messages.size == 2 }
+        assertTrue("Are longer than 2000 chars ${messages.map { it.length }}") { messages.all { it.length <= 2000 } }
+    }
 }

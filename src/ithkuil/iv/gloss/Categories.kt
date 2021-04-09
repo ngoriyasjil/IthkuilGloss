@@ -61,7 +61,8 @@ interface CaCategory : Category // Should ideally be sealed, but that feature is
 
 @Suppress("unused")
 enum class Configuration(override val short: String) : CaCategory {
-    UNIPLEX("UNI"),
+    UNIPLEX("UPX"),
+    DUPLEX("DPX"),
     DUPLEX_SIMILAR_SEPARATE("DSS"),
     DUPLEX_SIMILAR_CONNECTED("DSC"),
     DUPLEX_SIMILAR_FUSED("DSF"),
@@ -107,7 +108,7 @@ enum class Extension(override val short: String) : CaCategory {
 
 enum class Perspective(override val short: String) : CaCategory {
     MONADIC("M"),
-    POLYADIC("P"),
+    AGGLOMERATIVE("G"),
     NOMIC("N"),
     ABSTRACT("A");
 }
