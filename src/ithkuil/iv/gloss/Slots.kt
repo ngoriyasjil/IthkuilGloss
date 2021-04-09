@@ -175,18 +175,15 @@ fun String.isGeminateCa(): Boolean = when {
     else -> false
 }
 
-fun String.degeminateCa(): String = when {
-    this in CA_DEGEMINATIONS -> CA_DEGEMINATIONS[this] ?: this
-    withIndex().any { (index, letter) -> letter == getOrNull(index + 1) } ->
-        mapIndexed { index, letter ->
-            if (letter == getOrNull(index + 1)) "" else letter
-        }.joinToString("")
-    else -> this
-}
-
-
-fun main() {
-    println(gatherCaValues("nļ"))
+fun String.degeminateCa(): String {
+    val allomorph = CA_DEGEMINATIONS.keys.find { this.endsWith(it) }
+    return when {
+        allomorph != null -> replace(allomorph, CA_DEGEMINATIONS[allomorph]!!)
+        zipWithNext().any { (a, b) -> a == b } ->
+            zipWithNext { a, b -> if (a != b) b else "" }
+                .joinToString("", prefix = take(1))
+        else -> this
+    }
 }
 
 data class CaForms(

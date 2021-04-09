@@ -54,7 +54,11 @@ val CA_DESUBSTITUTIONS = listOf(
     "pļ" to "ll", "nk" to "kk", "nt" to "tt", "mp" to "pp"
 )
 
-val CA_DEGEMINATIONS = mapOf<String, String>()
+val CA_DEGEMINATIONS = mapOf(
+    "jjn" to "dn", "jjm" to "dm", "gžžn" to "gn", "gžžm" to "gm", "bžžn" to "bn", "bžžm" to "bm",
+    "ḑḑn" to "tn", "ḑḑm" to "tm", "xxn" to "kn", "xxm" to "km", "vvn" to "pn", "vmm" to "pm",
+    "ddv" to "tp", "ḑvv" to "tk", "ggv" to "kp", "ggḑ" to "kt", "bbv" to "pk", "bbḑ" to "pt",
+)
 
 val UNSTRESSED_FORMS = listOf(
     "á" to "a", "â" to "ä",

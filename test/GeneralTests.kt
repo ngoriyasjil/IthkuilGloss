@@ -102,12 +102,6 @@ class GeneralTests {
     }
 
     @Test
-    fun affixualAdjunctTest() {
-        "ïn" glossesTo "**n**/4₁"
-        "ïní" glossesTo "**n**/4₁-{VIISub}\\{concat.}"
-    }
-
-    @Test
     fun caTest() {
         "l" isCaOf ""
         "s" isCaOf "DPX"
