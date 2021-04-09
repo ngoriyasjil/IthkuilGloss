@@ -18,6 +18,16 @@ fun parseCc(c: String): Pair<Concatenation?, Shortcut?> {
     return Pair(concatenation, shortcut)
 }
 
+private fun caOf(
+    affiliation: Affiliation = Affiliation.CONSOLIDATIVE,
+    configuration: Configuration = Configuration.UNIPLEX,
+    extension: Extension = Extension.DELIMITIVE,
+    perspective: Perspective = Perspective.MONADIC,
+    essence: Essence = Essence.NORMAL,
+): Slot {
+    return Slot(affiliation, configuration, extension, perspective, essence)
+}
+
 fun parseVv(vv: String, shortcut: Shortcut?): Slot? {
     return if (vv in SPECIAL_VV_VOWELS) {
         parseSpecialVv(vv, shortcut)
@@ -61,19 +71,19 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
         }
         Shortcut.W_SHORTCUT -> {
             additional = when (series) {
-                1 -> parseCa("l")!!
-                2 -> parseCa("r")!!
-                3 -> parseCa("v")!!
-                4 -> parseCa("tļ")!!
+                1 -> caOf()
+                2 -> caOf(perspective = Perspective.AGGLOMERATIVE)
+                3 -> caOf(perspective = Perspective.NOMIC)
+                4 -> caOf(perspective = Perspective.AGGLOMERATIVE, essence = Essence.REPRESENTATIVE)
                 else -> return null
             }
         }
         Shortcut.Y_SHORTCUT -> {
             additional = when (series) {
-                1 -> parseCa("s")!!
-                2 -> parseCa("ř")!!
-                3 -> parseCa("z")!!
-                4 -> parseCa("sř")!!
+                1 -> caOf(extension = Extension.PROXIMAL)
+                2 -> caOf(essence = Essence.REPRESENTATIVE)
+                3 -> caOf(perspective = Perspective.ABSTRACT)
+                4 -> caOf(extension = Extension.PROXIMAL, essence = Essence.REPRESENTATIVE)
                 else -> return null
             }
         }
@@ -85,25 +95,25 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
 
 fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
     val version = when (vv) {
-        "ëi", "eë", "eä" -> Version.PROCESSUAL
-        "ëu", "öë", "öä" -> Version.COMPLETIVE
+        "ëi", "eë", "ae" -> Version.PROCESSUAL
+        "ëu", "oë", "ea" -> Version.COMPLETIVE
         else -> return null
     }
 
     val function = when (vv) {
         "ëi", "ëu" -> Function.STATIVE
-        "eë", "öë" -> Function.DYNAMIC
+        "eë", "oë" -> Function.DYNAMIC
         else -> null
     }
 
-    val ca = if (shortcut != null && vv in setOf("eä", "öä")) {
+    val ca = if (shortcut != null && vv in setOf("ae", "ea")) {
         when (shortcut) {
-            Shortcut.W_SHORTCUT -> parseCa("l")!!
-            Shortcut.Y_SHORTCUT -> parseCa("s")!!
+            Shortcut.W_SHORTCUT -> caOf()
+            Shortcut.Y_SHORTCUT -> caOf(extension = Extension.PROXIMAL)
         }
     } else if (shortcut != null) {
         return null
-    } else Slot()
+    } else null
 
     return Slot(version, function, ca)
 
@@ -144,10 +154,10 @@ fun parseAffixVr(vr: String): Slot? {
         .let {
             if (it == Pair(-1, -1)) {
                 val zeroSeries = when (vr) {
-                    "üa" -> 1
-                    "üe" -> 2
-                    "üo" -> 3
-                    "üö" -> 4
+                    "ae" -> 1
+                    "ea" -> 2
+                    "äi" -> 3
+                    "öi" -> 4
                     else -> return null
                 }
                 zeroSeries to 0
@@ -418,12 +428,13 @@ fun parseFullReferent(clusters: List<String>): Referential? {
 
     return when (reflist.size) {
         0 -> null
-        else -> Referential(*reflist.toTypedArray())
+        else -> Referential(reflist)
     }
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 fun parseFullReferent(c: String): Referential? {
-    val referents = sequence {
+    val referents = buildList {
         var index = 0
 
         while (index <= c.lastIndex) {
@@ -434,14 +445,14 @@ fun parseFullReferent(c: String): Referential? {
                 parseSingleReferent(c.substring(index, index + 1)).also { index++ }
             }
 
-            if (referent != null) yield(referent)
+            if (referent != null) add(referent)
         }
 
-    }.toList()
+    }
 
     return when (referents.size) {
         0 -> null
-        else -> Referential(*referents.toTypedArray())
+        else -> Referential(referents)
     }
 
 }
@@ -461,11 +472,11 @@ fun affixualAdjunctScope(vsCzVz: String?, isMultipleAdjunctVowel: Boolean = fals
         null -> if (isMultipleAdjunctVowel) "{same}" else "{VDom}"
         "h", "a" -> "{VDom}"
         "'h", "u" -> "{VSub}"
-        "'w", "e" -> "{VIIDom}"
-        "'y", "i" -> "{VIISub}"
+        "'hl", "e" -> "{VIIDom}"
+        "'hr", "i" -> "{VIISub}"
         "hw", "o" -> "{formative}"
         "'hw", "ö" -> "{adjacent}"
-        "ë" -> if (isMultipleAdjunctVowel) "{same}" else null
+        "ai" -> if (isMultipleAdjunctVowel) "{same}" else null
         else -> null
     }
     val default = (scope == "{VDom}" && !isMultipleAdjunctVowel) || (scope == "{same}" && isMultipleAdjunctVowel)

@@ -362,7 +362,7 @@ fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
 
 val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř", "mm", "nn", "ňň", "hl", "hm", "hn", "hň")
 
-class Referential(private vararg val referents: Slot) : Glossable, Iterable<Slot> by referents.toList() {
+class Referential(private val referents: List<Slot>) : Glossable, List<Slot> by referents {
     override fun toString(o: GlossOptions): String {
         return when (referents.size) {
             0 -> ""
@@ -543,14 +543,14 @@ fun parseMoodCaseScopeAdjunct(word: Word): GlossOutcome {
         "a" -> Mood.FACTUAL
         "e" -> Mood.SUBJUNCTIVE
         "i" -> Mood.ASSUMPTIVE
-        "ö" -> Mood.SPECULATIVE
-        "o" -> Mood.COUNTERFACTIVE
+        "o" -> Mood.SPECULATIVE
+        "ö" -> Mood.COUNTERFACTIVE
         "u" -> Mood.HYPOTHETICAL
         "ai" -> CaseScope.NATURAL
         "ei" -> CaseScope.ANTECEDENT
         "iu" -> CaseScope.SUBALTERN
-        "ëi" -> CaseScope.QUALIFIER
-        "oi" -> CaseScope.PRECEDENT
+        "oi" -> CaseScope.QUALIFIER
+        "öi" -> CaseScope.PRECEDENT
         "ui" -> CaseScope.SUCCESSIVE
         else -> return Error("Unknown Mood/Case-Scope adjunct vowel: $v")
     }
