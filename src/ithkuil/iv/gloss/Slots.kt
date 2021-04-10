@@ -40,11 +40,9 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
 
     val (series, form) = seriesAndForm(v)
 
-    if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
-
     val stem = when (form) {
         1, 2 -> Stem.STEM_ONE
-        3, 5, 4 -> Stem.STEM_TWO
+        3, 4 -> Stem.STEM_TWO
         9, 8 -> Stem.STEM_THREE
         7, 6 -> Stem.STEM_ZERO
         else -> return null
@@ -53,7 +51,7 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
 
     val version = when (form) {
         1, 3, 9, 7 -> Version.PROCESSUAL
-        2, 5, 4, 8, 6 -> Version.COMPLETIVE
+        2, 4, 8, 6 -> Version.COMPLETIVE
         else -> return null
     }
 
@@ -122,17 +120,15 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
 fun parseVr(vr: String): Slot? {
     val (series, form) = seriesAndForm(vr)
 
-    if ((series == 1 && form == 4) || (series != 1 && form == 5)) return null
-
     val specification = when (form) {
         1, 9 -> Specification.BASIC
         2, 8 -> Specification.CONTENTIAL
         3, 7 -> Specification.CONSTITUTIVE
-        5, 4, 6 -> Specification.OBJECTIVE
+        4, 6 -> Specification.OBJECTIVE
         else -> return null
     }
     val function = when (form) {
-        1, 2, 3, 5, 4 -> Function.STATIVE
+        1, 2, 3, 4 -> Function.STATIVE
         9, 8, 7, 6 -> Function.DYNAMIC
         else -> return null
     }
