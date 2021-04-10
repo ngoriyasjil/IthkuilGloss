@@ -90,16 +90,16 @@ class Affix(private val vx: String, private val cs: String) {
 
         if (cs in CASE_AFFIXES) {
             val vc = when (cs) {
-                "sw", "zw", "šw", "žw", "lw" -> vx
-                "sy", "zy", "šy", "žy", "ly" -> glottalizeVowel(vx)
+                "sw", "zw", "čw", "šw", "žw", "jw", "lw" -> vx
+                "sy", "zy", "čy", "šy", "žy", "jy", "ly" -> glottalizeVowel(vx)
                 else -> return AffixError("Unknown case affix form: $cs")
             }
 
             val case = Case.byVowel(vc) ?: return AffixError("Unknown case vowel: $vx")
 
             val kind = when (cs) {
-                "sw", "sy", "zw", "zy" -> CaseAffixKind.CASE_ACCESSOR
-                "šw", "šy", "žw", "žy" -> CaseAffixKind.INVERSE_ACCESSOR
+                "sw", "sy", "zw", "zy", "čw", "čy" -> CaseAffixKind.CASE_ACCESSOR
+                "šw", "šy", "žw", "žy", "jw", "jy" -> CaseAffixKind.INVERSE_ACCESSOR
                 "lw", "ly" -> CaseAffixKind.CASE_STACKING
                 else -> return AffixError("Unknown case affix form: $cs")
             }
@@ -107,6 +107,7 @@ class Affix(private val vx: String, private val cs: String) {
             val type = when (cs) {
                 "sw", "sy", "šw", "šy" -> AffixType.ONE
                 "zw", "zy", "žw", "žy" -> AffixType.TWO
+                "čw", "čy", "jw", "jy" -> AffixType.THREE
                 else -> return AffixError("Unknown case affix form: $cs")
             }
 

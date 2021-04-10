@@ -510,9 +510,9 @@ class RegisterAdjunct(private val register: Register, private val final: Boolean
 enum class Register(override val short: String, val initial: String, val final: String) : NoDefault {
     DISCURSIVE("DSV", "a", "ai"),
     PARENTHETICAL("PNT", "e", "ei"),
-    COGITANT("CGT", "o", "oi"),
-    EXAMPLIFICATIVE("EXM", "ö", "ëi"),
     SPECIFICATIVE("SPF", "i", "iu"),
+    EXAMPLIFICATIVE("EXM", "o", "oi"),
+    COGITANT("CGT", "ö", "öi"),
     MATHEMATICAL("MTH", "u", "ui"),
     CARRIER_END("CAR", "", "ü");
 

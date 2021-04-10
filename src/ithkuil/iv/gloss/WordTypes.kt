@@ -19,6 +19,7 @@ fun wordTypeOf(word: Word): WordType {
 
         pattern(word) {
             maybe("w", "y")
+            confirm { it != "äi" }
             repeat(3) {
                 maybe {
                     vowel()
@@ -35,7 +36,7 @@ fun wordTypeOf(word: Word): WordType {
                     consonant()
                 },
                 {
-                    "ï"()
+                    "a"()
                     oneOf(CP_CONSONANTS)
                 }
             )
@@ -65,8 +66,16 @@ fun wordTypeOf(word: Word): WordType {
         } -> WordType.MULTIPLE_AFFIX_ADJUNCT
 
         pattern(word) {
-            maybe("ë")
-            referentialConsonant()
+            either(
+                {
+                    maybe("ë")
+                    consonant()
+                },
+                {
+                    "äi"()
+                    oneOf(CP_CONSONANTS)
+                }
+            )
             while (current() == "ë") {
                 "ë"()
                 referentialConsonant()
@@ -112,9 +121,9 @@ class Matcher(var slots: List<String>, var matching: Boolean = true) {
 
     fun vowel() = fulfills { it.isVowel() }
 
-    fun consonant() = fulfills { it.isConsonant() }
+    fun consonant() = fulfills { it !in CN_CONSONANTS && it.isConsonant() }
 
-    fun referentialConsonant() = fulfills { it.isConsonant() || it in CP_CONSONANTS }
+    fun referentialConsonant() = fulfills { it in CP_CONSONANTS || (it.isConsonant() && it !in CN_CONSONANTS) }
 
     fun oneOf(set: Collection<String>) = fulfills { it in set }
 

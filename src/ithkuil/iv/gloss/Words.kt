@@ -384,8 +384,8 @@ fun parseReferential(word: Word): GlossOutcome {
     val c1 = word
         .takeWhile { it !in setOf("w", "y") }
         .dropLast(1)
-        .filter { it != "ë" }
-        .takeIf { it.size <= 3 } ?: return Error("Too many (>3) initial ë-separated consonants")
+        .filter { it !in setOf("ë", "äi") }
+        .takeIf { it.size <= 3 } ?: return Error("Too many (>3) initial consonant clusters")
     val refA =
         parseFullReferent(c1) ?: return Error("Unknown personal reference: $c1")
     var index = (word
@@ -431,8 +431,10 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
     }
     var index = 0
 
-    if (word[0] in setOf("ë", "ï")) {
-        if ((word[0] == "ï") != (word[1] in CP_CONSONANTS)) return Error("Epenthetic ï must only be used with Suppletive forms")
+    if (word[0] in setOf("ë", "a")) {
+        if ((word[0] == "a") != (word[1] in CP_CONSONANTS)) {
+            return Error("Epenthetic ï must only be used with Suppletive forms")
+        }
         index++
     }
 
@@ -446,9 +448,9 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
 
     val specification = when (word[index]) {
         "x" -> Specification.BASIC
-        "xx" -> Specification.CONTENTIAL
-        "lx" -> Specification.CONSTITUTIVE
-        "rx" -> Specification.OBJECTIVE
+        "xt" -> Specification.CONTENTIAL
+        "xp" -> Specification.CONSTITUTIVE
+        "xx" -> Specification.OBJECTIVE
         else -> return Error("Unknown combination referential Specification: ${word[index]}")
     }
     index++
