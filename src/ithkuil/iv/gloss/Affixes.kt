@@ -134,8 +134,8 @@ class Affix(private val vx: String, private val cs: String) {
                     1 -> Case.THEMATIC
                     2 -> Case.INSTRUMENTAL
                     3 -> Case.ABSOLUTIVE
-                    4 -> Case.STIMULATIVE
-                    5 -> Case.AFFECTIVE
+                    4 -> Case.AFFECTIVE
+                    5 -> Case.STIMULATIVE
                     6 -> Case.EFFECTUATIVE
                     7 -> Case.ERGATIVE
                     8 -> Case.DATIVE
