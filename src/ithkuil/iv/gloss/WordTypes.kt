@@ -19,7 +19,7 @@ fun wordTypeOf(word: Word): WordType {
 
         pattern(word) {
             maybe("w", "y")
-            confirm { it != "äi" }
+            confirm { it !in setOf("ë", "äi") }
             repeat(3) {
                 maybe {
                     vowel()
@@ -66,16 +66,8 @@ fun wordTypeOf(word: Word): WordType {
         } -> WordType.MULTIPLE_AFFIX_ADJUNCT
 
         pattern(word) {
-            either(
-                {
-                    maybe("ë")
-                    consonant()
-                },
-                {
-                    "äi"()
-                    oneOf(CP_CONSONANTS)
-                }
-            )
+            maybe("ë", "äi")
+            referentialConsonant()
             while (current() == "ë") {
                 "ë"()
                 referentialConsonant()

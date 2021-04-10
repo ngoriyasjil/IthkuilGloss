@@ -117,8 +117,8 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
     val vv: String = if (index == 0 && groups[0].isConsonant()) "a" else groups[index].also { index++ }
 
     val rootMode = when (vv) {
-        "ëi", "eë", "ëu", "öë" -> RootMode.AFFIX
-        "eä", "öä" -> RootMode.REFERENCE
+        "ëi", "eë", "ëu", "oë" -> RootMode.AFFIX
+        "ae", "ea" -> RootMode.REFERENCE
         else -> RootMode.ROOT
     }
 
@@ -381,6 +381,19 @@ fun parseReferential(word: Word): GlossOutcome {
         Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress on referential")
         else -> return Error("Stress error")
     }
+
+    if (word[0] in CP_CONSONANTS && word.size > 2) {
+        return Error("Cp in referential not preceded by epenthetic \"äi\"")
+    }
+
+    if (word[0] == "äi" && word[1] !in CP_CONSONANTS) {
+        return Error("Epenthetic \"äi\" not followed by a Cp form")
+    }
+
+    if (word[0] == "ë" && word[1] in CP_CONSONANTS) {
+        return Error("Cp in referential not preceded by epenthetic \"äi\"")
+    }
+
     val c1 = word
         .takeWhile { it !in setOf("w", "y") }
         .dropLast(1)

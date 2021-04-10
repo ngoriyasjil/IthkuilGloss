@@ -58,15 +58,6 @@ fun assertNotCarrier(word: String) {
 class GeneralTests {
 
     @Test
-    fun poemTest() {
-        "hlamröé-uçtļořï" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN.CSV-RPV-STM"
-        "khe" glossesTo "Obv.DET-ABS"
-        "adnilö'ö" glossesTo "S1-**dn**-OBJ-UTL"
-        "yeilaišeu" glossesTo "S2.RPV-**l**-**š**/1₂-ATT"
-        "aiňļavu'u" glossesTo "S1.**r**/4-**ňļ**-N-RLT"
-    }
-
-    @Test
     fun slotVTest() {
         "alarfull" glossesTo "S1-**l**-**rf**/9₁-{Ca}"
         "wa'lena" givesError "Unexpectedly few slot V affixes"
@@ -113,16 +104,8 @@ class GeneralTests {
     }
 
     @Test
-    fun vnCnTest() {
-        "iuha" glossesTo "VAC"
-        "ïha" glossesTo "RCP"
-        "ëuha" glossesTo "UNK"
-        "ëha" givesError "Unknown VnCn: ëh"
-    }
-
-    @Test
     fun csRootTest() {
-        "öëgüöl" glossesTo "CPT.DYN-**g**/0-D0.OBJ"
+        "oëgöil" glossesTo "CPT.DYN-**g**/0-D0.OBJ"
     }
 
     @Test
@@ -143,21 +126,13 @@ class GeneralTests {
     }
 
     @Test
-    fun suppletiveFormsTest() {
-        "hňa'u" glossesTo "[PHR]-ASI"
-        "ïhlarxal" glossesTo "[CAR]-OBJ-**l**/1₁"
-        "ëhňarxal" givesError "Epenthetic ï must only be used with Suppletive forms"
-        "lëhmoyehnë" glossesTo "[1m+[QUO]]-ERG-ABS-[NAM]"
-    }
-
-    @Test
     fun carrierIdentificationTest() {
         assertCarrier("sala")
         assertCarrier("husana-mala")
         assertCarrier("hamala-sala")
         assertCarrier("hla")
         assertCarrier("hňayazë")
-        assertCarrier("ïhnaxena")
+        assertCarrier("ahnaxena")
         assertNotCarrier("hma")
         assertNotCarrier("ëisala")
     }
