@@ -2,7 +2,7 @@
 
 A Discord parser bot for the Ithkuil IV language.
 
-Currently up to date to morphophonology v0.18.5.
+Currently up to date to morphophonology v0.19.0.
 
 See [the help file](https://github.com/ngoriyasjil/IthkuilGloss/blob/master/resources/help.md) for the list of commands!
 

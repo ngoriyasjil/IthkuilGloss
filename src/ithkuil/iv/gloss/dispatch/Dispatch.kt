@@ -2,14 +2,13 @@
 
 package ithkuil.iv.gloss.dispatch
 
+import ithkuil.iv.gloss.*
+import mu.KotlinLogging
 import java.io.File
 import java.net.URL
 import kotlin.system.exitProcess
-import kotlin.time.milliseconds
 import kotlin.time.ExperimentalTime
-import mu.KotlinLogging
-import ithkuil.iv.gloss.*
-import ithkuil.iv.gloss.Resources
+import kotlin.time.milliseconds
 
 val startTime = System.currentTimeMillis()
 
@@ -50,7 +49,7 @@ object LocalDictionary : Resources {
     override fun getRoot(cr: String): RootData? = roots[cr]
 }
 
-const val MORPHOPHONOLOGY_VERSION = "0.18.5"
+const val MORPHOPHONOLOGY_VERSION = "0.19.0"
 
 const val AFFIXES_URL =
     "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516"
