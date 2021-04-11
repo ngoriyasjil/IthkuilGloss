@@ -47,7 +47,7 @@ val ALLOGRAPHS = listOf(
 )
 
 val CA_DESUBSTITUTIONS = listOf(
-    "ḑy" to "ţţ", "vw" to "ff", "\\B[ţḑ]" to "bn", "\\B[fv]" to "bm",
+    "ḑy" to "ţţ", "vw" to "ff", "\\Bḑ" to "bn", "\\Bv" to "bm",
     "\\Bxw" to "çx", "ňn" to "ngn", "\\Bň" to "gn", "\\Bx" to "gm",
     "ňš" to "řř", "ňs" to "řr", "nš" to "rř", "ns" to "rr",
     "nd" to "çy", "ng" to "kg", "mb" to "pb",

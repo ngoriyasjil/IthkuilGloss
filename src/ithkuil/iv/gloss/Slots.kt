@@ -212,8 +212,8 @@ data class CaForms(
 fun gatherCaValues(ca: String): CaForms? {
     val affiliation = "[nrř]ļ\$|[lrř](?=.)".toRegex()
     val configuration = "[stckpţfçšzčžẓ]|[kpţf]s|[kp]š".toRegex()
-    val extension = "(?<=^[lrř])(?:[gb]z|d)|[tkpgb]".toRegex()
-    val perspectiveEssence = "^[lvj]|^tļ|[rwyřmhnç]".toRegex()
+    val extension = "(?<=^[lrř]?)(?:[gb]z|d)|[tkpgb]".toRegex()
+    val perspectiveEssence = "^[lvj]|^tļ|[lrwyřmhnç]".toRegex()
 
     val fullRegex = "($affiliation)?($configuration)?($extension)?($perspectiveEssence)?".toRegex()
 
@@ -227,7 +227,10 @@ fun gatherCaValues(ca: String): CaForms? {
 }
 
 fun parseCa(ca: String): Slot? {
-    val forms = gatherCaValues(ca.substituteAll(CA_DESUBSTITUTIONS)) ?: return null
+
+    val unwoundCa = ca.substituteAll(CA_DESUBSTITUTIONS)
+
+    val forms = gatherCaValues(unwoundCa) ?: return null
 
     val affiliation = if (forms.affiliationStandalone()) {
         when (forms.affiliation) {
