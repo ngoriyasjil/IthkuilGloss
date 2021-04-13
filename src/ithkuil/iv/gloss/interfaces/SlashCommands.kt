@@ -62,7 +62,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
             string("text", "The text to be checked") { required = true }
         }
 
-        command("whosagoodbot", "Tells the bot how good a bot it is. :3") { }
+        command("whosacutebot", "Tells the bot how cute a bot it is. :3") { }
 
         command("date", "Tells the current time and date (UTC) in Ithkuil") { }
 
@@ -122,11 +122,11 @@ suspend fun initializeSlashCommands(kord: Kord) {
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "whosagoodbot") return@on
-        logger.info { "Running slash command \"whosagoodbot\"" }
+        if (interaction.command.rootName != "whosacutebot") return@on
+        logger.info { "Running slash command \"whosacutebot\"" }
 
         interaction.respond {
-            content = respond("?!whosagoodbot")!!
+            content = respond("?!whosacutebot")!!
         }
     }
 
