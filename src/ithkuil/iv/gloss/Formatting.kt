@@ -83,6 +83,8 @@ fun formatWord(fullWord: String): FormattingOutcome {
 
     val clean = word.defaultFormWithStress()
 
+    if (clean.last() == '\'') return Invalid(word, "Word ends in glottal stop")
+
     fun codepointString(c: Char): String {
         val codepoint = c.toInt()
             .toString(16)
