@@ -84,17 +84,17 @@ fun parseRegisterAdjunct(word: Word): GlossOutcome {
 @OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutcome {
-    val glottalIndices = word.mapIndexedNotNull { index, group ->
-        if ('\'' in group) index else null
-    }
 
-    if (glottalIndices.size > 2) return Error("Too many glottal stops found")
+    val glottalIndices = mutableListOf<Int>()
 
-    val groups = word.map { group ->
+    val groups = word.mapIndexed { index, group ->
         if ('\'' in group) {
+            glottalIndices.add(index)
             unglottalizeVowel(group)
         } else group
     }
+
+    if (glottalIndices.size > 2) return Error("Too many glottal stops found")
 
     var index = 0
 
@@ -112,7 +112,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
         }
     } else null
 
-    val slotVFilledMarker = groups[index].isVowel() && (index in glottalIndices || index + 1 in glottalIndices)
+    val slotVFilledMarker = index in glottalIndices
 
     val vv: String = if (index == 0 && groups[0].isConsonant()) "a" else groups[index].also { index++ }
 
@@ -293,13 +293,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
     }
 
 
-    val slotIX: Glossable = if (concatenation == null) {
-        if (isVerbal) {
-            parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
-        } else {
-            Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
-        }
-    } else {
+    val slotIX: Glossable = if (concatenation != null) {
         when (word.stress) {
             Stress.PENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
             Stress.MONOSYLLABIC, Stress.ULTIMATE -> {
@@ -307,6 +301,12 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
             }
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress in concatenated formative")
             else -> return Error("Stress error")
+        }
+    } else {
+        if (isVerbal) {
+            parseVk(vcVk) ?: return Error("Unknown Vk form $vcVk")
+        } else {
+            Case.byVowel(vcVk) ?: return Error("Unknown Vc form $vcVk")
         }
     }
     index++
@@ -410,8 +410,7 @@ fun parseReferential(word: Word): GlossOutcome {
         word.getOrNull(index) in setOf("w", "y") -> {
             index++
             val vc2 = word.getOrNull(index) ?: return Error("Referential ended unexpectedly")
-            val caseB =
-                Case.byVowel(vc2) ?: return Error("Unknown case: ${word[index]}")
+            val caseB = Case.byVowel(vc2) ?: return Error("Unknown case: ${word[index]}")
             index++
 
             val c2 = word.getOrNull(index)
