@@ -2,22 +2,24 @@ package ithkuil.iv.gloss
 
 fun wordTypeOf(word: Word): WordType {
 
+    val (stripped, _) = word.stripSentencePrefix()
+
     return when {
-        pattern(word) {
+        pattern(stripped) {
             consonant()
         } -> WordType.BIAS_ADJUNCT
 
-        pattern(word) {
+        pattern(stripped) {
             "hr"()
             vowel()
         } -> WordType.MOOD_CASESCOPE_ADJUNCT
 
-        pattern(word) {
+        pattern(stripped) {
             "h"()
             vowel()
         } -> WordType.REGISTER_ADJUNCT
 
-        pattern(word) {
+        pattern(stripped) {
             maybe("w", "y")
             confirm { it !in setOf("ë", "äi") }
             repeat(3) {
@@ -29,7 +31,7 @@ fun wordTypeOf(word: Word): WordType {
             vowel()
         } -> WordType.MODULAR_ADJUNCT
 
-        pattern(word) {
+        pattern(stripped) {
             either(
                 {
                     maybe("ë")
@@ -45,14 +47,14 @@ fun wordTypeOf(word: Word): WordType {
             tail()
         } -> WordType.COMBINATION_REFERENTIAL
 
-        pattern(word) {
+        pattern(stripped) {
             confirm { it != "ë" }
             vowel()
             consonant()
             maybe { vowel() }
         } -> WordType.AFFIXUAL_ADJUNCT
 
-        pattern(word) {
+        pattern(stripped) {
             maybe("ë")
             consonant()
             val czGlottal = current()?.endsWith("'") ?: false
@@ -65,7 +67,7 @@ fun wordTypeOf(word: Word): WordType {
             tail()
         } -> WordType.MULTIPLE_AFFIX_ADJUNCT
 
-        pattern(word) {
+        pattern(stripped) {
             maybe("ë", "äi")
             referentialConsonant()
             while (current() == "ë") {
