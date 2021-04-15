@@ -1,6 +1,8 @@
 package ithkuil.iv.gloss.test
 
+import ithkuil.iv.gloss.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class WordTests {
 
@@ -40,3 +42,36 @@ class WordTests {
     }
 }
 
+infix fun String.glossesTo(gloss: String) {
+
+    val parse = when (val word = formatWord(this)) {
+        is Word -> parseWord(word)
+        is ConcatenatedWords -> parseConcatenationChain(word)
+        is Invalid -> throw AssertionError(word.message)
+    }
+
+    val (result, message) = when (parse) {
+        is Error -> null to "Error: ${parse.message}"
+        is Foreign -> null to "Foreign: ${parse.word}"
+        is Gloss -> parse.toString(GlossOptions()) to this
+    }
+
+    assertEquals(gloss, result, message)
+}
+
+infix fun String.givesError(error: String) {
+
+    val parse = when (val word = formatWord(this)) {
+        is Word -> parseWord(word)
+        is ConcatenatedWords -> parseConcatenationChain(word)
+        is Invalid -> throw AssertionError(word.message)
+    }
+
+    val (result, message) = when (parse) {
+        is Error -> parse.message to this
+        is Foreign -> null to "Foreign: ${parse.word}"
+        is Gloss -> null to parse.toString(GlossOptions())
+    }
+
+    assertEquals(error, result, message)
+}

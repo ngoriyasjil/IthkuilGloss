@@ -1,6 +1,11 @@
 package ithkuil.iv.gloss.test
 
+import ithkuil.iv.gloss.GlossOptions
+import ithkuil.iv.gloss.parseCa
 import kotlin.test.Test
+import kotlin.test.assertEquals
+
+infix fun String.isCaOf(gloss: String) = assertEquals(gloss, parseCa(this)?.toString(GlossOptions()), this)
 
 class SlotTests {
     @Test
