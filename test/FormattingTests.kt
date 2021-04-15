@@ -1,7 +1,15 @@
 package ithkuil.iv.gloss.test
 
+import ithkuil.iv.gloss.Invalid
 import ithkuil.iv.gloss.Stress
+import ithkuil.iv.gloss.Word
+import ithkuil.iv.gloss.formatWord
 import kotlin.test.Test
+import kotlin.test.assertEquals
+
+infix fun String.hasStress(stress: Stress) = assertEquals(stress, (formatWord(this) as Word).stress, this)
+
+infix fun String.givesInvalid(error: String) = assertEquals(error, (formatWord(this) as Invalid).message)
 
 class FormattingTests {
     @Test
