@@ -2,14 +2,14 @@ package ithkuil.iv.gloss
 
 // Formative slots
 
-fun parseCc(c: String): Pair<Concatenation?, Shortcut?> {
-    val concatenation = when (c) {
+fun parseCc(cc: String): Pair<Concatenation?, Shortcut?> {
+    val concatenation = when (cc) {
         "h", "hl", "hm" -> Concatenation.TYPE_ONE
         "hw", "hr", "hn" -> Concatenation.TYPE_TWO
         else -> null
     }
 
-    val shortcut = when (c) {
+    val shortcut = when (cc) {
         "w", "hl", "hr" -> Shortcut.W_SHORTCUT
         "y", "hm", "hn" -> Shortcut.Y_SHORTCUT
         else -> null
@@ -46,7 +46,9 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
         9, 8 -> Stem.STEM_THREE
         7, 6 -> Stem.STEM_ZERO
         else -> return null
-    }.let { Underlineable(it) }
+    }.let {
+        Underlineable(it)
+    }
 
 
     val version = when (form) {
