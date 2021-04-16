@@ -88,12 +88,7 @@ fun formatWord(fullWord: String): FormattingOutcome {
         return Invalid(word, "Non-ithkuil characters detected: $message")
     }
 
-    val stressedGroups = clean.splitGroups()
-
-    for (group in stressedGroups) {
-        if (group.isConsonant() xor group.isVowel()) continue
-        return Invalid(word, "Unknown group: $group")
-    }
+    val stressedGroups = clean.splitGroups() ?: return Invalid(word, "Failed grouping")
 
     val stress = findStress(stressedGroups)
 
@@ -143,27 +138,40 @@ enum class GroupingState {
     }
 
     companion object {
-        fun start(first: Char): GroupingState = if (first in VOWELS) VOWEL else CONSONANT
+        fun start(value: String): GroupingState = if (value in VOWELS) VOWEL else CONSONANT
     }
 
 }
 
-fun String.splitGroups(): List<String> {
-
-    var index = 0
-    var state = GroupingState.start(first())
-
+fun String.splitGroups(): List<String>? {
     val groups = mutableListOf<String>()
 
+    val chars = map(Char::toString) //Change to a list of strings for historical reasons
+
+    var index = 0
+
+    var state = if (chars[index] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
+
     while (index <= lastIndex) {
-        val group = when (state) {
-            GroupingState.CONSONANT -> substring(index)
+        val group: String
+
+        val cluster = when (state) {
+            GroupingState.CONSONANT -> chars.subList(index, length)
                 .takeWhile { it in CONSONANTS }
-            GroupingState.VOWEL -> substring(index)
+                .joinToString("")
+            GroupingState.VOWEL -> chars.subList(index, length)
                 .takeWhile { it in VOWELS_AND_GLOTTAL_STOP }
+                .joinToString("")
         }
 
+        if (cluster.isEmpty()) return null
+
+        if (state == GroupingState.VOWEL && !cluster.isVowel()) return null
+
         state = state.switch()
+        group = cluster
+
+
         index += group.length
         groups += group
     }
@@ -173,13 +181,13 @@ fun String.splitGroups(): List<String> {
 
 // Matches strings of the form "a", "ai", "a'" "a'i" and "ai'". Doesn't guarantee a valid vowelform.
 fun String.isVowel() = when (length) {
-    1 -> this[0] in VOWELS
-    2 -> this[0] in VOWELS && this[1] in VOWELS_AND_GLOTTAL_STOP
-    3 -> all { it in VOWELS_AND_GLOTTAL_STOP } && this[0] != '\'' && this.count { it == '\'' } == 1
+    1 -> this in VOWELS
+    2 -> this[0].toString() in VOWELS && this[1].toString() in VOWELS_AND_GLOTTAL_STOP
+    3 -> all { it.toString() in VOWELS_AND_GLOTTAL_STOP } && this[0] != '\'' && this.count { it == '\'' } == 1
     else -> false
 }
 
-fun String.isConsonant() = this.all { it in CONSONANTS }
+fun String.isConsonant() = this.all { it.toString() in CONSONANTS }
 
 val STRESSED_VOWELS = setOf('á', 'â', 'é', 'ê', 'í', 'î', 'ô', 'ó', 'û', 'ú')
 
