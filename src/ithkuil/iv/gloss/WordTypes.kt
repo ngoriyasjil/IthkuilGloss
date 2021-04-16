@@ -2,24 +2,22 @@ package ithkuil.iv.gloss
 
 fun wordTypeOf(word: Word): WordType {
 
-    val (stripped, _) = word.stripSentencePrefix()
-
     return when {
-        pattern(stripped) {
+        pattern(word) {
             consonant()
         } -> WordType.BIAS_ADJUNCT
 
-        pattern(stripped) {
-            "hr"()
+        pattern(word) {
+            +"hr"
             vowel()
         } -> WordType.MOOD_CASESCOPE_ADJUNCT
 
-        pattern(stripped) {
-            "h"()
+        pattern(word) {
+            +"h"
             vowel()
         } -> WordType.REGISTER_ADJUNCT
 
-        pattern(stripped) {
+        pattern(word) {
             maybe("w", "y")
             confirm { it !in setOf("ë", "äi") }
             repeat(3) {
@@ -31,14 +29,14 @@ fun wordTypeOf(word: Word): WordType {
             vowel()
         } -> WordType.MODULAR_ADJUNCT
 
-        pattern(stripped) {
+        pattern(word) {
             either(
                 {
                     maybe("ë")
                     consonant()
                 },
                 {
-                    "a"()
+                    +"a"
                     oneOf(CP_CONSONANTS)
                 }
             )
@@ -47,14 +45,14 @@ fun wordTypeOf(word: Word): WordType {
             tail()
         } -> WordType.COMBINATION_REFERENTIAL
 
-        pattern(stripped) {
+        pattern(word) {
             confirm { it != "ë" }
             vowel()
             consonant()
             maybe { vowel() }
         } -> WordType.AFFIXUAL_ADJUNCT
 
-        pattern(stripped) {
+        pattern(word) {
             maybe("ë")
             consonant()
             val czGlottal = current()?.endsWith("'") ?: false
@@ -67,11 +65,11 @@ fun wordTypeOf(word: Word): WordType {
             tail()
         } -> WordType.MULTIPLE_AFFIX_ADJUNCT
 
-        pattern(stripped) {
+        pattern(word) {
             maybe("ë", "äi")
             referentialConsonant()
             while (current() == "ë") {
-                "ë"()
+                +"ë"
                 referentialConsonant()
             }
             vowel()
@@ -111,7 +109,7 @@ class Matcher(var slots: List<String>, var matching: Boolean = true) {
         } else matching = false
     }
 
-    operator fun String.invoke() = fulfills { it == this } // Blursed string invocation :D
+    operator fun String.unaryPlus() = fulfills { it == this }
 
     fun vowel() = fulfills { it.isVowel() }
 
