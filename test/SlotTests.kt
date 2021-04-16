@@ -52,6 +52,6 @@ infix fun String.isNotCcOf(illegal: Pair<Concatenation?, Shortcut?>) {
 }
 
 infix fun String.isCaOf(expected: String) {
-    val gloss = parseCa(this)?.toString(GlossOptions())
+    val gloss = parseCa(this)?.gloss(GlossOptions())
     assertEquals(expected, gloss, this)
 }

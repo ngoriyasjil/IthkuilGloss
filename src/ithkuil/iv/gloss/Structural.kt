@@ -1,16 +1,21 @@
 package ithkuil.iv.gloss
 
-import ithkuil.iv.gloss.dispatch.AffixData
-import ithkuil.iv.gloss.dispatch.RootData
-
 interface Resources {
     fun getAffix(cs: String): AffixData?
     fun getRoot(cr: String): RootData?
 }
 
+data class AffixData(val abbreviation: String, val descriptions: List<String>) {
+    operator fun get(degree: Degree) = descriptions[degree.ordinal]
+}
+
+data class RootData(val descriptions: List<String>) {
+    operator fun get(stem: Stem) = descriptions[stem.ordinal]
+}
+
 
 interface Glossable {
-    fun toString(o: GlossOptions): String
+    fun gloss(o: GlossOptions): String
     fun checkDictionary(r: Resources): Glossable = this
 }
 
@@ -19,7 +24,7 @@ interface Category : Glossable {
     val name: String
     val short: String
 
-    override fun toString(o: GlossOptions) = when {
+    override fun gloss(o: GlossOptions) = when {
         !o.includeDefaults && this.ordinal == 0 -> ""
         o.verbose -> this.name.toLowerCase()
         else -> short
@@ -27,49 +32,49 @@ interface Category : Glossable {
 }
 
 interface NoDefault : Category {
-    override fun toString(o: GlossOptions): String =
-        super.toString(o.showDefaults())
+    override fun gloss(o: GlossOptions): String =
+        super.gloss(o.showDefaults())
 }
 
 
-sealed class GlossOutcome
-class Error(val message: String) : GlossOutcome()
-class Foreign(val word: String) : GlossOutcome()
+sealed class ParseOutcome
+class Error(val message: String) : ParseOutcome()
+class Foreign(val word: String) : ParseOutcome()
 
-open class Gloss(
+open class Parsed(
     private val slots: List<Glossable>,
     private val stressMarked: Glossable? = null,
-) : GlossOutcome(), Glossable {
+) : ParseOutcome(), Glossable {
 
     constructor(vararg slots: Glossable?, stressMarked: Glossable? = null) :
         this(slots.filterNotNull(), stressMarked = stressMarked)
 
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         val mainWord = slots
-            .map { it.toString(o) }
+            .map { it.gloss(o) }
             .filter(String::isNotEmpty)
             .joinToString(SLOT_SEPARATOR)
-        val stressCategory = stressMarked?.toString(o)
+        val stressCategory = stressMarked?.gloss(o)
             .let { if (!it.isNullOrEmpty()) "$STRESS_SLOT_SEPARATOR$it" else "" }
 
         return mainWord + stressCategory
     }
 
-    override fun checkDictionary(r: Resources): Gloss {
+    override fun checkDictionary(r: Resources): Parsed {
         val newSlots = slots.map { it.checkDictionary(r) }
 
-        return Gloss(newSlots, stressMarked = stressMarked)
+        return Parsed(newSlots, stressMarked = stressMarked)
     }
 
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun addPrefix(prefix: Glossable): Gloss {
+    fun addPrefix(prefix: Glossable): Parsed {
         val newSlots = buildList {
             add(prefix)
             addAll(slots)
         }
 
-        return Gloss(newSlots, stressMarked = stressMarked)
+        return Parsed(newSlots, stressMarked = stressMarked)
     }
 }
 
@@ -100,21 +105,27 @@ class Slot(private val values: List<Glossable>) : Glossable, List<Glossable> by 
 
     constructor(vararg values: Glossable?) : this(values.filterNotNull())
 
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         return values
-            .map { it.toString(o) }
+            .map { it.gloss(o) }
             .filter(String::isNotEmpty)
             .joinToString(CATEGORY_SEPARATOR)
+    }
+
+    override fun toString(): String {
+        val slotValues = values
+            .joinToString { it.gloss(GlossOptions(Precision.FULL, includeDefaults = true)) }
+        return "Slot($slotValues)"
     }
 
     override fun checkDictionary(r: Resources): Slot = Slot(values.map { it.checkDictionary(r) })
 }
 
-class ConcatenationChain(private val formatives: List<Gloss>) : Gloss() {
+class ConcatenationChain(private val formatives: List<Parsed>) : Parsed() {
 
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         return formatives
-            .map { it.toString(o) }
+            .map { it.gloss(o) }
             .filter(String::isNotEmpty)
             .joinToString(CONCATENATION_SEPARATOR)
     }
@@ -131,7 +142,7 @@ class GlossString(
     private val ignorable: Boolean = false
 ) : Glossable {
 
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         return when {
             ignorable && !o.includeDefaults -> ""
             o.concise -> short
@@ -143,21 +154,24 @@ class GlossString(
 
 class Shown(private val value: Glossable, private val condition: Boolean = true) : Glossable {
 
-    override fun toString(o: GlossOptions): String = value.toString(o.showDefaults(condition))
+    override fun gloss(o: GlossOptions): String = value.gloss(o.showDefaults(condition))
 
 }
 
 class Underlineable<T : Glossable>(val value: T, var used: Boolean = false) : Glossable {
 
-    override fun toString(o: GlossOptions): String = value.toString(o).let { if (used) "__${it}__" else it }
+    override fun gloss(o: GlossOptions): String = value.gloss(o).let { if (used) "__${it}__" else it }
 
 }
 
-class ForcedDefault(private val value: Glossable, private val default: String, private val condition: Boolean = true) :
-    Glossable {
+class ForcedDefault(
+    private val value: Glossable,
+    private val default: String,
+    private val condition: Boolean = true
+) : Glossable {
 
-    override fun toString(o: GlossOptions): String =
-        value.toString(o).let { if (it.isEmpty() && condition) default else it }
+    override fun gloss(o: GlossOptions): String =
+        value.gloss(o).let { if (it.isEmpty() && condition) default else it }
 
 }
 
@@ -183,5 +197,5 @@ class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glos
         return this
     }
 
-    override fun toString(o: GlossOptions): String = description
+    override fun gloss(o: GlossOptions): String = description
 }

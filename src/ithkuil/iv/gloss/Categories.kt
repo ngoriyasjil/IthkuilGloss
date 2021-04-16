@@ -163,10 +163,10 @@ enum class Phase(override val short: String) : NoDefault {
 
 class EffectAndPerson(private val person: String?, private val effect: Effect) : Glossable {
 
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         return if (person != null) {
-            "$person:${effect.toString(o.showDefaults())}"
-        } else effect.toString(o.showDefaults())
+            "$person:${effect.gloss(o.showDefaults())}"
+        } else effect.gloss(o.showDefaults())
     }
 
     companion object {
@@ -225,10 +225,10 @@ class LevelAndRelativity(
         if (absoluteLevel) LevelRelativity.ABSOLUTE else LevelRelativity.RELATIVE
     )
 
-    override fun toString(o: GlossOptions): String {
-        return level.toString(o) +
+    override fun gloss(o: GlossOptions): String {
+        return level.gloss(o) +
             (if (!o.verbose) "" else CATEGORY_SEPARATOR) +
-            relativity.toString(o)
+            relativity.gloss(o)
     }
 }
 
@@ -485,7 +485,7 @@ enum class Bias(override val short: String, val cb: String, private val represen
     TREPIDATIVE("TRP", "llč", "Oh, no!"),
     VEXATIVE("VEX", "ksk", "How annoying!");
 
-    override fun toString(o: GlossOptions): String = when {
+    override fun gloss(o: GlossOptions): String = when {
         o.concise -> short
         o.verbose -> "(${name.toLowerCase()}: “$representative“)"
         else -> "“${representative}“"
@@ -497,10 +497,10 @@ enum class Bias(override val short: String, val cb: String, private val represen
 }
 
 class RegisterAdjunct(private val register: Register, private val final: Boolean) : Glossable {
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         return when (final) {
-            false -> register.toString(o)
-            true -> "${register.toString(o)}_END"
+            false -> register.gloss(o)
+            true -> "${register.gloss(o)}_END"
         }
     }
 

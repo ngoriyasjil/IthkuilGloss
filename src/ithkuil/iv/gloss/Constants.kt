@@ -46,8 +46,12 @@ val ALLOGRAPHS = listOf(
     "ṛ|ř|ŗ|r͕|ŗ|ṛ" to "ř",
 )
 
+private const val unvoiced = "stckpţfçšč"
+
 val CA_DESUBSTITUTIONS = listOf(
-    "ḑy" to "ţţ", "vw" to "ff", "\\Bḑ" to "bn", "\\Bv" to "bm",
+    "ḑy" to "ţţ", "vw" to "ff",
+    "(?<=[$unvoiced])ţ|(?<=[^$unvoiced])ḑ" to "bn",
+    "(?<=[$unvoiced])f|(?<=[^$unvoiced])v" to "bm",
     "\\Bxw" to "çx", "ňn" to "ngn", "\\Bň" to "gn", "\\Bx" to "gm",
     "ňš" to "řř", "ňs" to "řr", "nš" to "rř", "ns" to "rr",
     "nd" to "çy", "ng" to "kg", "mb" to "pb",
