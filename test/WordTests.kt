@@ -52,6 +52,7 @@ infix fun String.glossesTo(gloss: String) {
 
     val (result, message) = when (parse) {
         is Error -> null to "Error: ${parse.message}"
+        is Foreign -> null to "Foreign: ${parse.word}"
         is Parsed -> parse.gloss(GlossOptions()) to this
     }
 
@@ -68,6 +69,7 @@ infix fun String.givesError(error: String) {
 
     val (result, message) = when (parse) {
         is Error -> parse.message to this
+        is Foreign -> null to "Foreign: ${parse.word}"
         is Parsed -> null to parse.gloss(GlossOptions())
     }
 

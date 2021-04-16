@@ -36,11 +36,10 @@ interface NoDefault : Category {
         super.gloss(o.showDefaults())
 }
 
-sealed class ContextOutcome
-class Foreign(val word: String) : ContextOutcome()
 
-sealed class ParseOutcome : ContextOutcome()
+sealed class ParseOutcome
 class Error(val message: String) : ParseOutcome()
+class Foreign(val word: String) : ParseOutcome()
 
 open class Parsed(
     private val slots: List<Glossable>,
