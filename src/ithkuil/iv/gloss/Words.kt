@@ -2,19 +2,19 @@ package ithkuil.iv.gloss
 
 import ithkuil.iv.gloss.dispatch.logger
 
-fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> GlossOutcome): GlossOutcome {
+fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> ParseOutcome): ParseOutcome {
     val (strippedWord, sentencePrefix) = word.stripSentencePrefix()
 
     val result = parseFunction(strippedWord)
 
     return when {
-        sentencePrefix && result is Gloss -> result.addPrefix(SENTENCE_START_GLOSS)
+        sentencePrefix && result is Parsed -> result.addPrefix(SENTENCE_START_GLOSS)
         else -> result
     }
 }
 
 @Suppress("Reformat") // This looks like dogshit without the vertical alignment.
-fun parseWord(iword: Word, marksMood: Boolean? = null): GlossOutcome {
+fun parseWord(iword: Word, marksMood: Boolean? = null): ParseOutcome {
     logger.info { "-> parseWord($iword)" }
 
     val result = parseWithoutSentencePrefix(iword) { word ->
@@ -33,7 +33,7 @@ fun parseWord(iword: Word, marksMood: Boolean? = null): GlossOutcome {
     logger.info {
         "   parseWord($iword) -> " +
             when (result) {
-                is Gloss -> "Gloss(${result.toString(GlossOptions(Precision.SHORT))})"
+                is Parsed -> "Gloss(${result.gloss(GlossOptions(Precision.SHORT))})"
                 is Error -> "Error(${result.message})"
                 is Foreign -> "Impossible foreign word: ${result.word})"
             }
@@ -43,7 +43,7 @@ fun parseWord(iword: Word, marksMood: Boolean? = null): GlossOutcome {
 
 }
 
-fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
+fun parseConcatenationChain(chain: ConcatenatedWords): ParseOutcome {
 
     for ((index, word) in chain.words.withIndex()) {
         val (concatenation, _) = parseCc(word[0])
@@ -58,7 +58,7 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
         }
 
         when (gloss) {
-            is Gloss -> gloss
+            is Parsed -> gloss
             is Error -> return gloss
             is Foreign -> throw IllegalArgumentException()
         }
@@ -67,23 +67,23 @@ fun parseConcatenationChain(chain: ConcatenatedWords): GlossOutcome {
     return ConcatenationChain(glosses)
 }
 
-fun parseBiasAdjunct(word: Word): GlossOutcome {
+fun parseBiasAdjunct(word: Word): ParseOutcome {
     val bias = Bias.byCb(word[0]) ?: return Error("Unknown bias: ${word[0]}")
 
-    return Gloss(bias)
+    return Parsed(bias)
 }
 
 
-fun parseRegisterAdjunct(word: Word): GlossOutcome {
+fun parseRegisterAdjunct(word: Word): ParseOutcome {
     val adjunct = Register.adjunctByVowel(word[1]) ?: return Error("Unknown register adjunct vowel: ${word[1]}")
 
-    return Gloss(adjunct)
+    return Parsed(adjunct)
 }
 
 
 @OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
-fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutcome {
+fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutcome {
 
     val glottalIndices = mutableListOf<Int>()
 
@@ -316,11 +316,11 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): GlossOutc
     val slotList: List<Glossable> = listOfNotNull(concatenation, slotII, root, slotIV) +
         slotV + listOfNotNull(slotVI) + slotVIIAndMaybeSlotV + listOfNotNull(slotVIII, slotIX)
 
-    return Gloss(slotList, stressMarked = relation)
+    return Parsed(slotList, stressMarked = relation)
 
 }
 
-fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
+fun parseModular(word: Word, marksMood: Boolean?): ParseOutcome {
 
     var index = 0
 
@@ -356,23 +356,23 @@ fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
 
     }
 
-    return Gloss(slot1, *midSlotList.toTypedArray(), slot5)
+    return Parsed(slot1, *midSlotList.toTypedArray(), slot5)
 
 }
 
 class Referential(private val referents: List<Slot>) : Glossable, List<Slot> by referents {
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
         return when (referents.size) {
             0 -> ""
-            1 -> referents[0].toString(o)
+            1 -> referents[0].gloss(o)
             else -> referents
                 .joinToString(REFERENT_SEPARATOR, REFERENT_START, REFERENT_END)
-                { it.toString(o) }
+                { it.gloss(o) }
         }
     }
 }
 
-fun parseReferential(word: Word): GlossOutcome {
+fun parseReferential(word: Word): ParseOutcome {
     val essence = when (word.stress) {
         Stress.ULTIMATE -> Essence.REPRESENTATIVE
         Stress.MONOSYLLABIC, Stress.PENULTIMATE -> Essence.NORMAL
@@ -423,16 +423,16 @@ fun parseReferential(word: Word): GlossOutcome {
 
             if (word.size > index) return Error("Referential is too long")
 
-            return Gloss(refA, Shown(caseA), Shown(caseB), refB, stressMarked = essence)
+            return Parsed(refA, Shown(caseA), Shown(caseB), refB, stressMarked = essence)
 
         }
         word.size > index + 1 -> return Error("Referential is too long")
 
-        else -> return Gloss(refA, caseA, stressMarked = essence)
+        else -> return Parsed(refA, caseA, stressMarked = essence)
     }
 }
 
-fun parseCombinationReferential(word: Word): GlossOutcome {
+fun parseCombinationReferential(word: Word): ParseOutcome {
     val essence = when (word.stress) {
         Stress.ULTIMATE -> Essence.REPRESENTATIVE
         Stress.MONOSYLLABIC, Stress.PENULTIMATE -> Essence.NORMAL
@@ -485,7 +485,7 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
     }
 
 
-    return Gloss(
+    return Parsed(
         ref, Shown(caseA, condition = caseB != null), specification,
         *vxCsAffixes.toTypedArray(),
         caseB?.let { Shown(it) }, stressMarked = essence
@@ -493,7 +493,7 @@ fun parseCombinationReferential(word: Word): GlossOutcome {
 
 }
 
-fun parseMultipleAffix(word: Word): GlossOutcome {
+fun parseMultipleAffix(word: Word): ParseOutcome {
     val concatOnly = if (word.stress == Stress.ULTIMATE) {
         GlossString("{concatenated formative only}", "{concat.}")
     } else null
@@ -530,12 +530,12 @@ fun parseMultipleAffix(word: Word): GlossOutcome {
         affixualAdjunctScope(vz, isMultipleAdjunctVowel = true) ?: return Error("Unknown Vz: $vz")
     } else null
 
-    return Gloss(firstAffix, scopeOfFirst, *vxCsAffixes.toTypedArray(), scopeOfRest, stressMarked = concatOnly)
+    return Parsed(firstAffix, scopeOfFirst, *vxCsAffixes.toTypedArray(), scopeOfRest, stressMarked = concatOnly)
 
 }
 
 
-fun parseAffixual(word: Word): GlossOutcome {
+fun parseAffixual(word: Word): ParseOutcome {
     val concatOnly = if (word.stress == Stress.ULTIMATE)
         GlossString("{concatenated formative only}", "{concat.}")
     else null
@@ -546,11 +546,11 @@ fun parseAffixual(word: Word): GlossOutcome {
 
     val scope = affixualAdjunctScope(word.getOrNull(2))
 
-    return Gloss(affix, scope, stressMarked = concatOnly)
+    return Parsed(affix, scope, stressMarked = concatOnly)
 
 }
 
-fun parseMoodCaseScopeAdjunct(word: Word): GlossOutcome {
+fun parseMoodCaseScopeAdjunct(word: Word): ParseOutcome {
     val value: Glossable = when (val v = word[1]) {
         "a" -> Mood.FACTUAL
         "e" -> Mood.SUBJUNCTIVE
@@ -567,5 +567,5 @@ fun parseMoodCaseScopeAdjunct(word: Word): GlossOutcome {
         else -> return Error("Unknown Mood/Case-Scope adjunct vowel: $v")
     }
 
-    return Gloss(Shown(value))
+    return Parsed(Shown(value))
 }

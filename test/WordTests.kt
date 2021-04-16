@@ -53,7 +53,7 @@ infix fun String.glossesTo(gloss: String) {
     val (result, message) = when (parse) {
         is Error -> null to "Error: ${parse.message}"
         is Foreign -> null to "Foreign: ${parse.word}"
-        is Gloss -> parse.toString(GlossOptions()) to this
+        is Parsed -> parse.gloss(GlossOptions()) to this
     }
 
     assertEquals(gloss, result, message)
@@ -70,7 +70,7 @@ infix fun String.givesError(error: String) {
     val (result, message) = when (parse) {
         is Error -> parse.message to this
         is Foreign -> null to "Foreign: ${parse.word}"
-        is Gloss -> null to parse.toString(GlossOptions())
+        is Parsed -> null to parse.gloss(GlossOptions())
     }
 
     assertEquals(error, result, message)

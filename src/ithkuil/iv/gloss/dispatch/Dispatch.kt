@@ -15,22 +15,12 @@ val startTime = System.currentTimeMillis()
 val logger = KotlinLogging.logger { }
 
 
-data class AffixData(val abbreviation: String, val descriptions: List<String>) {
-    operator fun get(degree: Degree) = descriptions[degree.ordinal]
-}
-
 fun parseAffixes(data: String): Map<String, AffixData> = data
     .lineSequence()
     .drop(1)
     .map { it.split("\t") }
     .filter { it.size >= 11 }
     .associate { it[0] to AffixData(it[1], it.subList(2, 11)) }
-
-data class RootData(val descriptions: List<String>) {
-
-    operator fun get(stem: Stem) = descriptions[stem.ordinal]
-
-}
 
 fun parseRoots(data: String): Map<String, RootData> = data
     .lineSequence()
@@ -215,13 +205,13 @@ fun lookupAffix(cxs: List<String>): String {
 
 fun sentenceGloss(words: List<String>, o: GlossOptions): String {
     val glosses = glossInContext(words.formatAll())
-        .map { (word, gloss) ->
-            when (gloss) {
+        .map { (word, parsed) ->
+            when (parsed) {
                 is Foreign -> "*$word*"
                 is Error -> "**$word**"
-                is Gloss -> {
-                    gloss.checkDictionary(LocalDictionary)
-                    gloss.toString(o).withZeroWidthSpaces()
+                is Parsed -> {
+                    parsed.checkDictionary(LocalDictionary)
+                    parsed.gloss(o).withZeroWidthSpaces()
                 }
             }
         }
@@ -231,14 +221,14 @@ fun sentenceGloss(words: List<String>, o: GlossOptions): String {
 
 fun wordByWord(words: List<String>, o: GlossOptions): String {
     val glossPairs = glossInContext(words.formatAll())
-        .map { (word, gloss) ->
-            when (gloss) {
-                is Gloss -> {
-                    gloss.checkDictionary(LocalDictionary)
-                    "**$word:** ${gloss.toString(o)}"
-                }
-                is Error -> "**$word:** *${gloss.message}*"
+        .map { (word, parsed) ->
+            when (parsed) {
                 is Foreign -> "**$word**"
+                is Error -> "**$word:** *${parsed.message}*"
+                is Parsed -> {
+                    parsed.checkDictionary(LocalDictionary)
+                    "**$word:** ${parsed.gloss(o)}"
+                }
             }
         }
 

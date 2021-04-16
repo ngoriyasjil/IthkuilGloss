@@ -56,7 +56,7 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
 
     }
 
-    override fun toString(o: GlossOptions): String {
+    override fun gloss(o: GlossOptions): String {
 
         return if (o.concise || degree == Degree.ZERO || description == null) {
             "$abbreviation$AFFIX_DEGREE_SEPARATOR${degree.numeral}${type?.subscript ?: ""}"
@@ -69,15 +69,15 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
 }
 
 class CaStacker(private val ca: Slot) : ValidAffix() {
-    override fun toString(o: GlossOptions): String = "(${ForcedDefault(ca, "default_ca").toString(o)})"
+    override fun gloss(o: GlossOptions): String = "(${ForcedDefault(ca, "default_ca").gloss(o)})"
 }
 
 class CaseAffix(private val kind: CaseAffixKind, private val case: Case, private val type: AffixType) : ValidAffix() {
-    override fun toString(o: GlossOptions): String = "(${kind.toString(o)}:${case.toString(o)})${type.subscript}"
+    override fun gloss(o: GlossOptions): String = "(${kind.gloss(o)}:${case.gloss(o)})${type.subscript}"
 }
 
 class ReferentialShortcut(private val referents: Referential, private val case: Case) : ValidAffix() {
-    override fun toString(o: GlossOptions): String = "(${referents.toString(o)}-${case.toString(o.showDefaults())})"
+    override fun gloss(o: GlossOptions): String = "(${referents.gloss(o)}-${case.gloss(o.showDefaults())})"
 }
 
 
