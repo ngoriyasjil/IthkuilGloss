@@ -48,7 +48,7 @@ class Word(
         return Word(newGroups, stress, prefixPunctuation, postfixPunctuation) to true
     }
 
-    val wordType by lazy { wordTypeOf(this) }
+    val wordType by lazy { wordTypeOf(this.stripSentencePrefix().first) }
 
 }
 
@@ -63,22 +63,7 @@ fun formatWord(fullWord: String): FormattingOutcome {
         ?: return Invalid(fullWord, "Unexpected punctuation")
 
     if ("-" in word) {
-        val words = word
-            .split("-")
-            .formatAll()
-            .map {
-                when (it) {
-                    is Invalid -> return Invalid(word, "${it.message} ($it)")
-                    is ConcatenatedWords -> return Invalid(word, "Nested concatenation! ($it)")
-                    is Word -> {
-                        if (it.wordType != WordType.FORMATIVE) {
-                            return Invalid(word, "Non-formative concatenated: ($it)")
-                        }
-                        it
-                    }
-                }
-            }
-        return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
+        return formatConcatenatedWords(word, prefix, postfix)
     }
 
     val clean = word.defaultFormWithStress()
@@ -118,6 +103,29 @@ fun formatWord(fullWord: String): FormattingOutcome {
     return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
 }
 
+private fun formatConcatenatedWords(
+    word: String,
+    prefix: String,
+    postfix: String
+): FormattingOutcome {
+    val words = word
+        .split("-")
+        .formatAll()
+        .map {
+            when (it) {
+                is Word -> {
+                    if (it.wordType != WordType.FORMATIVE) {
+                        return Invalid(word, "Non-formative concatenated: ($it)")
+                    }
+                    it
+                }
+                is Invalid -> return Invalid(word, "${it.message} ($it)")
+                is ConcatenatedWords -> return Invalid(word, "Nested concatenation! ($it)")
+            }
+        }
+    return ConcatenatedWords(words, prefixPunctuation = prefix, postfixPunctuation = postfix)
+}
+
 fun List<String>.formatAll(): List<FormattingOutcome> = map { formatWord(it) }
 
 enum class GroupingState {
@@ -128,6 +136,11 @@ enum class GroupingState {
         CONSONANT -> VOWEL
         VOWEL -> CONSONANT
     }
+
+    companion object {
+        fun start(value: String): GroupingState = if (value in VOWELS) VOWEL else CONSONANT
+    }
+
 }
 
 fun String.splitGroups(): List<String>? {
@@ -142,26 +155,21 @@ fun String.splitGroups(): List<String>? {
     while (index <= lastIndex) {
         val group: String
 
-        if (chars[index] == "-") {
-            state = if (chars[index + 1] in VOWELS) GroupingState.VOWEL else GroupingState.CONSONANT
-            group = "-"
-        } else {
-            val cluster = when (state) {
-                GroupingState.CONSONANT -> chars.subList(index, length)
-                    .takeWhile { it in CONSONANTS }
-                    .joinToString("")
-                GroupingState.VOWEL -> chars.subList(index, length)
-                    .takeWhile { it in VOWELS_AND_GLOTTAL_STOP }
-                    .joinToString("")
-            }
-
-            if (cluster.isEmpty()) return null
-
-            if (state == GroupingState.VOWEL && !cluster.isVowel()) return null
-
-            state = state.switch()
-            group = cluster
+        val cluster = when (state) {
+            GroupingState.CONSONANT -> chars.subList(index, length)
+                .takeWhile { it in CONSONANTS }
+                .joinToString("")
+            GroupingState.VOWEL -> chars.subList(index, length)
+                .takeWhile { it in VOWELS_AND_GLOTTAL_STOP }
+                .joinToString("")
         }
+
+        if (cluster.isEmpty()) return null
+
+        if (state == GroupingState.VOWEL && !cluster.isVowel()) return null
+
+        state = state.switch()
+        group = cluster
 
 
         index += group.length
