@@ -82,11 +82,11 @@ val VOWEL_FORMS = listOf(
 )
 
 val VOWELS = setOf(
-    "a", "ä", "e", "ë", "i", "ö", "o", "ü", "u",
-    "á", "â", "é", "ê", "í", "ú", "û", "ó", "ô",
+    'a', 'ä', 'e', 'ë', 'i', 'ö', 'o', 'ü', 'u',
+    'á', 'â', 'é', 'ê', 'í', 'ú', 'û', 'ó', 'ô',
 )
 
-val VOWELS_AND_GLOTTAL_STOP = VOWELS + "'"
+val VOWELS_AND_GLOTTAL_STOP = VOWELS + '\''
 
 val DIPHTHONGS = setOf("ai", "äi", "ei", "ëi", "oi", "öi", "ui", "au", "eu", "ëu", "ou", "iu")
 
@@ -100,8 +100,8 @@ val SPECIAL_VV_VOWELS = setOf(
 //Consonants
 
 val CONSONANTS = listOf(
-    "p", "b", "t", "d", "k", "g", "f", "v", "ţ", "ḑ", "s", "z", "š", "ž", "ç", "x", "h", "ļ",
-    "c", "ẓ", "č", "j", "m", "n", "ň", "r", "l", "w", "y", "ř"
+    'p', 'b', 't', 'd', 'k', 'g', 'f', 'v', 'ţ', 'ḑ', 's', 'z', 'š', 'ž', 'ç', 'x', 'h', 'ļ',
+    'c', 'ẓ', 'č', 'j', 'm', 'n', 'ň', 'r', 'l', 'w', 'y', 'ř'
 )
 
 val CC_CONSONANTS = setOf("w", "y", "h", "hl", "hm", "hw", "hr", "hn")

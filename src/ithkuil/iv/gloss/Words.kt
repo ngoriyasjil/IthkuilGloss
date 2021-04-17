@@ -13,6 +13,7 @@ fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> ParseOutcome
     }
 }
 
+// @formatter:off
 @Suppress("Reformat") // This looks like dogshit without the vertical alignment.
 fun parseWord(iword: Word, marksMood: Boolean? = null): ParseOutcome {
     logger.info { "-> parseWord($iword)" }
@@ -35,13 +36,13 @@ fun parseWord(iword: Word, marksMood: Boolean? = null): ParseOutcome {
             when (result) {
                 is Parsed -> "Gloss(${result.gloss(GlossOptions(Precision.SHORT))})"
                 is Error -> "Error(${result.message})"
-                is Foreign -> "Impossible foreign word: ${result.word})"
             }
     }
 
     return result
 
 }
+// @formatter:on
 
 fun parseConcatenationChain(chain: ConcatenatedWords): ParseOutcome {
 
@@ -52,15 +53,19 @@ fun parseConcatenationChain(chain: ConcatenatedWords): ParseOutcome {
             return Error("Invalid concatenation (at ${index + 1})")
     }
 
-    val glosses = chain.words.map {
-        val gloss = parseWithoutSentencePrefix(it) { formative ->
-            parseFormative(formative, inConcatenationChain = true)
+    val glosses = chain.words.mapIndexed { index, word ->
+
+        val gloss = if (index == 0) {
+            parseWithoutSentencePrefix(word) { formative ->
+                parseFormative(formative, inConcatenationChain = true)
+            }
+        } else {
+            parseFormative(word, inConcatenationChain = true)
         }
 
         when (gloss) {
             is Parsed -> gloss
             is Error -> return gloss
-            is Foreign -> throw IllegalArgumentException()
         }
     }
 
@@ -311,7 +316,10 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
     }
     index++
 
-    if (groups.lastIndex >= index) return Error("Formative continued unexpectedly: ${groups.drop(index - 1)}")
+    if (groups.lastIndex >= index) {
+        val tail = groups.drop(index - 1).joinToString("")
+        return Error("Formative continued unexpectedly: -$tail")
+    }
 
     val slotList: List<Glossable> = listOfNotNull(concatenation, slotII, root, slotIV) +
         slotV + listOfNotNull(slotVI) + slotVIIAndMaybeSlotV + listOfNotNull(slotVIII, slotIX)

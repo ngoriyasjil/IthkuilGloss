@@ -1,10 +1,9 @@
 package ithkuil.iv.gloss
 
-import java.lang.Exception
 import ithkuil.iv.gloss.dispatch.logger
 
-fun glossInContext(words: List<FormattingOutcome>): List<Pair<String, ParseOutcome>> {
-    val glossPairs = mutableListOf<Pair<String, ParseOutcome>>()
+fun glossInContext(words: List<FormattingOutcome>): List<Pair<String, ContextOutcome>> {
+    val glossPairs = mutableListOf<Pair<String, ContextOutcome>>()
 
     var withinQuotes = false
     var followsCarrier = false
@@ -12,7 +11,7 @@ fun glossInContext(words: List<FormattingOutcome>): List<Pair<String, ParseOutco
 
     for ((index, maybeWord) in words.withIndex()) {
 
-        val gloss: ParseOutcome
+        val gloss: ContextOutcome
 
         val word: Valid = when (maybeWord) {
             is Invalid -> {
