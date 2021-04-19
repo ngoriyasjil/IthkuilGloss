@@ -438,7 +438,7 @@ fun parseFullReferent(c: String): Referential? {
 
         while (index <= c.lastIndex) {
 
-            val referent = if (index + 2 <= c.length && c.substring(index, index + 2) in BICONSONANTAL_PRS) {
+            val referent = if (index + 2 <= c.length && c.substring(index, index + 2) in BICONSONANTAL_REFERENTIALS) {
                 parseSingleReferent(c.substring(index, index + 2)).also { index += 2 }
             } else {
                 parseSingleReferent(c.substring(index, index + 1)).also { index++ }

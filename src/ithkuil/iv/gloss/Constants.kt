@@ -106,6 +106,14 @@ val CP_CONSONANTS = setOf("hl", "hm", "hn", "hň")
 
 val COMBINATION_REFERENTIAL_SPECIFICATION = listOf("x", "xt", "xp", "xx")
 
+val BICONSONANTAL_REFERENTIALS = setOf(
+    "tļ",
+    "th", "ph", "kh",
+    "ll", "rr", "řř",
+    "mm", "nn", "ňň",
+    "hl", "hm", "hn", "hň"
+)
+
 val CASE_AFFIXES = setOf(
     "sw", "zw", "čw", "šw", "žw", "jw", "lw",
     "sy", "zy", "čy", "šy", "žy", "jy", "ly"

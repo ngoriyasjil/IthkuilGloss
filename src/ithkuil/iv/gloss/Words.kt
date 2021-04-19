@@ -360,8 +360,6 @@ fun parseModular(word: Word, marksMood: Boolean?): GlossOutcome {
 
 }
 
-val BICONSONANTAL_PRS = setOf("th", "ph", "kh", "ll", "rr", "řř", "mm", "nn", "ňň", "hl", "hm", "hn", "hň")
-
 class Referential(private val referents: List<Slot>) : Glossable, List<Slot> by referents {
     override fun toString(o: GlossOptions): String {
         return when (referents.size) {
