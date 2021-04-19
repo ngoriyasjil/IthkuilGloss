@@ -10,8 +10,8 @@ fun parseCc(cc: String): Pair<Concatenation?, Shortcut?> {
     }
 
     val shortcut = when (cc) {
-        "w", "hl", "hr" -> Shortcut.W_SHORTCUT
-        "y", "hm", "hn" -> Shortcut.Y_SHORTCUT
+        "w", "hl", "hr" -> Shortcut.W
+        "y", "hm", "hn" -> Shortcut.Y
         else -> null
     }
 
@@ -69,7 +69,7 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
                 else -> return null
             }
         }
-        Shortcut.W_SHORTCUT -> {
+        Shortcut.W -> {
             additional = when (series) {
                 1 -> caOf()
                 2 -> caOf(perspective = Perspective.AGGLOMERATIVE)
@@ -78,7 +78,7 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
                 else -> return null
             }
         }
-        Shortcut.Y_SHORTCUT -> {
+        Shortcut.Y -> {
             additional = when (series) {
                 1 -> caOf(extension = Extension.PROXIMAL)
                 2 -> caOf(essence = Essence.REPRESENTATIVE)
@@ -108,8 +108,8 @@ fun parseSpecialVv(vv: String, shortcut: Shortcut?): Slot? {
 
     val ca = if (shortcut != null && vv in setOf("ae", "ea")) {
         when (shortcut) {
-            Shortcut.W_SHORTCUT -> caOf()
-            Shortcut.Y_SHORTCUT -> caOf(extension = Extension.PROXIMAL)
+            Shortcut.W -> caOf()
+            Shortcut.Y -> caOf(extension = Extension.PROXIMAL)
         }
     } else if (shortcut != null) {
         return null
