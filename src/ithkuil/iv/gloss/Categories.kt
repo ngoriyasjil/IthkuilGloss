@@ -19,8 +19,8 @@ enum class RootMode {
 }
 
 enum class Shortcut {
-    Y_SHORTCUT,
-    W_SHORTCUT;
+    Y,
+    W;
 }
 
 enum class Concatenation(override val short: String) : NoDefault {
