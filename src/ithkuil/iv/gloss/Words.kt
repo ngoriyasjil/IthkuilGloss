@@ -127,9 +127,9 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
         else -> RootMode.ROOT
     }
 
-    val slotII = parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
-
     if (rootMode == RootMode.AFFIX && shortcut != null) return Error("Shortcuts can't be used with a Cs-root")
+
+    val slotII = parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
 
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
