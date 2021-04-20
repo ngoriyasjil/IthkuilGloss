@@ -26,14 +26,28 @@ class WordTests {
     }
 
     @Test
-    fun wordTypeTest() {
-        "muyüs" glossesTo "ma-IND-DAT-2m"
+    fun `Cs root formative examples`() {
+        "ëilal" glossesTo "**l**/1-D1"
+        "oëgöil" glossesTo "CPT.DYN-**g**/0-D0.OBJ"
     }
 
     @Test
-    fun csRootTest() {
-        "oëgöil" glossesTo "CPT.DYN-**g**/0-D0.OBJ"
+    fun `Cs root Vvs return an error with shortcuts`() {
+        "wëil" givesError "Shortcuts can't be used with a Cs-root"
     }
+
+    @Test
+    fun `One example of each word type parses correctly`() {
+        "lalu" glossesTo "S1-**l**-IND"
+        "ihnú" glossesTo "RCP.COU-{under adj.}"
+        "äst" glossesTo "**st**/2₁"
+        "miyüs" glossesTo "ma-AFF-DAT-2m"
+        "mixenüa" glossesTo "ma-AFF-**n**/3₁-THM"
+        "ha" glossesTo "DSV"
+        "pļļ" glossesTo "“Funny!“"
+        "hrei" glossesTo "CCA"
+    }
+
 
     @Test
     fun stressMarkingTest() {
