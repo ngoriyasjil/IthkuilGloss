@@ -201,7 +201,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
         val caValue = when {
             caForm in CN_PATTERN_ONE -> {
-                parseVnCn("a", caForm, isVerbal, false)
+                parseVnCn("a", caForm, isVerbal)
                     ?: return Error("Unknown Cn value in Ca: $caForm")
             }
 
@@ -272,7 +272,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
             parseVnCn(
                 groups[index] + groups[index + 2],
                 groups[index + 3],
-                isVerbal,
+                marksMood = isVerbal,
                 absoluteLevel = true
             ).also { index += 4 }
                 ?: return Error("Unknown VnCn value: $vnCn}")
@@ -282,7 +282,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
             parseVnCn(
                 groups[index],
                 groups[index + 1],
-                isVerbal,
+                marksMood = isVerbal,
             ).also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }

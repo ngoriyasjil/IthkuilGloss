@@ -327,7 +327,7 @@ fun parseCa(ca: String): Slot? {
     return Slot(affiliation, configuration, extension, perspective, essence)
 }
 
-fun parseVnCn(vn: String, cn: String, marksMood: Boolean, absoluteLevel: Boolean = false): Slot? {
+fun parseVnCn(vn: String, cn: String, marksMood: Boolean = true, absoluteLevel: Boolean = false): Slot? {
 
     if (cn !in CN_CONSONANTS) return null
 
