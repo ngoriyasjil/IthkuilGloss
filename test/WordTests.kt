@@ -50,7 +50,7 @@ class WordTests {
 
 
     @Test
-    fun stressMarkingTest() {
+    fun `Stress-marked categories are glossed with a slash`() {
         "lála'a" glossesTo "S1-**l**-PRN\\FRA"
         "layá" glossesTo "1m-THM-THM\\RPV"
     }

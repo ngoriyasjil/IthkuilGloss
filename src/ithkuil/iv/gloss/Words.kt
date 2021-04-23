@@ -133,19 +133,19 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
-            val stem = slotII.find { it is Underlineable<*> && it.value is Stem } as? Underlineable<Stem>
-                ?: return Error("Stem not found")
+            val stem = slotII.findIsInstance<Underlineable<Stem>>() ?: return Error("Stem not found")
             Root(groups[index], stem)
         }
+
         RootMode.AFFIX -> {
-            val form = if (groups[index + 1] in DEGREE_ZERO_CS_ROOT_FORMS) {
-                0
-            } else {
-                seriesAndForm(groups[index + 1]).second
+            val form = when (val affixVr = groups[index + 1]) {
+                in DEGREE_ZERO_CS_ROOT_FORMS -> 0
+                else -> seriesAndForm(affixVr).second
             }
             val degree = Degree.byForm(form) ?: return Error("Unknown Cs-root degree: $form")
             CsAffix(groups[index], degree)
         }
+
         RootMode.REFERENCE -> {
             parseFullReferent(groups[index]) ?: return Error("Unknown personal reference cluster: ${groups[index]}")
         }
@@ -251,13 +251,13 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
         .validateAll { return Error(it.message) }
         .let { affixList ->
 
-            val unClosuredEndOfSlotVIndex = endOfVxCsSlotVIndex // Necessary for smart casting (KT-7186)
+            val endOfSlotVIndex = endOfVxCsSlotVIndex // Necessary for smart casting (KT-7186)
 
-            if (unClosuredEndOfSlotVIndex != null) {
+            if (endOfSlotVIndex != null) {
                 buildList {
-                    addAll(affixList.subList(0, unClosuredEndOfSlotVIndex))
+                    addAll(affixList.subList(0, endOfSlotVIndex))
                     add(endOfSlotVGloss)
-                    addAll(affixList.subList(unClosuredEndOfSlotVIndex, affixList.size))
+                    addAll(affixList.subList(endOfSlotVIndex, affixList.size))
                 }
             } else affixList
         }
@@ -267,25 +267,23 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     val slotVIII: Slot? = when {
         absoluteLevel -> {
+            val vnCn = groups.subList(index, index + 4).joinToString("")
+
             parseVnCn(
                 groups[index] + groups[index + 2],
                 groups[index + 3],
                 isVerbal,
                 absoluteLevel = true
-            )
-                .also { index += 4 }
-
-                ?: return Error(
-                    "Unknown VnCn value: ${
-                        groups
-                            .subList(index, index + 4)
-                            .joinToString("")
-                    }"
-                )
+            ).also { index += 4 }
+                ?: return Error("Unknown VnCn value: $vnCn}")
         }
 
         groups.getOrNull(index + 1) in CN_CONSONANTS -> {
-            parseVnCn(groups[index], groups[index + 1], isVerbal, false).also { index += 2 }
+            parseVnCn(
+                groups[index],
+                groups[index + 1],
+                isVerbal,
+            ).also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
         else -> null
@@ -326,6 +324,13 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     return Parsed(slotList, stressMarked = relation)
 
+}
+
+private inline fun <reified R> Iterable<*>.findIsInstance(): R? {
+    for (element in this) {
+        if (element is R) return element
+    }
+    return null
 }
 
 fun parseModular(word: Word, marksMood: Boolean?): ParseOutcome {
