@@ -18,7 +18,7 @@ fun assertNotCarrier(word: String) {
 class ContextTests {
 
     @Test
-    fun carrierIdentificationTest() {
+    fun `Carrier identification examples`() {
         assertCarrier("sala")
         assertCarrier("husana-mala")
         assertCarrier("hamala-sala")

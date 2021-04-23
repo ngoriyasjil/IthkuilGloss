@@ -1,10 +1,7 @@
 package ithkuil.iv.gloss.test
 
 import ithkuil.iv.gloss.*
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
+import kotlin.test.*
 
 class SlotTests {
 
@@ -60,14 +57,39 @@ class SlotTests {
 
     @Test
     fun `Ca examples`() {
-        "l" isCaOf ""
-        "s" isCaOf "DPX"
-        "nļ" isCaOf "ASO"
-        "tļ" isCaOf "RPV"
-        "řktç" isCaOf "VAR.MSC.PRX.A.RPV"
-        "nš" isCaOf "COA.G.RPV"
-        "zḑ" isCaOf "MFS.DPL.A.RPV"
-        "nx" isCaOf "MSC.GRA.N.RPV"
+        parseCa("l") hasGlossOf ""
+        parseCa("s") hasGlossOf "DPX"
+        parseCa("nļ") hasGlossOf "ASO"
+        parseCa("tļ") hasGlossOf "RPV"
+        parseCa("řktç") hasGlossOf "VAR.MSC.PRX.A.RPV"
+        parseCa("nš") hasGlossOf "COA.G.RPV"
+        parseCa("zḑ") hasGlossOf "MFS.DPL.A.RPV"
+        parseCa("nx") hasGlossOf "MSC.GRA.N.RPV"
+    }
+
+    @Test
+    fun `VnCn parses for all values in CN_CONSONANTS`() {
+        CN_CONSONANTS.forEach { cn ->
+            assertNotNull(parseVnCn("a", cn))
+        }
+    }
+
+    @Test
+    fun `VnCn examples`() {
+        parseVnCn("i", "h") hasGlossOf "RCP"
+        parseVnCn("i", "w") hasGlossOf "PRG"
+        parseVnCn("ai", "hl") hasGlossOf "PCT.SUB"
+        parseVnCn("ia", "hl", marksMood = false) hasGlossOf "1:BEN.CCA"
+        parseVnCn("ao", "h") hasGlossOf "MIN"
+        parseVnCn("ao", "hny") hasGlossOf "DCL.HYP"
+        parseVnCn("ao", "h", absoluteLevel = true) hasGlossOf "MINa"
+    }
+
+    @Test
+    fun `Absolute Level fails with other vowel series`() {
+        assertNull(parseVnCn("a", "h", absoluteLevel = true))
+        assertNull(parseVnCn("ai", "h", absoluteLevel = true))
+        assertNull(parseVnCn("ia", "h", absoluteLevel = true))
     }
 }
 
@@ -79,11 +101,6 @@ infix fun String.isCcOf(pair: Pair<Concatenation?, Shortcut?>) {
 infix fun String.isNotCcOf(illegal: Pair<Concatenation?, Shortcut?>) {
     val gloss = parseCc(this)
     assertNotEquals(illegal, gloss, this)
-}
-
-infix fun String.isCaOf(expected: String) {
-    val gloss = parseCa(this)?.gloss(GlossOptions())
-    assertEquals(expected, gloss, this)
 }
 
 infix fun Glossable?.hasGlossOf(expected: String) {
