@@ -45,6 +45,20 @@ class SlotTests {
     }
 
     @Test
+    fun `Normal Vr examples`() {
+        parseVr("ä") hasGlossOf "CTE"
+        parseVr("o") hasGlossOf "DYN.CSV"
+        parseVr("öe") hasGlossOf "DYN.OBJ.AMG"
+    }
+
+    @Test
+    fun `Affix Vr examples`() {
+        parseAffixVr("a") hasGlossOf "D1"
+        parseAffixVr("ai") hasGlossOf "D1.CTE"
+        parseAffixVr("öi") hasGlossOf "D0.OBJ"
+    }
+
+    @Test
     fun `Ca examples`() {
         "l" isCaOf ""
         "s" isCaOf "DPX"
