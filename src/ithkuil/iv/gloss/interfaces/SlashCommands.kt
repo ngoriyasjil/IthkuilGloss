@@ -2,7 +2,7 @@ package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
 import dev.kord.core.Kord
-import dev.kord.core.behavior.respond
+import dev.kord.core.behavior.interaction.respondPublic
 import dev.kord.core.entity.interaction.boolean
 import dev.kord.core.entity.interaction.string
 import dev.kord.core.event.interaction.InteractionCreateEvent
@@ -76,7 +76,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
 
         val command = constructCommand(showDefaults, precision)
 
-        interaction.respond {
+        interaction.respondPublic {
             content = commandResponse("words") { words -> "$command $words" }
         }
     }
@@ -89,7 +89,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
 
         val command = constructCommand(showDefaults, precision, sgloss = true)
 
-        interaction.respond {
+        interaction.respondPublic {
             content = commandResponse("words") { words -> "$command $words" }
         }
     }
@@ -98,7 +98,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
         if (interaction.command.rootName != "root") return@on
         logger.info { "Running slash command \"root\"" }
 
-        interaction.respond {
+        interaction.respondPublic {
             content = commandResponse("crs") { crs -> "?root $crs" }
         }
     }
@@ -107,7 +107,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
         if (interaction.command.rootName != "affix") return@on
         logger.info { "Running slash command \"affix\"" }
 
-        interaction.respond {
+        interaction.respondPublic {
             content = commandResponse("cxs") { cxs -> "?affix $cxs" }
         }
     }
@@ -116,7 +116,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
         if (interaction.command.rootName != "ej") return@on
         logger.info { "Running slash command \"ej\"" }
 
-        interaction.respond {
+        interaction.respondPublic {
             content = commandResponse("text") { text -> "?ej $text" }
         }
     }
@@ -125,7 +125,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
         if (interaction.command.rootName != "whosacutebot") return@on
         logger.info { "Running slash command \"whosacutebot\"" }
 
-        interaction.respond {
+        interaction.respondPublic {
             content = respond("?!whosacutebot")!!
         }
     }
@@ -134,7 +134,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
         if (interaction.command.rootName != "date") return@on
         logger.info { "Running slash command \"date\"" }
 
-        interaction.respond {
+        interaction.respondPublic {
             content = respond("?date")!!
         }
     }

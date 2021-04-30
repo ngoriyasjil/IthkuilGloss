@@ -11,7 +11,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <kotlin.version>1.4.31</kotlin.version>
+    <kotlin.version>1.4.32</kotlin.version>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
     <main.class>ithkuil.iv.gloss.interfaces.DiscordKt</main.class>
@@ -75,6 +75,14 @@
       <artifactId>kord-core</artifactId>
       <version>0.7.0-RC3</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-maven-plugin</artifactId>
+      <version>1.4.32</version>
+      <scope>provided</scope>
+    </dependency>
+
 
   </dependencies>
 
