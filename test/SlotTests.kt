@@ -27,11 +27,11 @@ class SlotTests {
 
     @Test
     fun `Vv examples with no shortcut`() {
-        parseVv("a", null) hasGlossOf "S1.PRC"
+        parseVv("a", null) hasGlossOf "S1"
         parseVv("ö", null) hasGlossOf "S0.CPT"
-        parseVv("ua", null) hasGlossOf "S3.PRC.**t**/4"
+        parseVv("ua", null) hasGlossOf "S3.**t**/4"
         parseVv("oë", null) hasGlossOf "CPT.DYN"
-        parseVv("ae", null) hasGlossOf "PRC"
+        parseVv("ae", null) hasGlossOf ""
     }
 
     @Test
