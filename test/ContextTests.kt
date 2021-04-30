@@ -7,14 +7,6 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-fun assertCarrier(word: String) {
-    assertTrue(word) { isCarrier(formatWord(word) as Valid) }
-}
-
-fun assertNotCarrier(word: String) {
-    assertFalse(word) { isCarrier(formatWord(word) as Valid) }
-}
-
 class ContextTests {
 
     @Test
@@ -28,5 +20,12 @@ class ContextTests {
         assertNotCarrier("hma")
         assertNotCarrier("ëisala")
     }
+}
 
+fun assertCarrier(word: String) {
+    assertTrue(word) { isCarrier(formatWord(word) as Valid) }
+}
+
+fun assertNotCarrier(word: String) {
+    assertFalse(word) { isCarrier(formatWord(word) as Valid) }
 }

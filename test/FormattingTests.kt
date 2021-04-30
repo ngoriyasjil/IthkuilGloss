@@ -12,8 +12,9 @@ infix fun String.hasStress(stress: Stress) = assertEquals(stress, (formatWord(th
 infix fun String.givesInvalid(error: String) = assertEquals(error, (formatWord(this) as Invalid).message)
 
 class FormattingTests {
+
     @Test
-    fun stressTest() {
+    fun `Stress examples`() {
         "a" hasStress Stress.MONOSYLLABIC
         "ala" hasStress Stress.PENULTIMATE
         "alá" hasStress Stress.ULTIMATE
@@ -26,7 +27,7 @@ class FormattingTests {
     }
 
     @Test
-    fun stressErrorTest() {
+    fun `Stress error examples`() {
         "á" givesInvalid "Marked default stress"
         "ála" givesInvalid "Marked default stress"
         "álá" givesInvalid "Double-marked stress"

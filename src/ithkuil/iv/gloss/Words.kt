@@ -153,11 +153,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
     }
     index++
 
-    val caseGlottal = if (shortcut == null) {
-        glottalIndices.any { it in (index)..(groups.lastIndex) }
-    } else groups.last().isVowel() && groups.lastIndex in glottalIndices
-
-    if (concatenation != null && caseGlottal) return Error("Unexpected glottal stop in concatenated formative")
+    val glottalShiftStartIndex = index
 
     val vr = if (shortcut != null) "a" else {
         groups.getOrNull(index).also { index++ } ?: return Error("Formative ended unexpectedly")
@@ -219,7 +215,6 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
         ForcedDefault(caValue, "{Ca}", condition = csVxAffixes.isNotEmpty())
     }
 
-
     var endOfVxCsSlotVIndex: Int? = null
 
     val vxCsAffixes = buildList {
@@ -267,15 +262,16 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     val slotVIII: Slot? = when {
         absoluteLevel -> {
-            val vnCn = groups.subList(index, index + 4).joinToString("")
+            val vn = groups[index] + groups[index + 2]
+            val cn = groups[index + 3]
 
             parseVnCn(
-                groups[index] + groups[index + 2],
-                groups[index + 3],
+                vn,
+                cn,
                 marksMood = isVerbal,
                 absoluteLevel = true
             ).also { index += 4 }
-                ?: return Error("Unknown VnCn value: $vnCn}")
+                ?: return Error("Unknown VnCn value: ${vn[0]}y${vn[1]}$cn")
         }
 
         groups.getOrNull(index + 1) in CN_CONSONANTS -> {
@@ -289,19 +285,24 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
         else -> null
     }
 
-    val vcVk = (groups.getOrNull(index) ?: "a").let {
-        if (caseGlottal) {
-            glottalizeVowel(it)
-        } else it
-    }
+    val caseGlottal = if (shortcut == null) {
+        glottalIndices.any { it in (glottalShiftStartIndex)..(groups.lastIndex) }
+    } else groups.last().isVowel() && groups.lastIndex in glottalIndices
+
+    if (concatenation != null && caseGlottal) return Error("Unexpected glottal stop in concatenated formative")
+
+    val vcVk = (groups.getOrNull(index) ?: "a")
+        .let {
+            if (caseGlottal) glottalizeVowel(it) else it
+        }
 
 
     val slotIX: Glossable = if (concatenation != null) {
         when (word.stress) {
-            Stress.PENULTIMATE -> Case.byVowel(vcVk) ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
-            Stress.MONOSYLLABIC, Stress.ULTIMATE -> {
-                Case.byVowel(glottalizeVowel(vcVk)) ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
-            }
+            Stress.PENULTIMATE -> Case.byVowel(vcVk)
+                ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
+            Stress.MONOSYLLABIC, Stress.ULTIMATE -> Case.byVowel(glottalizeVowel(vcVk))
+                ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress in concatenated formative")
             else -> return Error("Stress error")
         }
