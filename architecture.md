@@ -28,7 +28,7 @@ This layer works out the mapping of phonemic forms to the underlying grammatical
 
 ### Layer 0: Categories
 
-Here are finally the actual categories, and the actual logic for glossing them! The Dispatch level calls a Gloss to be glossed, which calls its Slots, which ultimately call the toString methods of the categories, passing the settings (precision and whether defaults are shown) down each layer.
+Here are finally the actual categories, and the actual logic for glossing them! The Dispatch level calls a Gloss to be glossed, which calls its Slots, which ultimately call the .gloss methods of the categories, passing the settings (precision and whether defaults are shown) down each layer.
 
 That might be a lot to keep in one's head, but you generally don't have to worry about the other layers when working on one. I wish you luck.
 
