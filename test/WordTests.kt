@@ -7,6 +7,17 @@ import kotlin.test.assertEquals
 class WordTests {
 
     @Test
+    fun `Poem test`() {
+        "yužgrá" glossesTo "S3.PRX-**žgr**-OBS"
+        "eolaleici" glossesTo "S2.**t**/5-**l**-**c**/3₂-AFF"
+        "hlamröé-úçtļořëi" glossesTo "T1-S1-**mr**-PCR—S3-**çtļ**-DYN.CSV-G.RPV-STM\\FRA"
+        "khe" glossesTo "Rdp.DET-ABS"
+        "adni'lö" glossesTo "S1-**dn**-OBJ-UTL"
+        "yeilaiceu" glossesTo "S2.RPV-**l**-**c**/1₂-ATT"
+        "aiňļa'vu" glossesTo "S1.**r**/4-**ňļ**-N-RLT"
+    }
+
+    @Test
     fun `Slot V marking matches actual number of slot V affixes`() {
         "alarfull" glossesTo "S1-**l**-**rf**/9₁-{Ca}"
         "a'larfunall" glossesTo "S1-**l**-**rf**/9₁-**n**/1₁-{Ca}"
