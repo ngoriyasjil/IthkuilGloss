@@ -192,7 +192,7 @@ class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glos
                 stem.used = true
                 "“$stemDesc“"
             } else {
-                "“${rootEntry[Stem.STEM_ZERO]}“"
+                "“${rootEntry[Stem.ZERO]}“"
             }
         }
         return this

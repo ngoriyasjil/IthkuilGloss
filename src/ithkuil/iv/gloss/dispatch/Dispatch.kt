@@ -3,14 +3,14 @@
 package ithkuil.iv.gloss.dispatch
 
 import ithkuil.iv.gloss.*
+import kotlinx.datetime.Clock
 import mu.KotlinLogging
 import java.io.File
 import java.net.URL
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 
-val startTime = System.currentTimeMillis()
+val startTime = Clock.System.now()
 
 val logger = KotlinLogging.logger { }
 
@@ -113,32 +113,36 @@ fun respond(content: String): String? {
             loadResourcesOnline()
             "External resources successfully reloaded!"
         } catch (e: Exception) {
-            logger.info { e.toString() }
-            "Error while reloading external resources…"
+            logger.error { e.toString() }
+            "Error while reloading external resources. Please contact the maintainers"
         }
 
-        "status" -> {
-            val git = ProcessBuilder("git", "log", "-1", "--oneline").start()
-            val lastCommit = String(git.inputStream.readBytes())
-            return listOf(
-                "__Status report:__",
-                "**Ithkuil Version:** $MORPHOPHONOLOGY_VERSION",
-                "**Roots:** ${LocalDictionary.roots.size}",
-                "**Affixes:** ${LocalDictionary.affixes.size}",
-                "**Help file exists:** ${File("./resources/help.md").exists()}",
-                "**Uptime:** ${(System.currentTimeMillis() - startTime).milliseconds}",
-                "**Last commit:** $lastCommit"
-            ).joinToString("\n")
-        }
+        "status" -> """
+            __Status report:__
+            **Ithkuil Version:** $MORPHOPHONOLOGY_VERSION
+            **Roots:** ${LocalDictionary.roots.size}
+            **Affixes:** ${LocalDictionary.affixes.size}
+            **Help file exists:** ${File("./resources/help.md").exists()}
+            **Uptime:** ${Clock.System.now() - startTime}
+            **Last commit:** $lastCommit
+        """.trimIndent()
 
         "ej" -> externalJuncture(arguments.formatAll())
 
-        "!whosagoodbot", "!whosacutebot" -> "(=^ェ^=✿)"
+        "whosagoodbot", "whosacutebot" -> "(=^ェ^=✿)"
 
         "date" -> datetimeInIthkuil()
 
         else -> null
     }
+}
+
+val lastCommit: String by lazy {
+    ProcessBuilder("git", "log", "-1", "--oneline")
+        .start()
+        .inputStream
+        .bufferedReader()
+        .readText()
 }
 
 fun lookupRoot(crs: List<String>): String {
@@ -149,7 +153,7 @@ fun lookupRoot(crs: List<String>): String {
     for (cr in lookups) {
         val root = LocalDictionary.roots[cr]
         if (root != null) {
-            val generalDescription = root[Stem.STEM_ZERO]
+            val generalDescription = root[Stem.ZERO]
             val stemDescriptions = root.descriptions.drop(1)
             val titleLine = "**-${cr.toUpperCase()}-**: $generalDescription"
 
@@ -236,3 +240,8 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
 
 }
 
+fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
+
+fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter { it.isNotEmpty() }
+
+fun String.trimWhitespace() = this.splitOnWhitespace().joinToString(" ")

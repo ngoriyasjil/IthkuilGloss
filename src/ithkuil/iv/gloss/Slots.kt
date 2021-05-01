@@ -41,10 +41,10 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
     val (series, form) = seriesAndForm(v)
 
     val stem = when (form) {
-        1, 2 -> Stem.STEM_ONE
-        3, 4 -> Stem.STEM_TWO
-        9, 8 -> Stem.STEM_THREE
-        7, 6 -> Stem.STEM_ZERO
+        1, 2 -> Stem.ONE
+        3, 4 -> Stem.TWO
+        9, 8 -> Stem.THREE
+        7, 6 -> Stem.ZERO
         else -> return null
     }.let {
         Underlineable(it)

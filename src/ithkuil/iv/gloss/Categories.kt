@@ -39,10 +39,15 @@ enum class Relation(override val short: String) : Category {
 }
 
 enum class Stem(override val short: String) : NoDefault {
-    STEM_ZERO("S0"),
-    STEM_ONE("S1"),
-    STEM_TWO("S2"),
-    STEM_THREE("S3");
+    ZERO("S0"),
+    ONE("S1"),
+    TWO("S2"),
+    THREE("S3");
+
+    override fun gloss(o: GlossOptions) = when {
+        o.verbose -> "stem_${name.toLowerCase()}"
+        else -> short
+    }
 }
 
 enum class Specification(override val short: String) : Category {

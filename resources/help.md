@@ -27,7 +27,7 @@ Other commands:
   - **?!reload**: updates the root and affix dictionaries from the spreadsheet
   - **?date**: gives the current UTC time and date in Ithkuil IV
   - **?ej**: checks a text for violations of External Juncture (Sec. 1.5)
-  - **?!whosacutebot**: tells the bot that it is such a cute bot
+  - **?whosacutebot**: tells the bot that it is such a cute bot
     
 You can delete a message that is a reply to you by reacting to it with an ``:x:`` emoji.
 
@@ -38,7 +38,7 @@ Formatting details:
 
 For glossing Ithkuil III, there is the command "!gloss". This is a separate system which is not maintained by us (or anyone).
 
-The bot is an amateur coding project, and may suffer from severe bugs at any time. If you spot one, please contact me (@Behemoth4#6479), so I can hopefully go about fixing it.
+The bot is an amateur coding project, and may suffer from severe bugs at any time. If you spot one, please contact me (@ngoriyasjil#6479), so I can hopefully go about fixing it.
 
 GitHub repo at https://github.com/ngoriyasjil/IthkuilGloss
 

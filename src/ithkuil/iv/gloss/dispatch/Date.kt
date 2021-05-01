@@ -1,8 +1,11 @@
 package ithkuil.iv.gloss.dispatch
 
+import ithkuil.iv.gloss.Stem
 import ithkuil.iv.gloss.VOWEL_FORMS
-import java.time.LocalDateTime
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 private val NUMBER_ROOTS = listOf(
     "vr",
@@ -17,6 +20,8 @@ private val NUMBER_ROOTS = listOf(
     "lẓ",
     "j",
 )
+
+private val INVALID_INITIAL_NUMBER_ROOTS = setOf("ns", "lẓ", "čk")
 
 private val NUMBER_AFFIXES = listOf(
     "vc",
@@ -34,34 +39,46 @@ private val NUMBER_AFFIXES = listOf(
     "jd"
 )
 
-private fun digitPart(n: Int): String {
+private fun numeralBody(n: Int, shortcut: Boolean = false, stem: Stem = Stem.ONE): String {
     val units = n % 10
     val tens = n / 10
-    val u = NUMBER_ROOTS[units]
-    val t = if (tens > 0) "${VOWEL_FORMS[tens - 1]}rs" else ""
 
-    return "$u$t"
+    val unitsRoot = NUMBER_ROOTS[units]
+    val tensCs = if (tens > 0) "${VOWEL_FORMS[tens - 1]}rs" else ""
+
+    val cc = if (shortcut) "w" else ""
+
+    val vvElides = !shortcut && stem == Stem.ONE && unitsRoot !in INVALID_INITIAL_NUMBER_ROOTS
+    val vv = if (vvElides) "" else when (stem) {
+        Stem.ONE -> "a"
+        Stem.TWO -> "e"
+        Stem.THREE -> "u"
+        Stem.ZERO -> "o"
+    }
+
+    val vrCa = if (!shortcut) "al" else ""
+
+
+    return "$cc$vv$unitsRoot$vrCa$tensCs"
 }
 
-fun datetimeInIthkuil(date: LocalDateTime? = null): String {
-
-    val datetime = date ?: LocalDateTime.now(ZoneId.of("UTC"))
+fun datetimeInIthkuil(
+    datetime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+): String {
 
     val day = datetime.dayOfMonth
-
-    val month = datetime.monthValue
-
-    val ardhal = "Wu${digitPart(day)}irwia${NUMBER_AFFIXES[month]}ó"
-
+    val month = datetime.monthNumber
     val year = datetime.year
 
-    val ernal = "wa${digitPart(year / 100)}a'o"
-    val arnal = "wa${digitPart(year % 100)}ürwi'i"
+    val ardhal = "${numeralBody(day, shortcut = true, Stem.THREE)}ëirwia${NUMBER_AFFIXES[month]}iktó"
 
-    val urwal = "wu${digitPart(datetime.hour)}erwa'o"
-    val erwal = "wa${digitPart(datetime.minute)}oň"
+    val ernal = "${numeralBody(year / 100)}a'o"
+    val arnal = "${numeralBody(year % 100)}ürwi'i"
+
+    val urwal = "${numeralBody(datetime.hour, shortcut = true, Stem.THREE)}erwa'o"
+    val erwal = "${numeralBody(datetime.minute)}oň"
 
 
-    return "$ardhal $ernal $arnal, $urwal $erwal"
+    return "$ardhal $ernal $arnal ($urwal $erwal)".capitalize()
 
 }

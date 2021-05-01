@@ -211,12 +211,6 @@ fun glottalizeVowel(v: String): String {
     }
 }
 
-fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
-
-fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter { it.isNotEmpty() }
-fun String.trimWhitespace() = this.splitOnWhitespace().joinToString(" ")
-
-
 //Deals with series three vowels
 infix fun String.isSameVowelAs(s: String): Boolean = if ("/" in s) {
     s.split("/").any { it == this }
