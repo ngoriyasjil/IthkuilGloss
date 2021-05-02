@@ -9,6 +9,7 @@ class Invalid(private val word: String, val message: String) : FormattingOutcome
 sealed class Valid : FormattingOutcome() {
     abstract val prefixPunctuation: String
     abstract val postfixPunctuation: String
+    abstract val hasSentencePrefix: Boolean
 }
 
 class ConcatenatedWords(
@@ -16,39 +17,30 @@ class ConcatenatedWords(
     override val prefixPunctuation: String = "",
     override val postfixPunctuation: String = "",
 ) : Valid() {
+
     override fun toString(): String = words
         .joinToString(
             "-",
             prefix = prefixPunctuation,
             postfix = postfixPunctuation
         ) { it.toString() }
+
+    override val hasSentencePrefix: Boolean
+        get() = words.first().hasSentencePrefix
 }
 
 class Word(
-    private val stressedGroups: List<String>,
+    private val form: String,
+    private val groups: List<String>,
     val stress: Stress,
-    override val prefixPunctuation: String = "",
-    override val postfixPunctuation: String = "",
-    private val groups: List<String> = stressedGroups.map { it.clearStress() }
-    // ^ Should never be specified; class delegation doesn't accept properties, only parameters
+    override val prefixPunctuation: String,
+    override val postfixPunctuation: String,
+    override val hasSentencePrefix: Boolean,
 ) : List<String> by groups, Valid() {
 
-    override fun toString(): String {
-        return stressedGroups.joinToString("", prefix = prefixPunctuation, postfix = postfixPunctuation)
-    }
+    override fun toString(): String = form
 
-    fun stripSentencePrefix(): Pair<Word, Boolean> {
-        val newGroups = when {
-            size >= 3 && stressedGroups[0] == "ç" && stressedGroups[1] == "ë" -> drop(2)
-            stressedGroups[0] == "ç" && stressedGroups[1].isVowel() -> drop(1)
-            stressedGroups[0] == "çw" -> listOf("w") + drop(1)
-            stressedGroups[0] == "çç" -> listOf("y") + drop(1)
-            else -> return this to false
-        }
-        return Word(newGroups, stress, prefixPunctuation, postfixPunctuation) to true
-    }
-
-    val wordType by lazy { wordTypeOf(this.stripSentencePrefix().first) }
+    val wordType by lazy { wordTypeOf(this) }
 
 }
 
@@ -66,9 +58,9 @@ fun formatWord(fullWord: String): FormattingOutcome {
         return formatConcatenatedWords(word, prefix, postfix)
     }
 
-    val clean = word.defaultFormWithStress()
+    val clean = word.defaultForm()
 
-    if (clean.last() == '\'') return Invalid(word, "Word ends in glottal stop")
+    if (clean.last() == '\'') return Invalid(clean, "Word ends in glottal stop")
 
     fun codepointString(c: Char): String {
         val codepoint = c.toInt()
@@ -85,27 +77,44 @@ fun formatWord(fullWord: String): FormattingOutcome {
         if ("[qˇ^ʰ]".toRegex() in nonIthkuil) {
             message += " You might be writing in Ithkuil III. Try \"!gloss\" instead."
         }
-        return Invalid(word, "Non-ithkuil characters detected: $message")
+        return Invalid(clean, "Non-ithkuil characters detected: $message")
     }
 
     val stressedGroups = clean.splitGroups()
 
     for (group in stressedGroups) {
         if (group.isConsonant() xor group.isVowel()) continue
-        return Invalid(word, "Unknown group: $group")
+        return Invalid(clean, "Unknown group: $group")
     }
 
     val stress = findStress(stressedGroups)
 
+    if (stressedGroups.take(2) == listOf("ç", "ê")) return Invalid(clean, "Stress on sentence prefix")
+
     when (stress) {
-        Stress.INVALID_PLACE -> return Invalid(word, "Unrecognized stress placement")
-        Stress.MARKED_DEFAULT -> return Invalid(word, "Marked default stress")
-        Stress.DOUBLE_MARKED -> return Invalid(word, "Double-marked stress")
+        Stress.INVALID_PLACE -> return Invalid(clean, "Unrecognized stress placement")
+        Stress.MARKED_DEFAULT -> return Invalid(clean, "Marked default stress")
+        Stress.DOUBLE_MARKED -> return Invalid(clean, "Double-marked stress")
         else -> {
         }
     }
 
-    return Word(stressedGroups, stress, prefixPunctuation = prefix, postfixPunctuation = postfix)
+    val hasSentencePrefix = stressedGroups[0] in setOf("ç", "çw", "çç")
+
+    val strippedGroups = when (stressedGroups[0]) {
+        "ç" -> if (stressedGroups.getOrNull(1) == "ë") stressedGroups.drop(2) else stressedGroups.drop(1)
+        "çw" -> listOf("w") + stressedGroups.drop(1)
+        "çç" -> listOf("y") + stressedGroups.drop(1)
+        else -> stressedGroups
+    }
+
+    if (strippedGroups.isEmpty() || strippedGroups in setOf(listOf("w"), listOf("y"))) {
+        return Invalid(clean, "Lone sentence prefix")
+    }
+
+    val groups = strippedGroups.map { it.clearStress() }
+
+    return Word(clean, groups, stress, prefix, postfix, hasSentencePrefix)
 }
 
 private fun formatConcatenatedWords(
@@ -225,9 +234,7 @@ fun String.substituteAll(substitutions: List<Pair<String, String>>) =
 
 fun String.clearStress() = substituteAll(UNSTRESSED_FORMS)
 
-fun String.defaultFormWithStress() = toLowerCase().substituteAll(ALLOGRAPHS)
-
-fun String.defaultForm() = defaultFormWithStress().clearStress()
+fun String.defaultForm() = toLowerCase().substituteAll(ALLOGRAPHS)
 
 enum class Stress {
     ULTIMATE,

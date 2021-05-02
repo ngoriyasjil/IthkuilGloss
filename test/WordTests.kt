@@ -65,6 +65,16 @@ class WordTests {
         "lála'a" glossesTo "S1-**l**-PRN\\FRA"
         "layá" glossesTo "1m-THM-THM\\RPV"
     }
+
+    @Test
+    fun `Sentence prefix examples`() {
+        "çëlal" glossesTo "[sentence:]-S1-**l**"
+        "çalal" glossesTo "[sentence:]-S1-**l**"
+        "çwala" glossesTo "[sentence:]-S1-**l**"
+        "ççala" glossesTo "[sentence:]-S1.PRX-**l**"
+        "çëhamala-lala" glossesTo "[sentence:]-T1-S1-**m**—S1-**l**"
+        "hamala-çëlala" givesError "Sentence prefix inside concatenation chain"
+    }
 }
 
 infix fun String.glossesTo(gloss: String) {

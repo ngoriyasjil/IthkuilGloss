@@ -34,4 +34,12 @@ class FormattingTests {
         "álalala" givesInvalid "Unrecognized stress placement"
         "aí" givesInvalid "Unrecognized stress placement"
     }
+
+    @Test
+    fun `Sentence start prefix formatting errors`() {
+        "çêlala" givesInvalid "Stress on sentence prefix"
+        "ç" givesInvalid "Lone sentence prefix"
+        "çw" givesInvalid "Lone sentence prefix"
+        "çç" givesInvalid "Lone sentence prefix"
+    }
 }

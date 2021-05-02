@@ -2,24 +2,12 @@ package ithkuil.iv.gloss
 
 import ithkuil.iv.gloss.dispatch.logger
 
-fun parseWithoutSentencePrefix(word: Word, parseFunction: (Word) -> ParseOutcome): ParseOutcome {
-    val (strippedWord, sentencePrefix) = word.stripSentencePrefix()
-
-    val result = parseFunction(strippedWord)
-
-    return when {
-        sentencePrefix && result is Parsed -> result.addPrefix(SENTENCE_START_GLOSS)
-        else -> result
-    }
-}
-
 // @formatter:off
 @Suppress("Reformat") // This looks like dogshit without the vertical alignment.
-fun parseWord(iword: Word, marksMood: Boolean? = null): ParseOutcome {
-    logger.info { "-> parseWord($iword)" }
+fun parseWord(word: Word, marksMood: Boolean? = null): ParseOutcome {
+    logger.info { "-> parseWord($word)" }
 
-    val result = parseWithoutSentencePrefix(iword) { word ->
-        when (word.wordType) {
+    val result = when (word.wordType) {
             WordType.BIAS_ADJUNCT            -> parseBiasAdjunct           (word)
             WordType.MOOD_CASESCOPE_ADJUNCT  -> parseMoodCaseScopeAdjunct  (word)
             WordType.REGISTER_ADJUNCT        -> parseRegisterAdjunct       (word)
@@ -29,10 +17,14 @@ fun parseWord(iword: Word, marksMood: Boolean? = null): ParseOutcome {
             WordType.MULTIPLE_AFFIX_ADJUNCT  -> parseMultipleAffix         (word)
             WordType.REFERENTIAL             -> parseReferential           (word)
             WordType.FORMATIVE               -> parseFormative             (word)
-        }
+        }.let {
+            if (it is Parsed && word.hasSentencePrefix) {
+                it.addPrefix(SENTENCE_START_GLOSS)
+            } else it
     }
+
     logger.info {
-        "   parseWord($iword) -> " +
+        "   parseWord($word) -> " +
             when (result) {
                 is Parsed -> "Gloss(${result.gloss(GlossOptions(Precision.SHORT))})"
                 is Error -> "Error(${result.message})"
@@ -55,17 +47,17 @@ fun parseConcatenationChain(chain: ConcatenatedWords): ParseOutcome {
 
     val glosses = chain.words.mapIndexed { index, word ->
 
-        val gloss = if (index == 0) {
-            parseWithoutSentencePrefix(word) { formative ->
-                parseFormative(formative, inConcatenationChain = true)
-            }
-        } else {
-            parseFormative(word, inConcatenationChain = true)
-        }
+        val gloss = parseFormative(word, inConcatenationChain = true)
 
-        when (gloss) {
-            is Parsed -> gloss
-            is Error -> return gloss
+        val glossWithPrefix = if (gloss is Parsed && word.hasSentencePrefix) {
+            if (index == 0) {
+                gloss.addPrefix(SENTENCE_START_GLOSS)
+            } else return Error("Sentence prefix inside concatenation chain")
+        } else gloss
+
+        when (glossWithPrefix) {
+            is Parsed -> glossWithPrefix
+            is Error -> return glossWithPrefix
         }
     }
 
