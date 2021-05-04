@@ -11,7 +11,9 @@ const val REFERENT_START = "["
 const val REFERENT_END = "]"
 const val CONCATENATION_SEPARATOR = "—"
 const val LOW_TONE_MARKER = "_"
+
 const val CA_STACKING_VOWEL = "öi"
+const val IVE_CS = "nļ"
 const val CARRIER_ROOT_CR = "s"
 
 val ITHKUIL_CHARS = setOf(

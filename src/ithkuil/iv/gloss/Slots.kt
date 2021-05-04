@@ -347,44 +347,48 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean = true, absoluteLevel: 
         Aspect.byVowel(vn) ?: return null
     }
 
-    val cnValue: Glossable = if (marksMood) {
-        when (cn) {
-            "h", "w", "y" -> Mood.FACTUAL
-            "hl", "hw" -> Mood.SUBJUNCTIVE
-            "hr", "hlw" -> Mood.ASSUMPTIVE
-            "hm", "hly" -> Mood.SPECULATIVE
-            "hn", "hnw" -> Mood.COUNTERFACTIVE
-            "hň", "hny" -> Mood.HYPOTHETICAL
-            else -> return null
-        }
-    } else {
-        when (cn) {
-            "h", "w", "y" -> CaseScope.NATURAL
-            "hl", "hw" -> CaseScope.ANTECEDENT
-            "hr", "hlw" -> CaseScope.SUBALTERN
-            "hm", "hly" -> CaseScope.QUALIFIER
-            "hn", "hnw" -> CaseScope.PRECEDENT
-            "hň", "hny" -> CaseScope.SUCCESSIVE
-            else -> return null
-        }
+    val cnValue: Glossable = when (cn) {
+        "h", "w", "y" -> Mood.FACTUAL to CaseScope.NATURAL
+        "hl", "hw" -> Mood.SUBJUNCTIVE to CaseScope.ANTECEDENT
+        "hr", "hlw" -> Mood.ASSUMPTIVE to CaseScope.SUBALTERN
+        "hm", "hly" -> Mood.SPECULATIVE to CaseScope.QUALIFIER
+        "hn", "hnw" -> Mood.COUNTERFACTIVE to CaseScope.PRECEDENT
+        "hň", "hny" -> Mood.HYPOTHETICAL to CaseScope.SUCCESSIVE
+        else -> return null
+    }.let {
+        if (marksMood) it.first else it.second
     }
 
     return Slot(vnValue, cnValue)
 
 }
 
-fun parseVk(s: String): Slot? {
-    val (series, form) = seriesAndForm(s)
+fun parseVk(vk: String, inIveAffix: Boolean = false): Slot? {
+    val (series, form) = if (vk !in setOf("ae", "ea", "äi")) {
+        seriesAndForm(vk)
+    } else {
+        if (!inIveAffix) return null
+        when (vk) {
+            "ae" -> 1 to 0
+            "ea" -> 2 to 0
+            "äi" -> 3 to 0
+            else -> return null
+        }
+    }
 
-    val illocution = if (form == 5) Illocution.PERFORMATIVE else Illocution.ASSERTIVE
+    val illocution = when (form) {
+        5 -> Illocution.PERFORMATIVE
+        else -> Illocution.ASSERTIVE
+    }
 
     val expectation = when (series) {
         1 -> Expectation.COGNITIVE
         2 -> Expectation.RESPONSIVE
         3 -> Expectation.EXECUTIVE
-        else -> null
+        else -> return null
     }
     val validation = when (form) {
+        0 -> null
         1 -> Validation.OBSERVATIONAL
         2 -> Validation.RECOLLECTIVE
         3 -> Validation.PURPORTIVE
@@ -394,11 +398,9 @@ fun parseVk(s: String): Slot? {
         7 -> Validation.CONVENTIONAL
         8 -> Validation.INTUITIVE
         9 -> Validation.INFERENTIAL
-        else -> null
+        else -> return null
     }
-    val values = Slot(illocution, expectation, validation)
-
-    return if (values.size > 1) values else null
+    return Slot(illocution, expectation, validation)
 }
 
 // Referentials

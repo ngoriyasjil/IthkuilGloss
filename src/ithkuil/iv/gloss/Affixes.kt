@@ -1,6 +1,6 @@
 package ithkuil.iv.gloss
 
-
+@Suppress("unused")
 enum class Degree(val numeral: Int) {
     ONE(1),
     TWO(2),
@@ -37,10 +37,22 @@ class AffixError(val message: String) : AffixOutcome()
 
 sealed class ValidAffix : AffixOutcome(), Glossable
 
+class CaStacker(private val ca: Slot) : ValidAffix() {
+    override fun gloss(o: GlossOptions): String = "(${ForcedDefault(ca, "default_ca").gloss(o)})"
+}
+
+class CaseAffix(private val kind: CaseAffixKind, private val case: Case, private val type: AffixType) : ValidAffix() {
+    override fun gloss(o: GlossOptions): String = "(${kind.gloss(o)}:${case.gloss(o)})${type.subscript}"
+}
+
+class ReferentialShortcut(private val referents: Referential, private val case: Case) : ValidAffix() {
+    override fun gloss(o: GlossOptions): String = "(${referents.gloss(o)}-${case.gloss(o.showDefaults())})"
+}
+
 class CsAffix(private val cs: String, private val degree: Degree, private val type: AffixType? = null) : ValidAffix() {
 
     private var description: String? = null
-    private var abbreviation: String? = "**$cs**"
+    private var abbreviation: String = "**$cs**"
 
     override fun checkDictionary(r: Resources): Glossable {
 
@@ -57,27 +69,22 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
     }
 
     override fun gloss(o: GlossOptions): String {
-
         return if (o.concise || degree == Degree.ZERO || description == null) {
             "$abbreviation$AFFIX_DEGREE_SEPARATOR${degree.numeral}${type?.subscript ?: ""}"
         } else {
             "‘$description‘${type?.subscript ?: ""}"
         }
-
     }
-
 }
 
-class CaStacker(private val ca: Slot) : ValidAffix() {
-    override fun gloss(o: GlossOptions): String = "(${ForcedDefault(ca, "default_ca").gloss(o)})"
-}
+class IveAffix private constructor(private val values: Slot) : ValidAffix() {
 
-class CaseAffix(private val kind: CaseAffixKind, private val case: Case, private val type: AffixType) : ValidAffix() {
-    override fun gloss(o: GlossOptions): String = "(${kind.gloss(o)}:${case.gloss(o)})${type.subscript}"
-}
+    override fun gloss(o: GlossOptions): String = "(${values.gloss(o)})"
 
-class ReferentialShortcut(private val referents: Referential, private val case: Case) : ValidAffix() {
-    override fun gloss(o: GlossOptions): String = "(${referents.gloss(o)}-${case.gloss(o.showDefaults())})"
+    companion object {
+        operator fun invoke(vx: String): IveAffix? =
+            parseVk(vx, inIveAffix = true)?.let { values -> IveAffix(values) }
+    }
 }
 
 
@@ -112,6 +119,10 @@ class Affix(private val vx: String, private val cs: String) {
             }
 
             return CaseAffix(kind, case, type)
+        }
+
+        if (cs == IVE_CS) {
+            return IveAffix(vx) ?: AffixError("Unknown IVE affix: $vx")
         }
 
         val (series, form) = seriesAndForm(vx)
@@ -152,7 +163,7 @@ class Affix(private val vx: String, private val cs: String) {
 
         val degree = if (vx in setOf("ae", "ea", "äi")) {
             Degree.ZERO
-        } else Degree.values().getOrNull(form - 1) ?: return AffixError("Unknown affix vowel form: $vx")
+        } else Degree.byForm(form) ?: return AffixError("Unknown affix vowel form: $vx")
 
         val type: AffixType = if (degree == Degree.ZERO) when (vx) {
             "ae" -> AffixType.ONE
