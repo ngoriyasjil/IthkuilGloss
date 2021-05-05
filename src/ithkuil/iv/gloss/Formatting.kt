@@ -38,10 +38,9 @@ class Word(
     override val hasSentencePrefix: Boolean,
 ) : List<String> by groups, Valid() {
 
-    override fun toString(): String = form
+    override fun toString(): String = "$prefixPunctuation$form$postfixPunctuation"
 
     val wordType by lazy { wordTypeOf(this) }
-
 }
 
 fun formatWord(fullWord: String): FormattingOutcome {
@@ -54,8 +53,11 @@ fun formatWord(fullWord: String): FormattingOutcome {
     val (prefix, word, postfix) = punctuationRegex.matchEntire(fullWord)?.destructured
         ?: return Invalid(fullWord, "Unexpected punctuation")
 
+    val escapedPrefix = prefix.escapeMarkdown()
+    val escapedPostfix = postfix.escapeMarkdown()
+
     if ("-" in word) {
-        return formatConcatenatedWords(word, prefix, postfix)
+        return formatConcatenatedWords(word, escapedPrefix, escapedPostfix)
     }
 
     val clean = word.defaultForm()
@@ -114,8 +116,10 @@ fun formatWord(fullWord: String): FormattingOutcome {
 
     val groups = strippedGroups.map { it.clearStress() }
 
-    return Word(clean, groups, stress, prefix, postfix, hasSentencePrefix)
+    return Word(clean, groups, stress, escapedPrefix, escapedPostfix, hasSentencePrefix)
 }
+
+private fun String.escapeMarkdown(): String = replace("[\\\\`*_{}\\[\\]<>()#+\\-.!|]".toRegex(), "\\\\$0")
 
 private fun formatConcatenatedWords(
     word: String,

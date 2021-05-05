@@ -240,8 +240,8 @@ fun wordByWord(words: List<String>, o: GlossOptions): String {
 
 }
 
-fun String.withZeroWidthSpaces() = this.replace("([/—-])".toRegex(), "\u200b$1")
+fun String.withZeroWidthSpaces() = replace("[/—-]".toRegex(), "\u200b$0")
 
-fun String.splitOnWhitespace() = this.split(Regex("\\p{javaWhitespace}")).filter { it.isNotEmpty() }
+fun String.splitOnWhitespace() = split(Regex("\\p{javaWhitespace}")).filter { it.isNotEmpty() }
 
-fun String.trimWhitespace() = this.splitOnWhitespace().joinToString(" ")
+fun String.trimWhitespace() = splitOnWhitespace().joinToString(" ")
