@@ -14,7 +14,6 @@ val startTime = Clock.System.now()
 
 val logger = KotlinLogging.logger { }
 
-
 fun parseAffixes(data: String): Map<String, AffixData> = data
     .lineSequence()
     .drop(1)
@@ -73,19 +72,21 @@ fun loadResourcesLocal() = with(LocalDictionary) {
 }
 
 fun requestPrecision(request: String) = when {
-    request.contains("short") -> Precision.SHORT
-    request.contains("full") -> Precision.FULL
+    "short" in request -> Precision.SHORT
+    "full" in request -> Precision.FULL
     else -> Precision.REGULAR
 }
 
+private fun glossInline(content: String): String? =
+    ":\\?(.*?)\\?:".toRegex(RegexOption.DOT_MATCHES_ALL)
+        .findAll(content)
+        .map { match -> respond("?s ${match.groupValues[1].trimWhitespace()}") }
+        .joinToString("\n\n")
+        .takeIf { it.isNotBlank() }
+
 fun respond(content: String): String? {
     if (!content.startsWith("?")) {
-        return Regex(":\\?(.*?)\\?:", RegexOption.DOT_MATCHES_ALL).findAll(content)
-            .map { match -> respond("?sshort ${match.groupValues[1].trimWhitespace()}") }
-            .joinToString("\n\n")
-            .also {
-                if (it.isBlank()) return null
-            }
+        return glossInline(content)
     }
 
     val (fullRequest, arguments) = content.splitOnWhitespace().let { it[0] to it.drop(1) }

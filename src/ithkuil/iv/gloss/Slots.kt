@@ -162,9 +162,7 @@ fun parseAffixVr(vr: String): Slot? {
             } else it
         }
 
-    if (form !in 0..9) return null
-
-    val degree = GlossString("degree $form", "D$form")
+    val degree = Degree.byForm(form) ?: return null
 
     val specification = when (series) {
         1 -> Specification.BASIC

@@ -1,7 +1,7 @@
 package ithkuil.iv.gloss
 
 @Suppress("unused")
-enum class Degree(val numeral: Int) {
+enum class Degree(val numeral: Int) : Glossable {
     ONE(1),
     TWO(2),
     THREE(3),
@@ -12,6 +12,9 @@ enum class Degree(val numeral: Int) {
     EIGHT(8),
     NINE(9),
     ZERO(0);
+
+    override fun gloss(o: GlossOptions): String =
+        if (o.verbose) "degree_${name.toLowerCase()}" else "D${numeral}"
 
     companion object {
         fun byForm(n: Int): Degree? = values().find { it.numeral == n }
@@ -60,7 +63,7 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
 
         abbreviation = affixEntry.abbreviation
 
-        if (this.degree != Degree.ZERO) {
+        if (degree != Degree.ZERO) {
             description = affixEntry[degree]
         }
 

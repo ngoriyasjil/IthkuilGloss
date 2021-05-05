@@ -20,7 +20,7 @@ class ConcatenatedWords(
 
     override fun toString(): String = words
         .joinToString(
-            "-",
+            separator = "-",
             prefix = prefixPunctuation,
             postfix = postfixPunctuation
         ) { it.toString() }
@@ -30,7 +30,7 @@ class ConcatenatedWords(
 }
 
 class Word(
-    private val form: String,
+    private val word: String,
     private val groups: List<String>,
     val stress: Stress,
     override val prefixPunctuation: String,
@@ -38,7 +38,7 @@ class Word(
     override val hasSentencePrefix: Boolean,
 ) : List<String> by groups, Valid() {
 
-    override fun toString(): String = "$prefixPunctuation$form$postfixPunctuation"
+    override fun toString(): String = "$prefixPunctuation$word$postfixPunctuation"
 
     val wordType by lazy { wordTypeOf(this) }
 }
