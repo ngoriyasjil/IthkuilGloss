@@ -34,7 +34,7 @@ suspend fun initializeSlashCommands(kord: Kord) {
         }
 
         command("sgloss", "Gloss Ithkuil text linearly") {
-            string("text", "The Ithkuil text to gloss") {
+            string("words", "The Ithkuil text to gloss") {
                 required = true
             }
 
