@@ -278,7 +278,7 @@ fun parseCa(ca: String): Slot? {
         when (forms.extension) {
             "" -> Extension.DELIMITIVE
             "d" -> Extension.PROXIMAL
-            "g" -> Extension.INCIPIENT
+            "g" -> Extension.INCEPTIVE
             "b" -> Extension.ATTENUATIVE
             "gz" -> Extension.GRADUATIVE
             "bz" -> Extension.DEPLETIVE
@@ -288,7 +288,7 @@ fun parseCa(ca: String): Slot? {
         when (forms.extension) {
             "" -> Extension.DELIMITIVE
             "t" -> Extension.PROXIMAL
-            "k" -> Extension.INCIPIENT
+            "k" -> Extension.INCEPTIVE
             "p" -> Extension.ATTENUATIVE
             "g" -> Extension.GRADUATIVE
             "b" -> Extension.DEPLETIVE

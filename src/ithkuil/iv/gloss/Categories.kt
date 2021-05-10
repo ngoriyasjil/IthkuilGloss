@@ -105,7 +105,7 @@ enum class Affiliation(override val short: String) : CaCategory {
 enum class Extension(override val short: String) : CaCategory {
     DELIMITIVE("DEL"),
     PROXIMAL("PRX"),
-    INCIPIENT("ICP"),
+    INCEPTIVE("ICP"),
     ATTENUATIVE("ATV"),
     GRADUATIVE("GRA"),
     DEPLETIVE("DPL");
