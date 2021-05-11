@@ -31,7 +31,7 @@ enum class AffixType(val subscript: String) {
 enum class CaseAffixKind(override val short: String) : NoDefault {
     CASE_ACCESSOR("acc"),
     INVERSE_ACCESSOR("ia"),
-    CASE_STACKING("case:");
+    CASE_STACKING("case");
 }
 
 sealed class AffixOutcome
@@ -44,8 +44,9 @@ class CaStacker(private val ca: Slot) : ValidAffix() {
     override fun gloss(o: GlossOptions): String = "(${ForcedDefault(ca, "default_ca").gloss(o)})"
 }
 
-class CaseAffix(private val kind: CaseAffixKind, private val case: Case, private val type: AffixType) : ValidAffix() {
-    override fun gloss(o: GlossOptions): String = "(${kind.gloss(o)}:${case.gloss(o)})${type.subscript}"
+class CaseAffix(private val kind: CaseAffixKind, private val case: Case, private val type: AffixType?) : ValidAffix() {
+    override fun gloss(o: GlossOptions): String =
+        "(${kind.gloss(o)}:${case.gloss(o.showDefaults())})${type?.subscript ?: ""}"
 }
 
 class ReferentialShortcut(private val referents: Referential, private val case: Case) : ValidAffix() {
@@ -102,7 +103,7 @@ class Affix(private val vx: String, private val cs: String) {
             val vc = when (cs) {
                 "sw", "zw", "čw", "šw", "žw", "jw", "lw" -> vx
                 "sy", "zy", "čy", "šy", "žy", "jy", "ly" -> glottalizeVowel(vx)
-                else -> return AffixError("Unknown case affix form: $cs")
+                else -> return AffixError("Case affix form not handled: $cs. Please report the error")
             }
 
             val case = Case.byVowel(vc) ?: return AffixError("Unknown case vowel: $vx")
@@ -111,14 +112,15 @@ class Affix(private val vx: String, private val cs: String) {
                 "sw", "sy", "zw", "zy", "čw", "čy" -> CaseAffixKind.CASE_ACCESSOR
                 "šw", "šy", "žw", "žy", "jw", "jy" -> CaseAffixKind.INVERSE_ACCESSOR
                 "lw", "ly" -> CaseAffixKind.CASE_STACKING
-                else -> return AffixError("Unknown case affix form: $cs")
+                else -> return AffixError("Case affix form not handled: $cs. Please report the error")
             }
 
             val type = when (cs) {
                 "sw", "sy", "šw", "šy" -> AffixType.ONE
                 "zw", "zy", "žw", "žy" -> AffixType.TWO
                 "čw", "čy", "jw", "jy" -> AffixType.THREE
-                else -> return AffixError("Unknown case affix form: $cs")
+                "lw", "ly" -> null
+                else -> return AffixError("Case affix form not handled: $cs. Please report the error")
             }
 
             return CaseAffix(kind, case, type)
