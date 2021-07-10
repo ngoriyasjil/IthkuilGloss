@@ -177,8 +177,12 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     } else emptyList()
 
-    if (!slotVFilledMarker && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
-    if (slotVFilledMarker && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+
+    if (shortcut == null) {
+        if (!slotVFilledMarker && csVxAffixes.size >= 2) return Error("Unexpectedly many slot V affixes")
+        if (slotVFilledMarker && csVxAffixes.size < 2) return Error("Unexpectedly few slot V affixes")
+    }
+
 
     val slotV = csVxAffixes.parseAll().validateAll { return Error(it.message) }
 
