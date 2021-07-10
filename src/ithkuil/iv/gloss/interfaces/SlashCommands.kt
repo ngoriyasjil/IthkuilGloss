@@ -3,6 +3,8 @@ package ithkuil.iv.gloss.interfaces
 import dev.kord.common.annotation.KordPreview
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.respondPublic
+import dev.kord.core.entity.interaction.CommandInteraction
+import dev.kord.core.entity.interaction.InteractionCommand
 import dev.kord.core.entity.interaction.boolean
 import dev.kord.core.entity.interaction.string
 import dev.kord.core.event.interaction.InteractionCreateEvent
@@ -69,60 +71,80 @@ suspend fun initializeSlashCommands(kord: Kord) {
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "gloss") return@on
 
-        val showDefaults = interaction.command.options["show-defaults"]?.boolean() ?: false
-        val precision = interaction.command.options["precision"]?.string() ?: "regular"
+        val command = if (interaction is CommandInteraction) {
+            (interaction as CommandInteraction).command
+        } else return@on
 
-        val command = constructCommand(showDefaults, precision)
+        if (command.rootName != "gloss") return@on
+
+        val showDefaults = command.options["show-defaults"]?.boolean() ?: false
+        val precision = command.options["precision"]?.string() ?: "regular"
+
+        val terminalCommand = constructCommand(showDefaults, precision)
 
         interaction.respondPublic {
-            content = commandResponse("words") { words -> "$command $words" }
+            content = command.makeResponse("words") { words -> "$terminalCommand $words" }
         }
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "sgloss") return@on
 
-        val showDefaults = interaction.command.options["show-defaults"]?.boolean() ?: false
-        val precision = interaction.command.options["precision"]?.string() ?: "regular"
+        val command = (interaction as? CommandInteraction)?.command ?: return@on
 
-        val command = constructCommand(showDefaults, precision, sgloss = true)
+        if (command.rootName != "sgloss") return@on
+
+        val showDefaults = command.options["show-defaults"]?.boolean() ?: false
+        val precision = command.options["precision"]?.string() ?: "regular"
+
+        val terminalCommand = constructCommand(showDefaults, precision, sgloss = true)
 
         interaction.respondPublic {
-            content = commandResponse("words") { words -> "$command $words" }
+            content = command.makeResponse("words") { words -> "$terminalCommand $words" }
         }
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "root") return@on
+
+        val command = (interaction as? CommandInteraction)?.command ?: return@on
+
+        if (command.rootName != "root") return@on
         logger.info { "Running slash command \"root\"" }
 
         interaction.respondPublic {
-            content = commandResponse("crs") { crs -> "?root $crs" }
+            content = command.makeResponse("crs") { crs -> "?root $crs" }
         }
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "affix") return@on
+
+        val command = (interaction as? CommandInteraction)?.command ?: return@on
+
+        if (command.rootName != "affix") return@on
         logger.info { "Running slash command \"affix\"" }
 
         interaction.respondPublic {
-            content = commandResponse("cxs") { cxs -> "?affix $cxs" }
+            content = command.makeResponse("cxs") { cxs -> "?affix $cxs" }
         }
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "ej") return@on
+
+        val command = (interaction as? CommandInteraction)?.command ?: return@on
+
+        if (command.rootName != "ej") return@on
         logger.info { "Running slash command \"ej\"" }
 
         interaction.respondPublic {
-            content = commandResponse("text") { text -> "?ej $text" }
+            content = command.makeResponse("text") { text -> "?ej $text" }
         }
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "whosacutebot") return@on
+
+        val command = (interaction as? CommandInteraction)?.command ?: return@on
+
+        if (command.rootName != "whosacutebot") return@on
         logger.info { "Running slash command \"whosacutebot\"" }
 
         interaction.respondPublic {
@@ -131,7 +153,10 @@ suspend fun initializeSlashCommands(kord: Kord) {
     }
 
     kord.on<InteractionCreateEvent> {
-        if (interaction.command.rootName != "date") return@on
+
+        val command = (interaction as? CommandInteraction)?.command ?: return@on
+
+        if (command.rootName != "date") return@on
         logger.info { "Running slash command \"date\"" }
 
         interaction.respondPublic {
@@ -154,8 +179,8 @@ private fun constructCommand(showDefaults: Boolean, precision: String, sgloss: B
 }
 
 @KordPreview
-private fun InteractionCreateEvent.commandResponse(argName: String, stringCommand: (String) -> String): String {
-    val arg = interaction.command.options[argName]?.string()
+private fun InteractionCommand.makeResponse(argName: String, stringCommand: (String) -> String): String {
+    val arg = options[argName]?.string()
 
     return if (arg != null) {
         respond(stringCommand(arg)) ?: "*No response*"

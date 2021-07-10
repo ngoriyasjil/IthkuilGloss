@@ -1,7 +1,7 @@
 package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
-import dev.kord.core.*
+import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.MessageChannelBehavior
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.reply
@@ -13,9 +13,11 @@ import dev.kord.core.event.message.MessageUpdateEvent
 import dev.kord.core.event.message.ReactionAddEvent
 import dev.kord.core.live.live
 import dev.kord.core.live.on
+import dev.kord.core.on
 import ithkuil.iv.gloss.dispatch.loadResourcesOnline
 import ithkuil.iv.gloss.dispatch.logger
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import java.io.File
 import ithkuil.iv.gloss.dispatch.respond as terminalRespond
 
@@ -35,6 +37,13 @@ suspend fun main() {
         if (emoji != ReactionEmoji.Unicode("\u274C")) return@on
 
         messag.delete()
+    }
+
+    kord.on<MessageCreateEvent> {
+        if (message.content != "?!resetslashcommands") return@on
+        kord.slashCommands.getGlobalApplicationCommands().collect { it.delete() }
+        logger.info { "Deleted slash commands" }
+        initializeSlashCommands(kord)
     }
 
     initializeSlashCommands(kord)
