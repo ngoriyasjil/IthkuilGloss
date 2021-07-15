@@ -123,10 +123,14 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     val slotII = parseVv(vv, shortcut) ?: return Error("Unknown Vv value: $vv")
 
+    val cr = groups[index]
+
+    if (cr.isInvalidRootForm()) return Error("Invalid root form: $cr")
+
     val root: Glossable = when (rootMode) {
         RootMode.ROOT -> {
             val stem = slotII.findIsInstance<Underlineable<Stem>>() ?: return Error("Stem not found")
-            Root(groups[index], stem)
+            Root(cr, stem)
         }
 
         RootMode.AFFIX -> {
@@ -135,11 +139,11 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
                 else -> seriesAndForm(affixVr).second
             }
             val degree = Degree.byForm(form) ?: return Error("Unknown Cs-root degree: $form")
-            CsAffix(groups[index], degree)
+            CsAffix(cr, degree)
         }
 
         RootMode.REFERENCE -> {
-            parseFullReferent(groups[index]) ?: return Error("Unknown personal reference cluster: ${groups[index]}")
+            parseFullReferent(cr) ?: return Error("Unknown personal reference cluster: $cr")
         }
 
     }
@@ -322,6 +326,8 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
     return Parsed(slotList, stressMarked = relation)
 
 }
+
+private fun String.isInvalidRootForm(): Boolean = startsWith("h") || this in INVALID_ROOT_FORMS
 
 private inline fun <reified R> Iterable<*>.findIsInstance(): R? {
     for (element in this) {
