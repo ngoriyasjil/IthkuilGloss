@@ -45,7 +45,7 @@ enum class Stem(override val short: String) : NoDefault {
     THREE("S3");
 
     override fun gloss(o: GlossOptions) = when {
-        o.verbose -> "stem_${name.toLowerCase()}"
+        o.verbose -> "stem_${name.lowercase()}"
         else -> short
     }
 }
@@ -492,7 +492,7 @@ enum class Bias(override val short: String, val cb: String, private val represen
 
     override fun gloss(o: GlossOptions): String = when {
         o.concise -> short
-        o.verbose -> "(${name.toLowerCase()}: “$representative“)"
+        o.verbose -> "(${name.lowercase()}: “$representative“)"
         else -> "“${representative}“"
     }
 

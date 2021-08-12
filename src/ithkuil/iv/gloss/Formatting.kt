@@ -65,9 +65,9 @@ fun formatWord(fullWord: String): FormattingOutcome {
     if (clean.last() == '\'') return Invalid(clean, "Word ends in glottal stop")
 
     fun codepointString(c: Char): String {
-        val codepoint = c.toInt()
+        val codepoint = c.code
             .toString(16)
-            .toUpperCase()
+            .uppercase()
             .padStart(4, '0')
         return "\"$c\" (U+$codepoint)"
     }
@@ -238,7 +238,7 @@ fun String.substituteAll(substitutions: List<Pair<String, String>>) =
 
 fun String.clearStress() = substituteAll(UNSTRESSED_FORMS)
 
-fun String.defaultForm() = toLowerCase().substituteAll(ALLOGRAPHS)
+fun String.defaultForm() = lowercase().substituteAll(ALLOGRAPHS)
 
 enum class Stress {
     ULTIMATE,

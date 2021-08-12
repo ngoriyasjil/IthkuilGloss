@@ -25,8 +25,8 @@ interface Category : Glossable {
     val short: String
 
     override fun gloss(o: GlossOptions) = when {
-        !o.includeDefaults && this.ordinal == 0 -> ""
-        o.verbose -> this.name.toLowerCase()
+        !o.includeDefaults && ordinal == 0 -> ""
+        o.verbose -> name.lowercase()
         else -> short
     }
 }

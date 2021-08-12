@@ -14,7 +14,7 @@ enum class Degree(val numeral: Int) : Glossable {
     ZERO(0);
 
     override fun gloss(o: GlossOptions): String =
-        if (o.verbose) "degree_${name.toLowerCase()}" else "D${numeral}"
+        if (o.verbose) "degree_${name.lowercase()}" else "D${numeral}"
 
     companion object {
         fun byForm(n: Int): Degree? = values().find { it.numeral == n }

@@ -79,6 +79,6 @@ fun datetimeInIthkuil(
     val erwal = "${numeralBody(datetime.minute)}oň"
 
 
-    return "$ardhal $ernal $arnal ($urwal $erwal)".capitalize()
+    return "$ardhal $ernal $arnal ($urwal $erwal)".replaceFirstChar { it.uppercase() }
 
 }

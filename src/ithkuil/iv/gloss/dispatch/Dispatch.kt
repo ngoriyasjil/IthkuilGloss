@@ -156,7 +156,7 @@ fun lookupRoot(crs: List<String>): String {
         if (root != null) {
             val generalDescription = root[Stem.ZERO]
             val stemDescriptions = root.descriptions.drop(1)
-            val titleLine = "**-${cr.toUpperCase()}-**: $generalDescription"
+            val titleLine = "**-${cr.uppercase()}-**: $generalDescription"
 
             val descLines = stemDescriptions.mapIndexedNotNull { index, description ->
                 if (description.isNotEmpty()) "${index + 1}. $description"
@@ -168,7 +168,7 @@ fun lookupRoot(crs: List<String>): String {
             )
 
         } else {
-            entries.add("*-${cr.toUpperCase()}- not found*")
+            entries.add("*-${cr.uppercase()}- not found*")
         }
 
     }
