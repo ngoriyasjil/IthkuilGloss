@@ -1,7 +1,7 @@
 package ithkuil.iv.gloss.interfaces
 
 import dev.kord.common.annotation.KordPreview
-import dev.kord.core.*
+import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.MessageChannelBehavior
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.reply
@@ -13,6 +13,8 @@ import dev.kord.core.event.message.MessageUpdateEvent
 import dev.kord.core.event.message.ReactionAddEvent
 import dev.kord.core.live.live
 import dev.kord.core.live.on
+import dev.kord.core.on
+import dev.kord.rest.request.RestRequestException
 import ithkuil.iv.gloss.dispatch.loadResourcesOnline
 import ithkuil.iv.gloss.dispatch.logger
 import kotlinx.coroutines.delay
@@ -113,12 +115,22 @@ suspend fun Message.respondTo(): Message? {
 
 suspend fun sendHelp(helpee: User, channel: MessageChannelBehavior) {
     logger.info { "-> sendHelp(${helpee.tag})" }
-    val dmChannel = helpee.getDmChannelOrNull() ?: return
+
     val helpMessages = File("./resources/help.md")
         .readText()
         .splitMessages()
 
-    helpMessages.forEach { dmChannel.createMessage(it) }
+    try {
+        val dmChannel = helpee.getDmChannel()
+        helpMessages.forEach { dmChannel.createMessage(it) }
+    } catch (e: RestRequestException) {
+        channel.createMessage(
+            "Couldn't send help your way, ${helpee.mention}! " +
+                "Your DMs might be disabled for this server."
+        )
+        return
+    }
+
 
     channel.createMessage("Help sent your way, ${helpee.mention}!")
 }
