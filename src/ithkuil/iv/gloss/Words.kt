@@ -279,7 +279,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
                 groups[index],
                 groups[index + 1],
                 marksMood = isVerbal,
-            ).also { index += 2 }
+            )?.also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
         else -> null
