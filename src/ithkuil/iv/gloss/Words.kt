@@ -91,14 +91,16 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
         } else group
     }
 
-    if (glottalIndices.size > 2) return Error("Too many glottal stops found")
-
     var index = 0
 
     val (concatenation, shortcut) = if (groups[0] in CC_CONSONANTS) {
         index++
         parseCc(groups[0])
     } else Pair(null, null)
+
+    val maxGlottalStops = if (shortcut == null) 2 else 3
+
+    if (glottalIndices.size > maxGlottalStops) return Error("Too many glottal stops")
 
     if (!inConcatenationChain && concatenation != null) return Error("Lone concatenated formative")
 
@@ -278,7 +280,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
             parseVnCn(
                 groups[index],
                 groups[index + 1],
-                marksMood = isVerbal,
+                marksMood = isVerbal
             )?.also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
