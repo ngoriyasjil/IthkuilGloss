@@ -60,7 +60,7 @@ fun glossInContext(words: List<FormattingOutcome>): List<Pair<String, ContextOut
 
             } catch (ex: Exception) {
                 logger.error("", ex)
-                Error("A severe exception occurred. Please contact the maintainers.")
+                Error("Something went wrong in glossing this word. Please contact the maintainers.")
             }
 
         } else {
