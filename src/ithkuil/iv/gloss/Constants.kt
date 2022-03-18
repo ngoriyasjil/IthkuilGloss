@@ -136,7 +136,7 @@ val CN_PATTERN_ONE = setOf(
 
 val CZ_CONSONANTS = setOf("h", "'h", "'hl", "'hr", "hw", "'hw")
 
-val INVALID_ROOT_FORMS = setOf("ļ", "ļw", "ļy", "ç", "çç", "çw", "w", "y")
+val INVALID_ROOT_FORMS = setOf("ļ", "ç", "çç", "çw", "w", "y")
 
 //Other
 
