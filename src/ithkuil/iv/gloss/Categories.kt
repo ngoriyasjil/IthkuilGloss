@@ -324,7 +324,7 @@ enum class Case(override val short: String, val series: Int, val form: Int, val 
     GENITIVE("GEN", 2, 3),
     ATTRIBUTIVE("ATT", 2, 4),
     PRODUCTIVE("PDC", 2, 5),
-    INTERPRETIVE("ITP", 2, 6),
+    INTERPRETATIVE("ITP", 2, 6),
     ORIGINATIVE("OGN", 2, 7),
     INTERDEPENDENT("IDP", 2, 8),
     PARTITIVE("PAR", 2, 9),
