@@ -140,7 +140,7 @@ class Affix(private val vx: String, private val cs: String) {
                     3 -> Case.GENITIVE
                     4 -> Case.ATTRIBUTIVE
                     5 -> Case.PRODUCTIVE
-                    6 -> Case.INTERPRETIVE
+                    6 -> Case.INTERPRETATIVE
                     7 -> Case.ORIGINATIVE
                     8 -> Case.INTERDEPENDENT
                     9 -> Case.PARTITIVE
