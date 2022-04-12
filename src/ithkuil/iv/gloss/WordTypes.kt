@@ -42,6 +42,7 @@ fun wordTypeOf(word: Word): WordType {
             )
             vowel()
             oneOf(COMBINATION_REFERENTIAL_SPECIFICATION)
+            confirm { slots.none { it.isConsonant() && it.isGeminateCa() } }
             tail()
         } -> WordType.COMBINATION_REFERENTIAL
 

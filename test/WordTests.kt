@@ -75,6 +75,12 @@ class WordTests {
         "çëhamala-lala" glossesTo "[sentence:]-T1-S1-**m**—S1-**l**"
         "hamala-çëlala" givesError "Sentence prefix inside concatenation chain"
     }
+
+    @Test
+    fun `Combination referentials are distinguished from similar-looking formatives`() {
+        "ţnaxekka" glossesTo "S1-**ţn**-**x**/3₁-MSC"
+        "ţnaxeka" glossesTo "[mi.BEN+2p]-**k**/3₁"
+    }
 }
 
 infix fun String.glossesTo(gloss: String) {
