@@ -32,4 +32,4 @@ Here are finally the actual categories, and the actual logic for glossing them! 
 
 That might be a lot to keep in one's head, but you generally don't have to worry about the other layers when working on one. I wish you luck.
 
--- Behemoth
+-- Umḑuaňvilppöirksüxaiẓda
