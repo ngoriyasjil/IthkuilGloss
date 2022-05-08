@@ -39,11 +39,9 @@ suspend fun main() {
         messag.delete()
     }
 
-    initializeSlashCommands(kord)
-
     loadResourcesOnline()
     kord.login {
-        playing("?help for info")
+        presence { playing("?help for info") }
         logger.info { "Logged in!" }
     }
 }

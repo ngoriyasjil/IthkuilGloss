@@ -433,7 +433,6 @@ fun parseFullReferent(clusters: List<String>): Referential? {
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 fun parseFullReferent(c: String): Referential? {
     val referents = buildList {
         var index = 0

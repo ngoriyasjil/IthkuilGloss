@@ -78,7 +78,6 @@ fun parseRegisterAdjunct(word: Word): ParseOutcome {
 }
 
 
-@OptIn(ExperimentalStdlibApi::class)
 @Suppress("UNCHECKED_CAST")
 fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutcome {
 

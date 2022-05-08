@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package ithkuil.iv.gloss.dispatch
 
 import ithkuil.iv.gloss.*

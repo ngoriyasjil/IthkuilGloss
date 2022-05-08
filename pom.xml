@@ -73,7 +73,7 @@
     <dependency>
       <groupId>dev.kord</groupId>
       <artifactId>kord-core</artifactId>
-      <version>0.7.4</version>
+      <version>0.8.0-M13</version>
     </dependency>
 
     <dependency>

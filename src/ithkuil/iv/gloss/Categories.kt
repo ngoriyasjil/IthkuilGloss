@@ -185,7 +185,7 @@ class EffectAndPerson(private val person: String?, private val effect: Effect) :
             7 -> EffectAndPerson("3", Effect.DETRIMENTAL)
             8 -> EffectAndPerson("2", Effect.DETRIMENTAL)
             9 -> EffectAndPerson("1", Effect.DETRIMENTAL)
-            else -> throw(IndexOutOfBoundsException("Invalid vowelform: $form"))
+            else -> throw IndexOutOfBoundsException("Invalid vowelform: $form") //Unreachable
         }
     }
 
