@@ -14,6 +14,8 @@ import dev.kord.core.event.message.ReactionAddEvent
 import dev.kord.core.live.live
 import dev.kord.core.live.on
 import dev.kord.core.on
+import dev.kord.gateway.Intent
+import dev.kord.gateway.PrivilegedIntent
 import dev.kord.rest.request.RestRequestException
 import ithkuil.iv.gloss.dispatch.loadResourcesOnline
 import ithkuil.iv.gloss.dispatch.logger
@@ -21,11 +23,13 @@ import kotlinx.coroutines.delay
 import java.io.File
 import ithkuil.iv.gloss.dispatch.respond as terminalRespond
 
+@OptIn(PrivilegedIntent::class)
 @KordPreview
 suspend fun main() {
     val token = File("./resources/token.txt").readLines().first()
     val kord = Kord(token)
     kord.on<MessageCreateEvent> {
+        logger.debug { "Saw a message: \"${message.content}\"" }
         replyAndTrackChanges()
     }
 
@@ -41,6 +45,13 @@ suspend fun main() {
 
     loadResourcesOnline()
     kord.login {
+        intents {
+            +Intent.MessageContent
+            +Intent.GuildMessages
+            +Intent.GuildMessageReactions
+            +Intent.DirectMessages
+            +Intent.DirectMessagesReactions
+        }
         presence { playing("?help for info") }
         logger.info { "Logged in!" }
     }
