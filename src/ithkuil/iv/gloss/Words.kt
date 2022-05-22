@@ -193,11 +193,15 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
 
     val isVerbal = word.stress in setOf(Stress.ULTIMATE, Stress.MONOSYLLABIC)
 
+    var cnMoved = false
+
     val slotVI = if (shortcut != null) null else {
         val caForm = groups.getOrNull(index) ?: return Error("Formative ended unexpectedly")
 
         val caValue = when {
             caForm in CN_PATTERN_ONE -> {
+                if (caForm == "h") return Error("Unexpected default Cn in slot VI")
+                cnMoved = true
                 parseVnCn("a", caForm, isVerbal)
                     ?: return Error("Unknown Cn value in Ca: $caForm")
             }
@@ -287,7 +291,12 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
     }
 
     val caseGlottal = if (shortcut == null) {
-        glottalIndices.any { it in (glottalShiftStartIndex)..(groups.lastIndex) }
+        if (cnMoved) {
+            if (glottalIndices.any { it in glottalShiftStartIndex until groups.lastIndex }) {
+                return Error("Unexpected glottal stop with a moved Cn")
+            }
+        }
+        glottalIndices.any { it in glottalShiftStartIndex..(groups.lastIndex) }
     } else groups.last().isVowel() && groups.lastIndex in glottalIndices
 
     if (concatenation != null && caseGlottal) return Error("Unexpected glottal stop in concatenated formative")
