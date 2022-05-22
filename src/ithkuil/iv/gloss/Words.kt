@@ -561,7 +561,8 @@ fun parseAffixual(word: Word): ParseOutcome {
 
     val affix = Affix(word[0], word[1]).parse().validate { return Error(it.message) }
 
-    val scope = affixualAdjunctScope(word.getOrNull(2))
+    val vs = word.getOrNull(2)
+    val scope = affixualAdjunctScope(vs) ?: return Error("Unknown Vs: $vs")
 
     return Parsed(affix, scope, stressMarked = concatOnly)
 
