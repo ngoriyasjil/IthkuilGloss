@@ -42,7 +42,7 @@ fun wordTypeOf(word: Word): WordType {
             )
             vowel()
             oneOf(COMBINATION_REFERENTIAL_SPECIFICATION)
-            confirm { slots.none { it.isConsonant() && it.isGeminateCa() } }
+            test(slots.none { it.isConsonant() && it.isGeminateCa() })
             tail()
         } -> WordType.COMBINATION_REFERENTIAL
 
@@ -160,6 +160,12 @@ class Matcher(var slots: List<String>, var matching: Boolean = true) {
         if (!matching) return
 
         if (current()?.let { predicate(it) } != true) matching = false
+    }
+
+    fun test(claim: Boolean) {
+        if (!matching) return
+
+        if (!claim) matching = false
     }
 
     fun modify(transform: (String) -> String) {
