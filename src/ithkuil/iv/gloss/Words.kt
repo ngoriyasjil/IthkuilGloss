@@ -206,6 +206,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
             }
 
             caForm.isGeminateCa() -> {
+                if (caForm.isOvergeminatedCa()) return Error("Overgeminated Ca: $caForm")
                 if (csVxAffixes.isEmpty()) return Error("Unexpected geminated Ca: $caForm")
                 val ungeminated = caForm.degeminateCa()
                 parseCa(ungeminated) ?: return Error("Unknown Ca value: $ungeminated")

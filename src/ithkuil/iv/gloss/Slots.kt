@@ -183,6 +183,8 @@ fun String.isGeminateCa(): Boolean = when {
     else -> false
 }
 
+fun String.isOvergeminatedCa(): Boolean = zipWithNext { a, b -> a == b }.count { it } >= 2
+
 fun String.degeminateCa(): String {
     val allomorph = CA_DEGEMINATIONS.keys.find { this.endsWith(it) }
     return when {
