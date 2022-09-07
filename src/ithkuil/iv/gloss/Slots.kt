@@ -69,6 +69,7 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
                 else -> return null
             }
         }
+
         Shortcut.W -> {
             additional = when (series) {
                 1 -> caOf()
@@ -78,6 +79,7 @@ fun parseNormalVv(v: String, shortcut: Shortcut?): Slot? {
                 else -> return null
             }
         }
+
         Shortcut.Y -> {
             additional = when (series) {
                 1 -> caOf(extension = Extension.PROXIMAL)
@@ -188,6 +190,7 @@ fun String.degeminateCa(): String {
         zipWithNext().any { (a, b) -> a == b } ->
             zipWithNext { a, b -> if (a != b) b else "" }
                 .joinToString("", prefix = take(1))
+
         else -> this
     }
 }
@@ -479,9 +482,9 @@ fun affixualAdjunctScope(vsCzVz: String?, isMultipleAdjunctVowel: Boolean = fals
         "ai" -> if (isMultipleAdjunctVowel) "{same}" else null
         else -> null
     }
-    val default = (scope == "{VDom}" && !isMultipleAdjunctVowel) || (scope == "{same}" && isMultipleAdjunctVowel)
+    val isDefaultForm = if (isMultipleAdjunctVowel) scope == "{same}" else scope == "{VDom}"
 
-    return scope?.let { GlossString(it, ignorable = default) }
+    return scope?.let { GlossString(it, ignorable = isDefaultForm) }
 }
 
 
