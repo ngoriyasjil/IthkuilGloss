@@ -189,9 +189,9 @@ class Root(private val cr: String, private val stem: Underlineable<Stem>) : Glos
 
             description = if (stemDesc.isNotEmpty()) {
                 stem.used = true
-                "“$stemDesc“"
+                "“$stemDesc”"
             } else {
-                "“${rootEntry[Stem.ZERO]}“"
+                "“${rootEntry[Stem.ZERO]}”"
             }
         }
         return this

@@ -76,7 +76,7 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
         return if (o.concise || degree == Degree.ZERO || description == null) {
             "$abbreviation$AFFIX_DEGREE_SEPARATOR${degree.numeral}${type?.subscript ?: ""}"
         } else {
-            "‘$description‘${type?.subscript ?: ""}"
+            "‘$description’${type?.subscript ?: ""}"
         }
     }
 }
@@ -146,6 +146,7 @@ class Affix(private val vx: String, private val cs: String) {
                     9 -> Case.PARTITIVE
                     else -> return AffixError("Unknown vowel form ($form): $vx")
                 }
+
                 4 -> when (form) {
                     1 -> Case.THEMATIC
                     2 -> Case.INSTRUMENTAL
@@ -158,6 +159,7 @@ class Affix(private val vx: String, private val cs: String) {
                     9 -> Case.INDUCIVE
                     else -> return AffixError("Unknown vowel form ($form): $vx")
                 }
+
                 else -> return AffixError("Unknown referential shortcut series ($series): $vx")
             }
 
@@ -192,14 +194,8 @@ inline fun AffixOutcome.validate(dealWithError: (AffixError) -> Nothing): ValidA
     is AffixError -> dealWithError(this)
 }
 
-fun List<Affix>.parseAll(): List<AffixOutcome> = if (size == 1) {
-    this[0]
-        .parse(canBeReferentialShortcut = true)
-        .let { listOf(it) }
-} else {
-    map(Affix::parse)
-}
+fun List<Affix>.parseAll(): List<AffixOutcome> =
+    map { it.parse(canBeReferentialShortcut = (size == 1)) }
 
-inline fun List<AffixOutcome>.validateAll(
-    dealWithError: (AffixError) -> Nothing
-): List<ValidAffix> = map { it.validate(dealWithError) }
+inline fun List<AffixOutcome>.validateAll(dealWithError: (AffixError) -> Nothing): List<ValidAffix> =
+    map { it.validate(dealWithError) }

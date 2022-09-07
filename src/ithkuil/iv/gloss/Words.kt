@@ -78,7 +78,6 @@ fun parseRegisterAdjunct(word: Word): ParseOutcome {
 }
 
 
-@Suppress("UNCHECKED_CAST")
 fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutcome {
 
     val glottalIndices = mutableListOf<Int>()
@@ -287,6 +286,7 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
             )?.also { index += 2 }
                 ?: return Error("Unknown VnCn value: ${groups[index] + groups[index + 1]}")
         }
+
         else -> null
     }
 
@@ -311,8 +311,10 @@ fun parseFormative(word: Word, inConcatenationChain: Boolean = false): ParseOutc
         when (word.stress) {
             Stress.PENULTIMATE -> Case.byVowel(vcVk)
                 ?: return Error("Unknown Vf form $vcVk (penultimate stress)")
+
             Stress.MONOSYLLABIC, Stress.ULTIMATE -> Case.byVowel(glottalizeVowel(vcVk))
                 ?: return Error("Unknown Vf form $vcVk (ultimate stress)")
+
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress in concatenated formative")
             else -> return Error("Stress error")
         }
@@ -375,6 +377,7 @@ fun parseModular(word: Word, marksMood: Boolean?): ParseOutcome {
         else -> when (word.stress) {
             Stress.PENULTIMATE -> parseVnCn(word[index], "h", marksMood = true, absoluteLevel = false)
                 ?: return Error("Unknown non-aspect Vn: ${word[index]}")
+
             Stress.ULTIMATE -> parseVh(word[index]) ?: return Error("Unknown Vh: ${word[index]}")
             Stress.ANTEPENULTIMATE -> return Error("Antepenultimate stress on modular adjunct")
             else -> return Error("Stress error: ${word.stress.name}")
@@ -452,6 +455,7 @@ fun parseReferential(word: Word): ParseOutcome {
             return Parsed(refA, Shown(caseA), Shown(caseB), refB, stressMarked = essence)
 
         }
+
         word.size > index + 1 -> return Error("Referential is too long")
 
         else -> return Parsed(refA, caseA, stressMarked = essence)
