@@ -6,7 +6,6 @@ import mu.KotlinLogging
 import java.io.File
 import java.net.URL
 import kotlin.system.exitProcess
-import kotlin.time.ExperimentalTime
 
 val startTime = Clock.System.now()
 

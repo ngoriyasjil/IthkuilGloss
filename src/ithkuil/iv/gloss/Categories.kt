@@ -130,7 +130,6 @@ enum class Context(override val short: String) : Category {
     AMALGAMATIVE("AMG");
 }
 
-@Suppress("unused")
 enum class Valence(override val short: String) : Category {
     MONOACTIVE("MNO"),
     PARALLEL("PRL"),
@@ -147,7 +146,6 @@ enum class Valence(override val short: String) : Category {
     }
 }
 
-@Suppress("unused")
 enum class Phase(override val short: String) : NoDefault {
     PUNCTUAL("PCT"),
     ITERATIVE("ITR"),
@@ -198,7 +196,6 @@ enum class Effect(override val short: String) : Category {
     DETRIMENTAL("DET");
 }
 
-@Suppress("unused")
 enum class Level(override val short: String) : NoDefault {
     MINIMAL("MIN"),
     SUBEQUATIVE("SBE"),
@@ -237,7 +234,6 @@ class LevelAndRelativity(
     }
 }
 
-@Suppress("unused")
 enum class Aspect(override val short: String, val series: Int, val form: Int) : NoDefault {
     RETROSPECTIVE("RTR", 1, 1),
     PROSPECTIVE("PRS", 1, 2),
@@ -305,7 +301,6 @@ enum class CaseScope(override val short: String) : Category {
     SUCCESSIVE("CCV");
 }
 
-@Suppress("unused")
 enum class Case(override val short: String, val series: Int, val form: Int, val glottal: Boolean = false) : Category {
     //  Transrelative
     THEMATIC("THM", 1, 1),
@@ -426,7 +421,6 @@ enum class Validation(override val short: String) : NoDefault {
     IMAGINARY("IMA");
 }
 
-@Suppress("unused")
 enum class Bias(override val short: String, val cb: String, private val representative: String) : NoDefault {
     ACCIDENTAL("ACC", "lf", "As luck would would have it..."),
     ADMISSIVE("ADM", "lļ", "Mm-hm"),
@@ -511,7 +505,6 @@ class RegisterAdjunct(private val register: Register, private val final: Boolean
 
 }
 
-@Suppress("unused")
 enum class Register(override val short: String, val initial: String, val final: String) : NoDefault {
     DISCURSIVE("DSV", "a", "ai"),
     PARENTHETICAL("PNT", "e", "ei"),
@@ -535,7 +528,6 @@ enum class Register(override val short: String, val initial: String, val final: 
     }
 }
 
-@Suppress("unused")
 enum class Referent(override val short: String, private vararg val forms: String) : NoDefault {
     MONADIC_SPEAKER("1m", "l", "r", "ř"),
     MONADIC_ADDRESSEE("2m", "s", "š", "ž"),

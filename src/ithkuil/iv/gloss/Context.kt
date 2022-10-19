@@ -18,6 +18,7 @@ fun glossInContext(words: List<FormattingOutcome>): List<Pair<String, ContextOut
                 glossPairs.add(maybeWord.toString() to Error(maybeWord.message))
                 continue
             }
+
             is Valid -> maybeWord
         }
 
@@ -107,6 +108,7 @@ fun isCarrier(word: Valid): Boolean {
 
                 word.getOrNull(rootIndex) == CARRIER_ROOT_CR
             }
+
             WordType.REFERENTIAL, WordType.COMBINATION_REFERENTIAL ->
                 setOf("hl", "hn", "hň").any { it in word } //Quotative adjunct "hm" is not included
 

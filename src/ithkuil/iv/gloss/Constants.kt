@@ -1,5 +1,3 @@
-@file:Suppress("SpellCheckingInspection")
-
 package ithkuil.iv.gloss
 
 const val SLOT_SEPARATOR = "-"

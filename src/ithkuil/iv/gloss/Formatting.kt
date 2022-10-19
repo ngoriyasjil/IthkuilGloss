@@ -137,6 +137,7 @@ private fun formatConcatenatedWords(
                     }
                     it
                 }
+
                 is Invalid -> return Invalid(word, "${it.message} ($it)")
                 is ConcatenatedWords -> return Invalid(word, "Nested concatenation! ($it)")
             }
@@ -172,6 +173,7 @@ fun String.splitGroups(): List<String> {
         val group = when (state) {
             GroupingState.CONSONANT -> substring(index)
                 .takeWhile { it in CONSONANTS }
+
             GroupingState.VOWEL -> substring(index)
                 .takeWhile { it in VOWELS_AND_GLOTTAL_STOP }
         }

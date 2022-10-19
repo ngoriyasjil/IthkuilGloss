@@ -1,6 +1,5 @@
 package ithkuil.iv.gloss
 
-@Suppress("unused")
 enum class Degree(val numeral: Int) : Glossable {
     ONE(1),
     TWO(2),
