@@ -156,8 +156,8 @@ fun parseAffixVr(vr: String): Slot? {
                 val zeroSeries = when (vr) {
                     "ae" -> 1
                     "ea" -> 2
-                    "äi" -> 3
-                    "öi" -> 4
+                    "üo" -> 3
+                    "üö" -> 4
                     else -> return null
                 }
                 zeroSeries to 0
@@ -242,7 +242,7 @@ fun parseCa(ca: String): Slot? {
             "" -> Affiliation.CONSOLIDATIVE
             "nļ" -> Affiliation.ASSOCIATIVE
             "rļ" -> Affiliation.COALESCENT
-            "řļ" -> Affiliation.VARIATIVE
+            "ň" -> Affiliation.VARIATIVE
             else -> return null
         }
     } else {
@@ -279,17 +279,7 @@ fun parseCa(ca: String): Slot? {
         else -> return null
     }
 
-    val extension = if (forms.configuration.isEmpty()) {
-        when (forms.extension) {
-            "" -> Extension.DELIMITIVE
-            "d" -> Extension.PROXIMAL
-            "g" -> Extension.INCEPTIVE
-            "b" -> Extension.ATTENUATIVE
-            "gz" -> Extension.GRADUATIVE
-            "bz" -> Extension.DEPLETIVE
-            else -> return null
-        }
-    } else {
+    val extension = if (configuration != Configuration.UNIPLEX) {
         when (forms.extension) {
             "" -> Extension.DELIMITIVE
             "t" -> Extension.PROXIMAL
@@ -297,6 +287,16 @@ fun parseCa(ca: String): Slot? {
             "p" -> Extension.ATTENUATIVE
             "g" -> Extension.GRADUATIVE
             "b" -> Extension.DEPLETIVE
+            else -> return null
+        }
+    } else {
+        when (forms.extension) {
+            "" -> Extension.DELIMITIVE
+            "d" -> Extension.PROXIMAL
+            "g" -> Extension.INCEPTIVE
+            "b" -> Extension.ATTENUATIVE
+            "gz" -> Extension.GRADUATIVE
+            "bz" -> Extension.DEPLETIVE
             else -> return null
         }
     }
@@ -353,10 +353,10 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean = true, absoluteLevel: 
     val cnValue: Glossable = when (cn) {
         "h", "w", "y" -> Mood.FACTUAL to CaseScope.NATURAL
         "hl", "hw" -> Mood.SUBJUNCTIVE to CaseScope.ANTECEDENT
-        "hr", "hlw" -> Mood.ASSUMPTIVE to CaseScope.SUBALTERN
-        "hm", "hly" -> Mood.SPECULATIVE to CaseScope.QUALIFIER
+        "hr", "hrw" -> Mood.ASSUMPTIVE to CaseScope.SUBALTERN
+        "hm", "hmw" -> Mood.SPECULATIVE to CaseScope.QUALIFIER
         "hn", "hnw" -> Mood.COUNTERFACTIVE to CaseScope.PRECEDENT
-        "hň", "hny" -> Mood.HYPOTHETICAL to CaseScope.SUCCESSIVE
+        "hň", "hňw" -> Mood.HYPOTHETICAL to CaseScope.SUCCESSIVE
         else -> return null
     }.let {
         if (marksMood) it.first else it.second

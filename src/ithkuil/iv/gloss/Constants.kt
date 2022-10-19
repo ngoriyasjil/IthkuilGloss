@@ -10,7 +10,7 @@ const val REFERENT_END = "]"
 const val CONCATENATION_SEPARATOR = "—"
 const val LOW_TONE_MARKER = "_"
 
-const val CA_STACKING_VOWEL = "öi"
+const val CA_STACKING_VOWEL = "üö"
 const val IVE_CS = "nļ"
 const val CARRIER_ROOT_CR = "s"
 
@@ -125,7 +125,7 @@ val CASE_AFFIXES = setOf(
 
 val CN_CONSONANTS = setOf(
     "h", "hl", "hr", "hm", "hn", "hň",
-    "w", "y", "hw", "hlw", "hly", "hnw", "hny"
+    "w", "y", "hw", "hrw", "hmw", "hnw", "hňw"
 )
 
 val CN_PATTERN_ONE = setOf(

@@ -411,11 +411,11 @@ fun parseReferential(word: Word): ParseOutcome {
     }
 
     if (word[0] in CP_CONSONANTS && word.size > 2) {
-        return Error("Cp in referential not preceded by epenthetic \"äi\"")
+        return Error("Cp in referential not preceded by epenthetic \"üo\"")
     }
 
-    if (word[0] == "äi" && word[1] !in CP_CONSONANTS) {
-        return Error("Epenthetic \"äi\" not followed by a Cp form")
+    if (word[0] == "üo" && word[1] !in CP_CONSONANTS) {
+        return Error("Epenthetic \"üo\" not followed by a Cp form")
     }
 
     if (word[0] == "ë" && word[1] in CP_CONSONANTS) {
@@ -474,7 +474,7 @@ fun parseCombinationReferential(word: Word): ParseOutcome {
 
     if (word[0] in setOf("ë", "a")) {
         if ((word[0] == "a") != (word[1] in CP_CONSONANTS)) {
-            return Error("Epenthetic ï must only be used with Suppletive forms")
+            return Error("Epenthetic a must only be used with Suppletive forms")
         }
         index++
     }
@@ -594,7 +594,7 @@ fun parseMoodCaseScopeAdjunct(word: Word): ParseOutcome {
         "ei" -> CaseScope.ANTECEDENT
         "iu" -> CaseScope.SUBALTERN
         "oi" -> CaseScope.QUALIFIER
-        "öi" -> CaseScope.PRECEDENT
+        "ü" -> CaseScope.PRECEDENT
         "ui" -> CaseScope.SUCCESSIVE
         else -> return Error("Unknown Mood/Case-Scope adjunct vowel: $v")
     }

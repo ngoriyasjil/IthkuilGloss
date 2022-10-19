@@ -167,14 +167,14 @@ class Affix(private val vx: String, private val cs: String) {
             return ReferentialShortcut(referential, case)
         }
 
-        val degree = if (vx in setOf("ae", "ea", "äi")) {
+        val degree = if (vx in setOf("ae", "ea", "üo")) {
             Degree.ZERO
         } else Degree.byForm(form) ?: return AffixError("Unknown affix vowel form: $vx")
 
         val type: AffixType = if (degree == Degree.ZERO) when (vx) {
             "ae" -> AffixType.ONE
             "ea" -> AffixType.TWO
-            "äi" -> AffixType.THREE
+            "üo" -> AffixType.THREE
             else -> return AffixError("Unknown degree zero vowel: $vx")
         } else when (series) {
             1 -> AffixType.ONE

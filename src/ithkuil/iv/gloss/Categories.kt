@@ -510,7 +510,7 @@ enum class Register(override val short: String, val initial: String, val final: 
     PARENTHETICAL("PNT", "e", "ei"),
     SPECIFICATIVE("SPF", "i", "iu"),
     EXAMPLIFICATIVE("EXM", "o", "oi"),
-    COGITANT("CGT", "ö", "öi"),
+    COGITANT("CGT", "ö", "üo"),
     MATHEMATICAL("MTH", "u", "ui"),
     CARRIER_END("CAR", "", "ü");
 
