@@ -366,44 +366,83 @@ fun parseVnCn(vn: String, cn: String, marksMood: Boolean = true, absoluteLevel: 
 
 }
 
-fun parseVk(vk: String, inIveAffix: Boolean = false): Slot? {
-    val (series, form) = if (vk !in setOf("ae", "ea", "äi")) {
-        seriesAndForm(vk)
-    } else {
-        if (!inIveAffix) return null
-        when (vk) {
-            "ae" -> 1 to 0
-            "ea" -> 2 to 0
-            "äi" -> 3 to 0
+fun parseVk(vk: String): Slot? {
+
+    val (series, form) = seriesAndForm(vk)
+
+    val illocution = when (series) {
+        1 -> Illocution.ASSERTIVE
+        2 -> when (form) {
+            1 -> Illocution.DIRECTIVE
+            2 -> Illocution.DECLARATIVE
+            3 -> Illocution.INTERROGATIVE
+            4 -> Illocution.VERIFICATIVE
+
+            6 -> Illocution.ADMONITIVE
+            7 -> Illocution.POTENTIATIVE
+            8 -> Illocution.HORTATIVE
+            9 -> Illocution.CONJECTURAL
+            else -> return null
+        }
+
+        else -> return null
+    }
+
+    val validation = if (series == 2) null else {
+        when (form) {
+            1 -> Validation.OBSERVATIONAL
+            2 -> Validation.RECOLLECTIVE
+            3 -> Validation.PURPORTIVE
+            4 -> Validation.REPORTIVE
+            5 -> Validation.UNSPECIFIED
+            6 -> Validation.IMAGINARY
+            7 -> Validation.CONVENTIONAL
+            8 -> Validation.INTUITIVE
+            9 -> Validation.INFERENTIAL
             else -> return null
         }
     }
 
-    val illocution = when (form) {
-        5 -> Illocution.PERFORMATIVE
-        else -> Illocution.ASSERTIVE
+    return Slot(illocution, validation)
+}
+
+fun parseIveAffixVowel(vx: String): Slot? {
+    val (series, form) = seriesAndForm(vx)
+
+    val illocution = when (series) {
+        1 -> when (form) {
+            1 -> Illocution.ASSERTIVE
+            2 -> Illocution.DIRECTIVE
+            3 -> Illocution.DECLARATIVE
+            4 -> Illocution.INTERROGATIVE
+            5 -> Illocution.VERIFICATIVE
+            6 -> Illocution.ADMONITIVE
+            7 -> Illocution.POTENTIATIVE
+            8 -> Illocution.HORTATIVE
+            9 -> Illocution.CONJECTURAL
+            else -> return null
+        }
+
+        2 -> Illocution.ASSERTIVE
+        else -> return null
     }
 
-    val expectation = when (series) {
-        1 -> Expectation.COGNITIVE
-        2 -> Expectation.RESPONSIVE
-        3 -> Expectation.EXECUTIVE
-        else -> return null
+    val validation = if (series == 1) null else {
+        when (form) {
+            1 -> Validation.OBSERVATIONAL
+            2 -> Validation.RECOLLECTIVE
+            3 -> Validation.PURPORTIVE
+            4 -> Validation.REPORTIVE
+            5 -> Validation.UNSPECIFIED
+            6 -> Validation.IMAGINARY
+            7 -> Validation.CONVENTIONAL
+            8 -> Validation.INTUITIVE
+            9 -> Validation.INFERENTIAL
+            else -> return null
+        }
     }
-    val validation = when (form) {
-        0 -> null
-        1 -> Validation.OBSERVATIONAL
-        2 -> Validation.RECOLLECTIVE
-        3 -> Validation.PURPORTIVE
-        4 -> Validation.REPORTIVE
-        5 -> null
-        6 -> Validation.IMAGINARY
-        7 -> Validation.CONVENTIONAL
-        8 -> Validation.INTUITIVE
-        9 -> Validation.INFERENTIAL
-        else -> return null
-    }
-    return Slot(illocution, expectation, validation)
+
+    return Slot(illocution, validation)
 }
 
 // Referentials

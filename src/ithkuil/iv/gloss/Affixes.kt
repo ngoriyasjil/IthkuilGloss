@@ -86,7 +86,7 @@ class IveAffix private constructor(private val values: Slot) : ValidAffix() {
 
     companion object {
         operator fun invoke(vx: String): IveAffix? =
-            parseVk(vx, inIveAffix = true)?.let { values -> IveAffix(values) }
+            parseIveAffixVowel(vx)?.let { values -> IveAffix(values) }
     }
 }
 

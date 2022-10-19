@@ -401,24 +401,26 @@ enum class Case(override val short: String, val series: Int, val form: Int, val 
 
 enum class Illocution(override val short: String) : Category {
     ASSERTIVE("ASR"),
-    PERFORMATIVE("PFM");
-}
-
-enum class Expectation(override val short: String) : Category {
-    COGNITIVE("COG"),
-    RESPONSIVE("RSP"),
-    EXECUTIVE("EXE");
+    DIRECTIVE("DIR"),
+    DECLARATIVE("DEC"),
+    INTERROGATIVE("IRG"),
+    VERIFICATIVE("VRF"),
+    ADMONITIVE("ADM"),
+    POTENTIATIVE("POT"),
+    HORTATIVE("HOR"),
+    CONJECTURAL("CNJ");
 }
 
 enum class Validation(override val short: String) : NoDefault {
     OBSERVATIONAL("OBS"),
     RECOLLECTIVE("REC"),
-    REPORTIVE("RPR"),
     PURPORTIVE("PUP"),
+    REPORTIVE("RPR"),
+    UNSPECIFIED("USP"),
+    IMAGINARY("IMA"),
     CONVENTIONAL("CVN"),
-    INFERENTIAL("INF"),
     INTUITIVE("ITU"),
-    IMAGINARY("IMA");
+    INFERENTIAL("INF");
 }
 
 enum class Bias(override val short: String, val cb: String, private val representative: String) : NoDefault {
