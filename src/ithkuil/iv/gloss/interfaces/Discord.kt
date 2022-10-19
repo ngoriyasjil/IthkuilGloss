@@ -20,7 +20,10 @@ import dev.kord.rest.request.RestRequestException
 import ithkuil.iv.gloss.dispatch.loadResourcesOnline
 import ithkuil.iv.gloss.dispatch.logger
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 import ithkuil.iv.gloss.dispatch.respond as terminalRespond
 
 @OptIn(PrivilegedIntent::class)
@@ -37,8 +40,8 @@ suspend fun main() {
 
         val messag = message.asMessageOrNull() ?: return@on
         if (messag.author != kord.getSelf()) return@on
-        if (user != messag.referencedMessage?.author) return@on
         if (emoji != ReactionEmoji.Unicode("\u274C")) return@on
+        if (messag.referencedMessage != null && user != messag.referencedMessage?.author) return@on
 
         messag.delete()
     }
@@ -86,9 +89,15 @@ private suspend fun MessageCreateEvent.replyAndTrackChanges() {
         }
     }
 
+    liveMessage.coroutineContext.job.invokeOnCompletion {
+        if ((it as? CancellationException)?.message == "Minute passed") return@invokeOnCompletion
+        logger.debug { "Original message deleted" }
+        runBlocking { response.delete("Original message deleted") }
+    }
+
     delay(60000)
 
-    liveMessage.shutDown()
+    liveMessage.shutDown(CancellationException("Minute passed"))
 }
 
 suspend fun Message.respondTo(): Message? {

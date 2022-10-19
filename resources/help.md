@@ -1,6 +1,6 @@
 **IthkuilGloss Help**
 
-The IthkuilGloss bot gives morpheme-by-morpheme glosses of Ithkuil IV text. A gloss exposes the underlying grammatical values, which helps both in understanding and composing Ithkuil text.
+The IthkuilGloss bot gives morpheme-by-morpheme glosses of Ithkuil IV text. A gloss exposes the underlying grammatical values, which helps in both understanding and composing Ithkuil text.
 
 Main commands:
 - Glosses the following words one at a time:
@@ -8,12 +8,13 @@ Main commands:
    - **?full**: full precision
    - **?short**: short precision
    
-- Glosses the following sentences linearly:
+- Glosses the text sentences linearly (sometimes useful for glossing entire sentences):
    - **?s** or **?sgloss**: regular precision
    - **?sfull**: full precision
    - **?sshort**: short precision
   
 > Command: ?gloss lalo
+> 
 > Reply: **lalo:** __S1__-“adult human“-ERG
 
 By default, the commands don't show default values. To show all values, use the prefix "??" (e.g. "??gloss") instead of "?".
@@ -32,7 +33,7 @@ Other commands:
   - **?ej**: checks a text for violations of External Juncture (Sec. 1.5)
   - **?whosacutebot**: tells the bot that it is such a cute bot
     
-You can delete a message by the bot that is a reply to you by reacting to it with an ``:x:`` emoji.
+If you edit or delete your message within a minute of posting it, the bot's reply will also be edited or deleted. You can also delete a message by the bot that is a reply to you (or where the original message is deleted) by reacting to it with an ``:x:`` emoji.
 
 Formatting details:
   - Bold text in place of a root/affix means that it was not found in the current database
