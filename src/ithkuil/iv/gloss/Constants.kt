@@ -11,7 +11,7 @@ const val CONCATENATION_SEPARATOR = "—"
 const val LOW_TONE_MARKER = "_"
 
 const val CA_STACKING_VOWEL = "üö"
-const val IVE_CS = "nļ"
+const val IVL_CS = "nļ"
 const val CARRIER_ROOT_CR = "s"
 
 val ITHKUIL_CHARS = setOf(

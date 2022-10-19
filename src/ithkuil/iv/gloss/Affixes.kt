@@ -80,13 +80,13 @@ class CsAffix(private val cs: String, private val degree: Degree, private val ty
     }
 }
 
-class IveAffix private constructor(private val values: Slot) : ValidAffix() {
+class IvlAffix private constructor(private val values: Slot) : ValidAffix() {
 
     override fun gloss(o: GlossOptions): String = "(${values.gloss(o)})"
 
     companion object {
-        operator fun invoke(vx: String): IveAffix? =
-            parseIveAffixVowel(vx)?.let { values -> IveAffix(values) }
+        operator fun invoke(vx: String): IvlAffix? =
+            parseIvlAffixVowel(vx)?.let { values -> IvlAffix(values) }
     }
 }
 
@@ -125,8 +125,8 @@ class Affix(private val vx: String, private val cs: String) {
             return CaseAffix(kind, case, type)
         }
 
-        if (cs == IVE_CS) {
-            return IveAffix(vx) ?: AffixError("Unknown IVE affix: $vx")
+        if (cs == IVL_CS) {
+            return IvlAffix(vx) ?: AffixError("Unknown IVL affix vowel: $vx")
         }
 
         val (series, form) = seriesAndForm(vx)

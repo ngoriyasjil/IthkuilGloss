@@ -406,7 +406,7 @@ fun parseVk(vk: String): Slot? {
     return Slot(illocution, validation)
 }
 
-fun parseIveAffixVowel(vx: String): Slot? {
+fun parseIvlAffixVowel(vx: String): Slot? {
     val (series, form) = seriesAndForm(vx)
 
     val illocution = when (series) {
