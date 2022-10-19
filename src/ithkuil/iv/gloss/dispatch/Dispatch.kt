@@ -35,7 +35,7 @@ object LocalDictionary : Resources {
     override fun getRoot(cr: String): RootData? = roots[cr]
 }
 
-const val MORPHOPHONOLOGY_VERSION = "0.19.0"
+const val MORPHOPHONOLOGY_VERSION = "1.0.0"
 
 const val AFFIXES_URL =
     "https://docs.google.com/spreadsheets/d/1JdaG1PaSQJRE2LpILvdzthbzz1k_a0VT86XSXouwGy8/export?format=tsv&gid=499365516"
