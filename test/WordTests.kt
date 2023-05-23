@@ -33,7 +33,7 @@ class WordTests {
         "halala'a-alal" givesError "Unexpected glottal stop in concatenated formative"
         "a'lananalla'a" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-{Ca}-PRN"
         "a'la'nanalla" glossesTo "S1-**l**-**n**/1₁-**n**/1₁-{Ca}-PRN"
-        "a'la'nanalla'a" givesError "Too many glottal stops found"
+        "a'la'nanalla'a" givesError "Too many glottal stops"
     }
 
     @Test
