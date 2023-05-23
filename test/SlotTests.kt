@@ -84,7 +84,7 @@ class SlotTests {
         parseVnCn("ai", "hl") hasGlossOf "PCT.SUB"
         parseVnCn("ia", "hl", marksMood = false) hasGlossOf "1:BEN.CCA"
         parseVnCn("ao", "h") hasGlossOf "MIN"
-        parseVnCn("ao", "hny") hasGlossOf "DCL.HYP"
+        parseVnCn("ao", "hňw") hasGlossOf "DCL.HYP"
         parseVnCn("ao", "h", absoluteLevel = true) hasGlossOf "MINa"
     }
 
