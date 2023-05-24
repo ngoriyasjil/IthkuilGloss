@@ -51,8 +51,11 @@ class SlotTests {
     @Test
     fun `Affix Vr examples`() {
         parseAffixVr("a") hasGlossOf "D1"
-        parseAffixVr("ai") hasGlossOf "D1.CTE"
-        parseAffixVr("öi") hasGlossOf "D0.OBJ"
+        parseAffixVr("ai") hasGlossOf "D1.FNC"
+        parseAffixVr("ae") hasGlossOf "D0"
+        parseAffixVr("ea") hasGlossOf "D0.FNC"
+        parseAffixVr("üo") hasGlossOf "D0.RPS"
+        parseAffixVr("üö") hasGlossOf "D0.AMG"
     }
 
     @Test
@@ -81,7 +84,7 @@ class SlotTests {
         parseVnCn("ai", "hl") hasGlossOf "PCT.SUB"
         parseVnCn("ia", "hl", marksMood = false) hasGlossOf "1:BEN.CCA"
         parseVnCn("ao", "h") hasGlossOf "MIN"
-        parseVnCn("ao", "hny") hasGlossOf "DCL.HYP"
+        parseVnCn("ao", "hňw") hasGlossOf "DCL.HYP"
         parseVnCn("ao", "h", absoluteLevel = true) hasGlossOf "MINa"
     }
 

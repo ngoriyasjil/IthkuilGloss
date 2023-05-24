@@ -166,15 +166,15 @@ fun parseAffixVr(vr: String): Slot? {
 
     val degree = Degree.byForm(form) ?: return null
 
-    val specification = when (series) {
-        1 -> Specification.BASIC
-        2 -> Specification.CONTENTIAL
-        3 -> Specification.CONSTITUTIVE
-        4 -> Specification.OBJECTIVE
+    val context = when (series) {
+        1 -> Context.EXISTENTIAL
+        2 -> Context.FUNCTIONAL
+        3 -> Context.REPRESENTATIONAL
+        4 -> Context.AMALGAMATIVE
         else -> return null
     }
 
-    return Slot(degree, specification)
+    return Slot(degree, context)
 }
 
 fun String.isGeminateCa(): Boolean = when {
