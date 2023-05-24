@@ -44,6 +44,23 @@ val ALLOGRAPHS = listOf(
     "ż|ẓ" to "ẓ",
     "ṇ|ň|ņ|ṇ" to "ň",
     "ṛ|ř|ŗ|r͕|ŗ|ṛ" to "ř",
+    //ASCII romanization
+    "cczz|yc" to "čč", "cz" to "č",
+    "xxy|ccs" to "çç", "xy|cs" to "ç",
+    "ddt" to "ḑḑ", "dt" to "ḑ",
+    "hxll" to "ļļ", "hxl" to "ļ",
+    "wwnn|yn" to "ňň", "wn" to "ň",
+    "wrr|yr" to "řř", "wr" to "ř",
+    "ssz" to "šš", "sz" to "š",
+    "tts|ttd|wtt" to "ţţ", "ts|td|wt" to "ţ",
+    "zzs" to "žž", "zs" to "ž",
+    "ddz|dzz" to "ẓ", "dz" to "ẓ",
+    "qq" to "'",
+    "aaq" to "â", "aa" to "á", "aq" to "ä",
+    "eeq" to "ê", "ee" to "é", "eq" to "ë",
+    "ooq" to "ô", "oo" to "ó", "oq" to "ö",
+    "uuq" to "û", "uu" to "ú", "uq" to "ü",
+    "ii" to "í",
 )
 
 private const val unvoiced = "stckpţfçšč"
